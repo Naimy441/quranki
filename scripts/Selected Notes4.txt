@@ -1,0 +1,550 @@
+#separator:tab
+#html:false
+#deck column:1
+Quranic Words::Level 01 - Articles (This, That)	هَٰذَا	this (male)
+Quranic Words::Level 01 - Articles (This, That)	هَٰذِهِ	this (female), these (for broken plural)
+Quranic Words::Level 01 - Articles (This, That)	هَٰؤُلَاءِ	these
+Quranic Words::Level 01 - Articles (This, That)	ذالِكَ	that (male)
+Quranic Words::Level 01 - Articles (This, That)	تِلْكَ	that (female), those (for broken plural)
+Quranic Words::Level 01 - Articles (This, That)	أُوْلَآئِكَ	those
+Quranic Words::Level 01 - Articles (This, That)	الَّذِي	he who
+Quranic Words::Level 01 - Articles (This, That)	الَّتِي	she who, those who (for broken plural)
+Quranic Words::Level 01 - Articles (This, That)	الَّذِينَ	those who
+Quranic Words::Level 02 - No and Yes	لَا إِلهَ	(There is) no god
+Quranic Words::Level 02 - No and Yes	إِلَّا الله	except Allah
+Quranic Words::Level 02 - No and Yes	كَلّا	never, certainly not
+Quranic Words::Level 02 - No and Yes	لَنْ	not (for future)
+Quranic Words::Level 02 - No and Yes	لَمْ	not (for past)
+Quranic Words::Level 02 - No and Yes	مَا	not
+Quranic Words::Level 02 - No and Yes	لَيْسَ	not, it is not (male)
+Quranic Words::Level 02 - No and Yes	لَيْسَتْ	not, it is not (female)
+Quranic Words::Level 02 - No and Yes	بَلَى	yes indeed
+Quranic Words::Level 02 - No and Yes	غَيْر	not, other than
+Quranic Words::Level 02 - No and Yes	دُونَ	besides
+Quranic Words::Level 02 - No and Yes	إِلَّا	except, unless, if not
+Quranic Words::Level 02 - No and Yes	نَعَمْ	yes
+Quranic Words::Level 03 - Possessive Pronoun Endings	هُ...	his
+Quranic Words::Level 03 - Possessive Pronoun Endings	هَا...	her, their (for broken plural)
+Quranic Words::Level 03 - Possessive Pronoun Endings	كَ...	your (male)
+Quranic Words::Level 03 - Possessive Pronoun Endings	كِ...	your (female)
+Quranic Words::Level 03 - Possessive Pronoun Endings	(يْ (نِي...	my, me
+Quranic Words::Level 03 - Possessive Pronoun Endings	هُمْ...	their (male)
+Quranic Words::Level 03 - Possessive Pronoun Endings	هُنَّ...	their (female)
+Quranic Words::Level 03 - Possessive Pronoun Endings	كُمْ...	your (male plural)
+Quranic Words::Level 03 - Possessive Pronoun Endings	كُنَّ...	your (female plural)
+Quranic Words::Level 03 - Possessive Pronoun Endings	نَا...	our
+Quranic Words::Level 03 - Possessive Pronoun Endings	هُمَا...	their (dual)
+Quranic Words::Level 03 - Possessive Pronoun Endings	كُمَا...	your (dual)
+Quranic Words::Level 04 - Pronouns	هُوَ	he
+Quranic Words::Level 04 - Pronouns	هِيَ	she, they (for broken plural)
+Quranic Words::Level 04 - Pronouns	أَنْتَ	you (male)
+Quranic Words::Level 04 - Pronouns	أَنْتِ	you (female)
+Quranic Words::Level 04 - Pronouns	أَنَا	I
+Quranic Words::Level 04 - Pronouns	هُمْ	they (male)
+Quranic Words::Level 04 - Pronouns	هُنَّ	they (female)
+Quranic Words::Level 04 - Pronouns	أَنْتُم	you (male plural)
+Quranic Words::Level 04 - Pronouns	أَنْتُنَّ	you (female plural)
+Quranic Words::Level 04 - Pronouns	نَحْنُ	we
+Quranic Words::Level 04 - Pronouns	هُمَا	they (dual)
+Quranic Words::Level 04 - Pronouns	أَنْتُمَا	you (dual)
+Quranic Words::Level 05 - Prepositions - I	فَوْقَ	above, up
+Quranic Words::Level 05 - Prepositions - I	تَحْتَ	under
+Quranic Words::Level 05 - Prepositions - I	بَيْنَ أَيْدَي، بَيْنَ يَدَيْ	in front of
+Quranic Words::Level 05 - Prepositions - I	خَلْفَ	back, after
+Quranic Words::Level 05 - Prepositions - I	أَمَامَ	in front of
+Quranic Words::Level 05 - Prepositions - I	وَرَاء	behind
+Quranic Words::Level 05 - Prepositions - I	pl (يَمِيْن (أَيْمَان	right, oath
+Quranic Words::Level 05 - Prepositions - I	pl (شِمَال (شَمَائِل	left
+Quranic Words::Level 05 - Prepositions - I	بَيْنَ	between
+Quranic Words::Level 05 - Prepositions - I	حَوْل	around, approximately
+Quranic Words::Level 05 - Prepositions - I	حَيْثُ	wherever
+Quranic Words::Level 05 - Prepositions - I	أيْنَمَا	wherever
+Quranic Words::Level 06 - Interrogative	مَا	what, that which
+Quranic Words::Level 06 - Interrogative	مَنْ	who, the one who
+Quranic Words::Level 06 - Interrogative	مَتى	when, the time when
+Quranic Words::Level 06 - Interrogative	أَيْنَ	where
+Quranic Words::Level 06 - Interrogative	كَيْفَ	how
+Quranic Words::Level 06 - Interrogative	كَمْ	how many
+Quranic Words::Level 06 - Interrogative	أَيُّ	which (ا)
+Quranic Words::Level 06 - Interrogative	أَنّى	wherefrom, why, how
+Quranic Words::Level 06 - Interrogative	أَ، هَل	question particle
+Quranic Words::Level 06 - Interrogative	مَاذَا	what (م)
+Quranic Words::Level 06 - Interrogative	لِمَ، لِمَاذَا	why
+Quranic Words::Level 06 - Interrogative	لَوْ لَا	if not, even if
+Quranic Words::Level 07 - Adjectives - 1	ذُو، ذَا، ذِي	endowed with, owner of (male)
+Quranic Words::Level 07 - Adjectives - 1	ذَات	endowed with, owner of (female)
+Quranic Words::Level 07 - Adjectives - 1	أُوْلُواْ، أُوْلِي	people of, owners of
+Quranic Words::Level 07 - Adjectives - 1	أهْل	people of, relatives
+Quranic Words::Level 07 - Adjectives - 1	آل	family, relatives, people
+Quranic Words::Level 07 - Adjectives - 1	أَلَا	lo!, is it not?
+Quranic Words::Level 07 - Adjectives - 1	نِعْمَ	what an excellent
+Quranic Words::Level 07 - Adjectives - 1	بِئْسَ	what an evil
+Quranic Words::Level 07 - Adjectives - 1	بِئْسَمَا	evil is that which
+Quranic Words::Level 07 - Adjectives - 1	مِثْل	similar
+Quranic Words::Level 07 - Adjectives - 1	pl(مَثَل (أَمْثَال	similitude, example
+Quranic Words::Level 07 - Adjectives - 1	(مِمَّنْ (مِنْ+مَنْ	than the one who, from those who (م)
+Quranic Words::Level 08 - When	قَبْلَ	before
+Quranic Words::Level 08 - When	بَعْد	after
+Quranic Words::Level 08 - When	حِين	time, period, at the time
+Quranic Words::Level 08 - When	إِذْ	when (for past)
+Quranic Words::Level 08 - When	إِذَا	when (for future)
+Quranic Words::Level 08 - When	ثُمَّ	moreover (ث)
+Quranic Words::Level 08 - When	فَ	then, thus, therefore
+Quranic Words::Level 08 - When	بَل	nay, rather, but
+Quranic Words::Level 08 - When	عِنْدَ، لَدى، لَدُنْ	near, with
+Quranic Words::Level 08 - When	إِنْ ... إِلَّا	nothing...but (ا)
+Quranic Words::Level 08 - When	مَا... إِلَّا	nothing...but (م)
+Quranic Words::Level 08 - When	(أَلَّا (أَنْ+لَا	that... not, so as not (ا)
+Quranic Words::Level 09 - Prepositions + مَا	بِمَا	with what, because
+Quranic Words::Level 09 - Prepositions + مَا	عَمَّا	about what
+Quranic Words::Level 09 - Prepositions + مَا	فِيمَا	in what
+Quranic Words::Level 09 - Prepositions + مَا	كَمَا	as, just as (ك)
+Quranic Words::Level 09 - Prepositions + مَا	لِمَا	for what, for that which
+Quranic Words::Level 09 - Prepositions + مَا	مِمَّا	out of what (م)
+Quranic Words::Level 09 - Prepositions + مَا	أَمَّا	as to, as for
+Quranic Words::Level 09 - Prepositions + مَا	إِمَّا	if, either, or
+Quranic Words::Level 09 - Prepositions + مَا	أَنَّمَا	that (4 letters)
+Quranic Words::Level 09 - Prepositions + مَا	إِنَّمَا	verily, only
+Quranic Words::Level 09 - Prepositions + مَا	كَأَنَّمَا	as if
+Quranic Words::Level 09 - Prepositions + مَا	كُلَّمَا	whenever
+Quranic Words::Level 10 - Prepositions	بِ	with, in, from
+Quranic Words::Level 10 - Prepositions	عَنْ	about
+Quranic Words::Level 10 - Prepositions	فِي	in
+Quranic Words::Level 10 - Prepositions	كَ	as, like
+Quranic Words::Level 10 - Prepositions	لِ، لَ	for
+Quranic Words::Level 10 - Prepositions	مِنْ	from
+Quranic Words::Level 10 - Prepositions	إِلَى	towards
+Quranic Words::Level 10 - Prepositions	تَ	by (of oath)
+Quranic Words::Level 10 - Prepositions	حَتَّى	until
+Quranic Words::Level 10 - Prepositions	عَلَى	on
+Quranic Words::Level 10 - Prepositions	مَعَ	with (م)
+Quranic Words::Level 10 - Prepositions	وَ	and, by (of oath)
+Quranic Words::Level 11 - Prefix for Verbs	(قَدْ (+فعل	has (with past tense); surely (with present tense)
+Quranic Words::Level 11 - Prefix for Verbs	(سَ (+فعل	will (for near future)
+Quranic Words::Level 11 - Prefix for Verbs	(سَوْفَ (+فعل	will (for future)
+Quranic Words::Level 11 - Prefix for Verbs	لَ+فعل+نَّ	will surely
+Quranic Words::Level 11 - Prefix for Verbs	لَقَدْ	indeed (3 letters)
+Quranic Words::Level 11 - Prefix for Verbs	لَ	indeed, surely
+Quranic Words::Level 11 - Prefix for Verbs	(لِ، لْ (أَمْر	let (somebody) do (imperative)
+Quranic Words::Level 11 - Prefix for Verbs	الْ	the
+Quranic Words::Level 11 - Prefix for Verbs	أَمْ	or? (م)
+Quranic Words::Level 11 - Prefix for Verbs	أَوْ	or (و)
+Quranic Words::Level 11 - Prefix for Verbs	بَعْض	some of
+Quranic Words::Level 11 - Prefix for Verbs	كُلَّ	everyone, all
+Quranic Words::Level 12 - Inna	إِنَّ	verily, truly
+Quranic Words::Level 12 - Inna	أَنَّ	that (more active)
+Quranic Words::Level 12 - Inna	كَأَنَّ	as if
+Quranic Words::Level 12 - Inna	(لكِنَّ (لكِنْ	but, however
+Quranic Words::Level 12 - Inna	لَعَلَّ	perhaps, maybe
+Quranic Words::Level 12 - Inna	أَنْ	that (less active)
+Quranic Words::Level 12 - Inna	إِنْ	if (ا)
+Quranic Words::Level 12 - Inna	إِيَّا	alone
+Quranic Words::Level 12 - Inna	عَسَى	possibly
+Quranic Words::Level 12 - Inna	لَمَّا	when
+Quranic Words::Level 12 - Inna	لَوْ	if (ل)
+Quranic Words::Level 12 - Inna	يَا، يَاأَيُّهَا	O!
+Quranic Words::Level 13 - Some attributes (of Allah and others) Part 1	خَبِير	knowing, ever aware
+Quranic Words::Level 13 - Some attributes (of Allah and others) Part 1	رَبّ	Lord
+Quranic Words::Level 13 - Some attributes (of Allah and others) Part 1	رَحْمَٰن	Compassionate, merciful
+Quranic Words::Level 13 - Some attributes (of Allah and others) Part 1	سَلَام	peace
+Quranic Words::Level 13 - Some attributes (of Allah and others) Part 1	سَمِيع	one who listens, all-hearing
+Quranic Words::Level 13 - Some attributes (of Allah and others) Part 1	شَكُور	grateful
+Quranic Words::Level 13 - Some attributes (of Allah and others) Part 1	عَزِيز	mighty
+Quranic Words::Level 13 - Some attributes (of Allah and others) Part 1	غَفُور	most forgiving
+Quranic Words::Level 13 - Some attributes (of Allah and others) Part 1	قَدِير	All-powerful
+Quranic Words::Level 13 - Some attributes (of Allah and others) Part 1	نَذِير	warner
+Quranic Words::Level 13 - Some attributes (of Allah and others) Part 1	نَصِير	helper
+Quranic Words::Level 13 - Some attributes (of Allah and others) Part 1	وَكِيل	representative, trustee
+Quranic Words::Level 14 - Some attributes (of Allah and others) Part 2	fg(أَوَّل (أُولَى	first
+Quranic Words::Level 14 - Some attributes (of Allah and others) Part 2	fg (آخِر (آخِرَة	last
+Quranic Words::Level 14 - Some attributes (of Allah and others) Part 2	fg(آخَر (أُخْرَى	other
+Quranic Words::Level 14 - Some attributes (of Allah and others) Part 2	أَمِين	trustworthy
+Quranic Words::Level 14 - Some attributes (of Allah and others) Part 2	بَصِير	one who sees clearly, all-Seer
+Quranic Words::Level 14 - Some attributes (of Allah and others) Part 2	بَعِيد	far
+Quranic Words::Level 14 - Some attributes (of Allah and others) Part 2	تَوَّاب	most forgiving
+Quranic Words::Level 14 - Some attributes (of Allah and others) Part 2	حَفِيظ	protector, guardian
+Quranic Words::Level 14 - Some attributes (of Allah and others) Part 2	حَكِيم	wise
+Quranic Words::Level 14 - Some attributes (of Allah and others) Part 2	حَلِيم	forbearing
+Quranic Words::Level 14 - Some attributes (of Allah and others) Part 2	حَمِيد	praiseworthy
+Quranic Words::Level 14 - Some attributes (of Allah and others) Part 2	حَمِيم	warm (friend), boiling water
+Quranic Words::Level 15 - Noun of Superiority	أَشَدّ	most severe
+Quranic Words::Level 15 - Noun of Superiority	أَعْلَى	higher, superior
+Quranic Words::Level 15 - Noun of Superiority	أَعْلَم	better-knowing, more informed
+Quranic Words::Level 15 - Noun of Superiority	أَقْرَب	nearer, nearest, nearest relatives
+Quranic Words::Level 15 - Noun of Superiority	أََكْبَر	bigger
+Quranic Words::Level 15 - Noun of Superiority	أَكْثَر	more, most
+Quranic Words::Level 15 - Noun of Superiority	أَحَقّ	more entitled, more worthy
+Quranic Words::Level 15 - Noun of Superiority	أَحْسَن	better, best
+Quranic Words::Level 15 - Noun of Superiority	أَدْنَى	nearer, more likely, lower, less
+Quranic Words::Level 15 - Noun of Superiority	أَظْلَم	more unjust
+Quranic Words::Level 15 - Noun of Superiority	أَهْدَى	better guided
+Quranic Words::Level 15 - Noun of Superiority	أَوْلَى	nearer, more entitled, woe
+Quranic Words::Level 16 - Some attributes	شَدِيد	severe, strong
+Quranic Words::Level 16 - Some attributes	عَلِيّ	high, exalted
+Quranic Words::Level 16 - Some attributes	عَلِيم	knower
+Quranic Words::Level 16 - Some attributes	قَرِيب‌	near
+Quranic Words::Level 16 - Some attributes	كَبِير	big
+Quranic Words::Level 16 - Some attributes	كَثِير	plenty, much
+Quranic Words::Level 16 - Some attributes	سَرِيع	quick, swift, fast
+Quranic Words::Level 16 - Some attributes	رَحِيم	merciful
+Quranic Words::Level 16 - Some attributes	عَظِيم	supreme
+Quranic Words::Level 16 - Some attributes	قَلِيل	little
+Quranic Words::Level 16 - Some attributes	كَرِيم	noble, honorable, generous
+Quranic Words::Level 16 - Some attributes	لَطِيف	subtle, nice
+Quranic Words::Level 17 - Prophets and More	pl (رَسُول (رُسُل	Messenger
+Quranic Words::Level 17 - Prophets and More	نَبِيّ	Prophet
+Quranic Words::Level 17 - Prophets and More	أَنْبِيَاءَ , نَبِيِّيْن, نَبِيُّون	prophets
+Quranic Words::Level 17 - Prophets and More	آدم, نوح, إبراهيم, لوط, إسماعيل,إسحاق, يعقوب, إسرائيل, يوسف, هود, شعيب,صالح, موسى, عيسى بن مريم	"Adam, Nuh, Ibrahim, Lut, Isma&#x27;eel, Ishaq, Ya&#x27;qub, Isra&#x27;eel, Yusuf, Hud, Shu&#x27;ayb, Salih, Musa, &#x27;Isa ibnu Maryam"
+Quranic Words::Level 17 - Prophets and More	pl (شَيْطَان (شَيَاطِين	Satan
+Quranic Words::Level 17 - Prophets and More	فِرْعَوْن	Pharaoh
+Quranic Words::Level 17 - Prophets and More	عَاد	People of Hud
+Quranic Words::Level 17 - Prophets and More	ثَمُود	People of Salih
+Quranic Words::Level 18 - Allah's Signs	pl (آيَة (آيَات	sign
+Quranic Words::Level 18 - Allah's Signs	pl (بَيِّنَة (بَيِّنَات	evidence
+Quranic Words::Level 18 - Allah's Signs	قُرْآن	"Qur&#x27;an, reading, recitation"
+Quranic Words::Level 18 - Allah's Signs	أنْعَام	cattle
+Quranic Words::Level 18 - Allah's Signs	pl (جَبَل (جِبَال	mountain
+Quranic Words::Level 18 - Allah's Signs	بَحْر	sea, large river
+Quranic Words::Level 18 - Allah's Signs	شَمْس	sun
+Quranic Words::Level 18 - Allah's Signs	قَمَر	moon
+Quranic Words::Level 18 - Allah's Signs	pl (لَيْلَة (لَيَالِيْ	night
+Quranic Words::Level 18 - Allah's Signs	نَهَار	day
+Quranic Words::Level 18 - Allah's Signs	أَرْض	earth
+Quranic Words::Level 18 - Allah's Signs	pl (سَمَاء (سَمَاوات	sky
+Quranic Words::Level 19 - Last Day 1	pl (صَاحِب (أَصْحَاب	companion, fellow
+Quranic Words::Level 19 - Last Day 1	عَاقِبَة	end
+Quranic Words::Level 19 - Last Day 1	عَذَاب	torment, punishment
+Quranic Words::Level 19 - Last Day 1	عِقَاب	punishment, chastisement
+Quranic Words::Level 19 - Last Day 1	قِيَامَة	Resurrection
+Quranic Words::Level 19 - Last Day 1	لِقَاء	meeting
+Quranic Words::Level 19 - Last Day 1	مُسَمَّى	fixed
+Quranic Words::Level 19 - Last Day 1	نَار	fire
+Quranic Words::Level 19 - Last Day 1	pl (نَهَر (أَنْهَار	river
+Quranic Words::Level 19 - Last Day 1	وَيْل	woe unto
+Quranic Words::Level 19 - Last Day 1	pl (يَوْم (أَيَّام	day
+Quranic Words::Level 19 - Last Day 1	يَوْمَئِذٍ	that day
+Quranic Words::Level 20 - Last Day 2	أَبَدًا	forever, ever
+Quranic Words::Level 20 - Last Day 2	pl (أَجْر (أُجُور	reward
+Quranic Words::Level 20 - Last Day 2	أَجَل	term
+Quranic Words::Level 20 - Last Day 2	الْآخِرَة	the Hereafter
+Quranic Words::Level 20 - Last Day 2	أَلِيم	painful
+Quranic Words::Level 20 - Last Day 2	ثَوَاب	reward
+Quranic Words::Level 20 - Last Day 2	جَحِيم	hellfire
+Quranic Words::Level 20 - Last Day 2	جَزَاء	reward
+Quranic Words::Level 20 - Last Day 2	pl (جَنَّة (جَنَّات	garden, paradise
+Quranic Words::Level 20 - Last Day 2	جَهَنَّم	the hell
+Quranic Words::Level 20 - Last Day 2	حِسَاب	reckoning
+Quranic Words::Level 20 - Last Day 2	سَاعَة	hour (day of resurrection)
+Quranic Words::Level 21 - Deen	pl(أَمْر (أَمُور	command, matter, affair
+Quranic Words::Level 21 - Deen	تَقْوَى	piety, fear
+Quranic Words::Level 21 - Deen	حَقّ	truth, true, right
+Quranic Words::Level 21 - Deen	بَاطِل	falsehood
+Quranic Words::Level 21 - Deen	حِكْمَة	wisdom
+Quranic Words::Level 21 - Deen	حَمْد	praise
+Quranic Words::Level 21 - Deen	دِين	religion, judgement
+Quranic Words::Level 21 - Deen	زَكَاة	poor-due, purity
+Quranic Words::Level 21 - Deen	pl(شَهِيد (شُهَدَاء	witness
+Quranic Words::Level 21 - Deen	صَلَاة	prayer
+Quranic Words::Level 21 - Deen	مُبِين	clear, self-expressive
+Quranic Words::Level 21 - Deen	نوُر	light
+Quranic Words::Level 22 - Faith	pl (أَحَد (إِحْدَى	one, anyone
+Quranic Words::Level 22 - Faith	pl(إِله (آلِهَة	god, deity
+Quranic Words::Level 22 - Faith	pl(شَرِيك (شُرَكَاء	partner, associate
+Quranic Words::Level 22 - Faith	شَهَادَة	witness, testemony
+Quranic Words::Level 22 - Faith	عَرْش	throne
+Quranic Words::Level 22 - Faith	عَهْد	covenant, promise
+Quranic Words::Level 22 - Faith	غَيْب	unseen
+Quranic Words::Level 22 - Faith	pl(كِتَاب (كُتُب	book
+Quranic Words::Level 22 - Faith	كَلِمَة	word
+Quranic Words::Level 22 - Faith	pl(مَلَك (مَلَائِكَة	angel
+Quranic Words::Level 22 - Faith	مِيثَاق	covenant, treaty
+Quranic Words::Level 22 - Faith	وَاحِد	one
+Quranic Words::Level 23 - Deeds	pl (عَمَل (أَعْمَال	actions, deeds, works
+Quranic Words::Level 23 - Deeds	حَسَنَة	good (deed)
+Quranic Words::Level 23 - Deeds	pl(سَيِّئَة (سَيِّئَات	evil, bad
+Quranic Words::Level 23 - Deeds	خَيْر	good, better
+Quranic Words::Level 23 - Deeds	شَرّ	evil, bad, worse
+Quranic Words::Level 23 - Deeds	إِثْم	sin
+Quranic Words::Level 23 - Deeds	pl(ذَنْب (ذُنُوب	sin
+Quranic Words::Level 23 - Deeds	جُنَاح	sin
+Quranic Words::Level 23 - Deeds	حَرَام	sacred, unlawful
+Quranic Words::Level 23 - Deeds	pl(اِسْم (أَسْمَاء	name
+Quranic Words::Level 23 - Deeds	pl(حَدِيث (أَحَادِيث	discourse, speech
+Quranic Words::Level 23 - Deeds	طَيِّبَة	good
+Quranic Words::Level 24 - Blessings	آلَاء	favors
+Quranic Words::Level 24 - Blessings	سُلْطَان	authority, warrant
+Quranic Words::Level 24 - Blessings	فَضْل	grace
+Quranic Words::Level 24 - Blessings	مَاء	water
+Quranic Words::Level 24 - Blessings	مُلْك	dominion, reign
+Quranic Words::Level 24 - Blessings	نِعْمَة	favor
+Quranic Words::Level 24 - Blessings	أَجْمَعِين أَجْمَعُون	all
+Quranic Words::Level 24 - Blessings	إِذْن	permission
+Quranic Words::Level 24 - Blessings	بَأْس	punishment, power
+Quranic Words::Level 24 - Blessings	جَمِيع	all, everybody
+Quranic Words::Level 24 - Blessings	سَوَاء	same, equal, level, fair
+Quranic Words::Level 24 - Blessings	فَرِيق	party, group
+Quranic Words::Level 25 - Relatives	pl( أُمّ (أُمَّهَات	mother
+Quranic Words::Level 25 - Relatives	pl(أَب (آبَاء	father
+Quranic Words::Level 25 - Relatives	pl(زَوْج (أَزْوَاج	wife, husband
+Quranic Words::Level 25 - Relatives	pl(رَجُل (رِجَال	man
+Quranic Words::Level 25 - Relatives	pl(اِمْرَأَة (نِسَاء	woman
+Quranic Words::Level 25 - Relatives	pl(وَلَد (أَوْلَاد	child
+Quranic Words::Level 25 - Relatives	pl(وَالِد (وَالِدَيْن	parent
+Quranic Words::Level 25 - Relatives	ذُرِّيَّة	descendants, children
+Quranic Words::Level 25 - Relatives	اِبْن	son
+Quranic Words::Level 25 - Relatives	بَنُون، بَنِين، أَبْنَاء	sons
+Quranic Words::Level 25 - Relatives	(أخ (أَخُو، أَخَا، أَخِي	brother
+Quranic Words::Level 25 - Relatives	إِخْوَان	brothers
+Quranic Words::Level 26 - Self (Body Parts)	pl(وجْه (وُجُوه	face
+Quranic Words::Level 26 - Self (Body Parts)	pl(عَيْن (عُيُون	eye, spring
+Quranic Words::Level 26 - Self (Body Parts)	pl (بَصَر(أَبْصَار	sight
+Quranic Words::Level 26 - Self (Body Parts)	أفْوَاه pl	mouths
+Quranic Words::Level 26 - Self (Body Parts)	pl(لِسَان (أَلْسِنَة	tongue, language
+Quranic Words::Level 26 - Self (Body Parts)	pl(قَلْب (قُلُوب	heart
+Quranic Words::Level 26 - Self (Body Parts)	pl(صَدْر (صُدُور	breast
+Quranic Words::Level 26 - Self (Body Parts)	pl(يَد (أَيْدِي	hand
+Quranic Words::Level 26 - Self (Body Parts)	pl(رَجُل (أَرْجُل	foot
+Quranic Words::Level 26 - Self (Body Parts)	pl(نَفْس (أَنْفُس	soul
+Quranic Words::Level 26 - Self (Body Parts)	رُوح	soul, spirit
+Quranic Words::Level 26 - Self (Body Parts)	قُوَّة	power, strength
+Quranic Words::Level 27 - World	pl(بَيْت (بُيُوت	house
+Quranic Words::Level 27 - World	pl(دَار (دِيَار	home, abode
+Quranic Words::Level 27 - World	دُنْيَا	world
+Quranic Words::Level 27 - World	pl(سَبِيل (سُبُل	way
+Quranic Words::Level 27 - World	صِرَاط	path
+Quranic Words::Level 27 - World	pl(عَالَم (عَالَمِين	world
+Quranic Words::Level 27 - World	فِتْنَة	trial, persecution
+Quranic Words::Level 27 - World	pl(قَرْيَة (قُرَى	town
+Quranic Words::Level 27 - World	pl(مَال (أَمْوَال	wealth
+Quranic Words::Level 27 - World	مَتَاع	provision, enjoyment
+Quranic Words::Level 27 - World	pl(مَسْجِد (مَسَاجِد	mosque
+Quranic Words::Level 27 - World	pl(مَكَان (مَكَانَة	place, abode
+Quranic Words::Level 28 - People	pl(أُمَّة (أُمَم	community
+Quranic Words::Level 28 - People	قَوْم	people, nation
+Quranic Words::Level 28 - People	إِنسَان	man
+Quranic Words::Level 28 - People	نَاس	men, people
+Quranic Words::Level 28 - People	pl(ذَكَر (ذُكُور	male
+Quranic Words::Level 28 - People	pl(أُنْثَى (إِنَاث	female
+Quranic Words::Level 28 - People	pl(عَبْد (عِبَاد	slave
+Quranic Words::Level 28 - People	pl(عَدُوّ(أَعْدَاء	enemy
+Quranic Words::Level 28 - People	pl(كَافِر(كُفَّار	disbeliever
+Quranic Words::Level 28 - People	مُجْرِم	criminal
+Quranic Words::Level 28 - People	مَلَأ	chiefs, leaders
+Quranic Words::Level 28 - People	pl(وَلِيّ (أَوْلِيَاء	protecting friend, guardian
+Quranic Words::Level 29 - Verbs 1	فَعَلَ	to do
+Quranic Words::Level 29 - Verbs 1	فَتَحَ	to open
+Quranic Words::Level 29 - Verbs 1	بَعَثَ	to raise, to resurrect, to send
+Quranic Words::Level 29 - Verbs 1	جَعَلَ	to make, to place, to set up
+Quranic Words::Level 29 - Verbs 1	جَمَعَ	to gather, to collect
+Quranic Words::Level 29 - Verbs 1	ذَهَبَ	to go, to take away
+Quranic Words::Level 29 - Verbs 1	رَفَعَ	to raise
+Quranic Words::Level 29 - Verbs 1	سَحَرَ	to enchant, to bewitch
+Quranic Words::Level 29 - Verbs 1	صَلَحَ	to be righteous
+Quranic Words::Level 29 - Verbs 1	لَعَنَ	to curse
+Quranic Words::Level 29 - Verbs 1	نَفَعَ	to profit
+Quranic Words::Level 30 - Verbs 2	نَصَرَ	to help
+Quranic Words::Level 30 - Verbs 2	بَلَغَ	to reach
+Quranic Words::Level 30 - Verbs 2	تَرَكَ	to leave
+Quranic Words::Level 30 - Verbs 2	حَشَرَ	to gather, to bring together
+Quranic Words::Level 30 - Verbs 2	حَكَمَ	to judge, to rule
+Quranic Words::Level 30 - Verbs 2	خَرَجَ	to come out
+Quranic Words::Level 30 - Verbs 2	خَلَدَ	to live forever
+Quranic Words::Level 30 - Verbs 2	خَلَقَ	to create
+Quranic Words::Level 30 - Verbs 2	دَخَلَ	to enter
+Quranic Words::Level 30 - Verbs 2	ذَكَرَ	to remember, to mention
+Quranic Words::Level 30 - Verbs 2	رَزَقَ	to provide
+Quranic Words::Level 31 - Verbs 3	سَجَدَ	to prostrate
+Quranic Words::Level 31 - Verbs 3	شَعَرَ	to perceive
+Quranic Words::Level 31 - Verbs 3	شَكَرَ	to be grateful, to give thanks
+Quranic Words::Level 31 - Verbs 3	صَدَقَ	to be true, to say the truth
+Quranic Words::Level 31 - Verbs 3	عَبَدَ	to worship, to serve
+Quranic Words::Level 31 - Verbs 3	فَسَقَ	to transgress
+Quranic Words::Level 31 - Verbs 3	قَتَلَ	to kill
+Quranic Words::Level 31 - Verbs 3	قَعَدَ	to sit
+Quranic Words::Level 31 - Verbs 3	كَتَبَ	to write, to prescribe
+Quranic Words::Level 31 - Verbs 3	كَفَرَ	to disbelieve, to be ungrateful
+Quranic Words::Level 31 - Verbs 3	مَكَرَ	to plot
+Quranic Words::Level 31 - Verbs 3	نَظَرَ	to look, to wait
+Quranic Words::Level 31 - Verbs 3	ضَرَبَ	to strike, to set forth
+Quranic Words::Level 31 - Verbs 3	حَمَلَ	to carry, to bear
+Quranic Words::Level 31 - Verbs 3	صَبَرَ	to be patient
+Quranic Words::Level 31 - Verbs 3	ظَلَمَ	to wrong
+Quranic Words::Level 31 - Verbs 3	عَرَفَ	to recognize, to know
+Quranic Words::Level 31 - Verbs 3	عَقَلَ	to understand, to comprehend
+Quranic Words::Level 31 - Verbs 3	غَفَرَ	to forgive
+Quranic Words::Level 31 - Verbs 3	قَدَرَ	to decree, to have power
+Quranic Words::Level 31 - Verbs 3	كَذَبَ	to lie, to deny
+Quranic Words::Level 31 - Verbs 3	كَسَبَ	to earn
+Quranic Words::Level 31 - Verbs 3	مَلَكَ	to possess, to have power
+Quranic Words::Level 32 - Verbs 4	ضَرَبَ	to strike, to set forth
+Quranic Words::Level 32 - Verbs 4	حَمَلَ	to carry, to bear
+Quranic Words::Level 32 - Verbs 4	صَبَرَ	to be patient
+Quranic Words::Level 32 - Verbs 4	ظَلَمَ	to wrong
+Quranic Words::Level 32 - Verbs 4	عَرَفَ	to recognize, to know
+Quranic Words::Level 32 - Verbs 4	عَقَلَ	to understand, to comprehend
+Quranic Words::Level 32 - Verbs 4	غَفَرَ	to forgive
+Quranic Words::Level 32 - Verbs 4	قَدَرَ	to decree, to have power
+Quranic Words::Level 32 - Verbs 4	كَذَبَ	to lie, to deny
+Quranic Words::Level 32 - Verbs 4	كَسَبَ	to earn
+Quranic Words::Level 32 - Verbs 4	مَلَكَ	to possess, to have power
+Quranic Words::Level 33 - Verbs 5	سَمِعَ	to hear
+Quranic Words::Level 33 - Verbs 5	حَزِنَ	to be grieved
+Quranic Words::Level 33 - Verbs 5	حَسِبَ	to think, to consider
+Quranic Words::Level 33 - Verbs 5	حَفِظَ	to guard, to protect
+Quranic Words::Level 33 - Verbs 5	خَسِرَ	to lose
+Quranic Words::Level 33 - Verbs 5	رَحِمَ	to have mercy (on)
+Quranic Words::Level 33 - Verbs 5	شَهِدَ	to bear witness, to be present, to testify
+Quranic Words::Level 33 - Verbs 5	عَلِمَ	to know
+Quranic Words::Level 33 - Verbs 5	عَمِلَ	to do, to work
+Quranic Words::Level 33 - Verbs 5	كَرِهَ	to dislike, to hate
+Quranic Words::Level 33 - Verbs 5	بَصُرَ	to watch, to see
+Quranic Words::Level 34 - Verbs 6 The last two letters of the root -  same	حَيَّ	to live
+Quranic Words::Level 34 - Verbs 6 The last two letters of the root -  same	رَدَّ	to return
+Quranic Words::Level 34 - Verbs 6 The last two letters of the root -  same	صَدَّ	to turn away, to hinder
+Quranic Words::Level 34 - Verbs 6 The last two letters of the root -  same	ضَرَّ	to hurt, to harm
+Quranic Words::Level 34 - Verbs 6 The last two letters of the root -  same	ضَلَّ	to go astray, to err, to lose
+Quranic Words::Level 34 - Verbs 6 The last two letters of the root -  same	ظَنَّ	to think, to believe
+Quranic Words::Level 34 - Verbs 6 The last two letters of the root -  same	عَدَّ	to count
+Quranic Words::Level 34 - Verbs 6 The last two letters of the root -  same	غَرَّ	to beguile, to deceive
+Quranic Words::Level 34 - Verbs 6 The last two letters of the root -  same	مَدَّ	to spread out, to stretch
+Quranic Words::Level 34 - Verbs 6 The last two letters of the root -  same	مَسَّ	to touch
+Quranic Words::Level 34 - Verbs 6 The last two letters of the root -  same	وَدَّ	to love, to wish
+Quranic Words::Level 35 - Verbs 7 the first letter of the root is و	وَذَرَ	to leave behind
+Quranic Words::Level 35 - Verbs 7 the first letter of the root is و	وَضَعَ	to put, to set, to give birth
+Quranic Words::Level 35 - Verbs 7 the first letter of the root is و	وَقَعَ	to befall, to fall, to fulfil
+Quranic Words::Level 35 - Verbs 7 the first letter of the root is و	وَهَبَ	to grant, to bestow
+Quranic Words::Level 35 - Verbs 7 the first letter of the root is و	وَجَدَ	to find
+Quranic Words::Level 35 - Verbs 7 the first letter of the root is و	وَرِثَ	to inherit
+Quranic Words::Level 35 - Verbs 7 the first letter of the root is و	وَزَرَ *	to bear a load *
+Quranic Words::Level 35 - Verbs 7 the first letter of the root is و	وَصَفَ	to describe, to ascribe, to attribute
+Quranic Words::Level 35 - Verbs 7 the first letter of the root is و	وَعَدَ	to promise
+Quranic Words::Level 35 - Verbs 7 the first letter of the root is و	وَقَى	to save, to protect
+Quranic Words::Level 35 - Verbs 7 the first letter of the root is و	وَسِعَ	to encompass, to comprehend
+Quranic Words::Level 36 - Verbs 8 Second letter of the root is و or ي	تَابَ	to repent
+Quranic Words::Level 36 - Verbs 8 Second letter of the root is و or ي	ذَاقَ	to taste
+Quranic Words::Level 36 - Verbs 8 Second letter of the root is و or ي	فَازَ	to succeed, to gain victory
+Quranic Words::Level 36 - Verbs 8 Second letter of the root is و or ي	قَالَ	to say
+Quranic Words::Level 36 - Verbs 8 Second letter of the root is و or ي	قَامَ	to stand up, to rise
+Quranic Words::Level 36 - Verbs 8 Second letter of the root is و or ي	كَانَ	to be
+Quranic Words::Level 36 - Verbs 8 Second letter of the root is و or ي	مَاتَ	to die
+Quranic Words::Level 36 - Verbs 8 Second letter of the root is و or ي	خَافَ	to fear, to be afraid
+Quranic Words::Level 36 - Verbs 8 Second letter of the root is و or ي	كَادَ	to be close to, to almost do
+Quranic Words::Level 36 - Verbs 8 Second letter of the root is و or ي	كَادَ	to plot against
+Quranic Words::Level 36 - Verbs 8 Second letter of the root is و or ي	زَادَ	to increase
+Quranic Words::Level 37 - Verbs 9 Last letter of the root is و or ي	تَلَا	to recite
+Quranic Words::Level 37 - Verbs 9 Last letter of the root is و or ي	دَعَا	to call, to pray
+Quranic Words::Level 37 - Verbs 9 Last letter of the root is و or ي	عَفَا	to forgive, to excuse, to forgo
+Quranic Words::Level 37 - Verbs 9 Last letter of the root is و or ي	بَغَى	to seek, to opress
+Quranic Words::Level 37 - Verbs 9 Last letter of the root is و or ي	جَرَى	to flow
+Quranic Words::Level 37 - Verbs 9 Last letter of the root is و or ي	جَزَى	to reward
+Quranic Words::Level 37 - Verbs 9 Last letter of the root is و or ي	قَضَى	to decree, to fulfil, to judge
+Quranic Words::Level 37 - Verbs 9 Last letter of the root is و or ي	كَفَى	to suffice
+Quranic Words::Level 37 - Verbs 9 Last letter of the root is و or ي	هَدَى	to guide, to direct
+Quranic Words::Level 37 - Verbs 9 Last letter of the root is و or ي	خَشِىَ	to fear
+Quranic Words::Level 37 - Verbs 9 Last letter of the root is و or ي	رَضِيَ	to be satisfied, to be content, to be pleased
+Quranic Words::Level 37 - Verbs 9 Last letter of the root is و or ي	نَسِىَ	to forget
+Quranic Words::Level 38 - Verbs 10 one of the letters of the root is a hamza	سَأَلَ	to ask
+Quranic Words::Level 38 - Verbs 10 one of the letters of the root is a hamza	قَرَأَ	to read, to recite (ق)
+Quranic Words::Level 38 - Verbs 10 one of the letters of the root is a hamza	أَخَذَ	to take, to catch
+Quranic Words::Level 38 - Verbs 10 one of the letters of the root is a hamza	أَكَلَ	to eat
+Quranic Words::Level 38 - Verbs 10 one of the letters of the root is a hamza	أَمَرَ	to command
+Quranic Words::Level 38 - Verbs 10 one of the letters of the root is a hamza	أَمِنَ	to be safe, to feel safe, to trust
+Quranic Words::Level 38 - Verbs 10 one of the letters of the root is a hamza	أَبَى	to refuse
+Quranic Words::Level 38 - Verbs 10 one of the letters of the root is a hamza	رَءَا	to see
+Quranic Words::Level 38 - Verbs 10 one of the letters of the root is a hamza	أَتَى	to come
+Quranic Words::Level 38 - Verbs 10 one of the letters of the root is a hamza	شَآءَ	to will, to wish
+Quranic Words::Level 38 - Verbs 10 one of the letters of the root is a hamza	سَآءَ	to be evil
+Quranic Words::Level 38 - Verbs 10 one of the letters of the root is a hamza	جَآءَ	to come
+Quranic Words::Level 39 - Verbs 11 Form II part 1	بَدَّلَ	to change
+Quranic Words::Level 39 - Verbs 11 Form II part 1	بَشَّرَ	to give good news
+Quranic Words::Level 39 - Verbs 11 Form II part 1	بَيَّنَ	to make clear
+Quranic Words::Level 39 - Verbs 11 Form II part 1	زَيَّنَ	to adorn, to make something seem fair
+Quranic Words::Level 39 - Verbs 11 Form II part 1	سَبَّحَ	to glorify, to praise
+Quranic Words::Level 39 - Verbs 11 Form II part 1	سَخَّرَ	to bring under control
+Quranic Words::Level 39 - Verbs 11 Form II part 1	صَدَّقَ	to accept as true, to pronounce to be true
+Quranic Words::Level 39 - Verbs 11 Form II part 1	عَذَّبَ	to punish, to torment
+Quranic Words::Level 39 - Verbs 11 Form II part 1	عَلَّمَ	to teach
+Quranic Words::Level 39 - Verbs 11 Form II part 1	قَدَّمَ	to send forward
+Quranic Words::Level 39 - Verbs 11 Form II part 1	كَذَّبَ	to accuse of falsehood, to deny
+Quranic Words::Level 40 - Verbs 12 Form II part 2 & form III	نَبَّأَ	to declare, to apprise, to inform
+Quranic Words::Level 40 - Verbs 12 Form II part 2 & form III	نَزَّلَ	to send down, to reveal
+Quranic Words::Level 40 - Verbs 12 Form II part 2 & form III	نَجَّى	to deliver, to rescue
+Quranic Words::Level 40 - Verbs 12 Form II part 2 & form III	وَلَّى	to turn
+Quranic Words::Level 40 - Verbs 12 Form II part 2 & form III	جَاهَدَ	to struggle, to strive
+Quranic Words::Level 40 - Verbs 12 Form II part 2 & form III	قَاتَلَ	to fight
+Quranic Words::Level 40 - Verbs 12 Form II part 2 & form III	نَادَى	to call out, to cry unto
+Quranic Words::Level 40 - Verbs 12 Form II part 2 & form III	نَافَقَ	to be hypocritical
+Quranic Words::Level 40 - Verbs 12 Form II part 2 & form III	هَاجَرَ	to migrate
+Quranic Words::Level 41 - Verbs 13 Form IV part 1	أَبْصَرَ	to see, to watch
+Quranic Words::Level 41 - Verbs 13 Form IV part 1	أَحْسَنَ	to do good, to do excellently
+Quranic Words::Level 41 - Verbs 13 Form IV part 1	أَخْرَجَ	to bring forth, to drive out
+Quranic Words::Level 41 - Verbs 13 Form IV part 1	أَدْخَلَ	to admit, to make enter
+Quranic Words::Level 41 - Verbs 13 Form IV part 1	أَرْجَعَ	to send back, to take back
+Quranic Words::Level 41 - Verbs 13 Form IV part 1	أَرْسَلَ	to send
+Quranic Words::Level 41 - Verbs 13 Form IV part 1	أَسْرَفَ	to exceed, to be extravagant
+Quranic Words::Level 41 - Verbs 13 Form IV part 1	أَسْلَمَ	to submit, to surrender
+Quranic Words::Level 41 - Verbs 13 Form IV part 1	أَشْرَكَ	to ascribe a partner
+Quranic Words::Level 41 - Verbs 13 Form IV part 1	أَصْبَحَ	to become
+Quranic Words::Level 41 - Verbs 13 Form IV part 1	أَصْلَحَ	to reform, to improve, to make peace
+Quranic Words::Level 42 - Verbs 14 Form IV part 2	أَعْرَضَ	to turn away
+Quranic Words::Level 42 - Verbs 14 Form IV part 2	أَغْرَقَ	to drown
+Quranic Words::Level 42 - Verbs 14 Form IV part 2	أَفْسَدَ	to spread corruption
+Quranic Words::Level 42 - Verbs 14 Form IV part 2	أَفْلَحَ	to be successful
+Quranic Words::Level 42 - Verbs 14 Form IV part 2	أَنْبَتَ	to make grow
+Quranic Words::Level 42 - Verbs 14 Form IV part 2	أَنذَرَ	to warn
+Quranic Words::Level 42 - Verbs 14 Form IV part 2	أَنزَلَ	to send down, to reveal
+Quranic Words::Level 42 - Verbs 14 Form IV part 2	أَنشَأَ	to produce, to raise
+Quranic Words::Level 42 - Verbs 14 Form IV part 2	أَنْعَمَ	to favor, to bestow grace
+Quranic Words::Level 42 - Verbs 14 Form IV part 2	أَنفَقَ	to spend
+Quranic Words::Level 42 - Verbs 14 Form IV part 2	أَنْكَرَ	to not recognize, to deny
+Quranic Words::Level 42 - Verbs 14 Form IV part 2	أَهْلَكَ	to destroy
+Quranic Words::Level 43 - Verbs 15 Form IV part 3	أَتَمَّ	to complete
+Quranic Words::Level 43 - Verbs 15 Form IV part 3	أَحْبَّ	to love
+Quranic Words::Level 43 - Verbs 15 Form IV part 3	أَحَلَّ	to make lawful, to cause to dwell
+Quranic Words::Level 43 - Verbs 15 Form IV part 3	أَسَرَّ	to conceal, to speak secretly
+Quranic Words::Level 43 - Verbs 15 Form IV part 3	أَضَلَّ	to leave in error, to send astray
+Quranic Words::Level 43 - Verbs 15 Form IV part 3	أَعَدَّ	to prepare
+Quranic Words::Level 43 - Verbs 15 Form IV part 3	أَذَاقَ	to make taste
+Quranic Words::Level 43 - Verbs 15 Form IV part 3	أَرَادَ	to intend, to wish
+Quranic Words::Level 43 - Verbs 15 Form IV part 3	أَصَابَ	to befall, to inflict
+Quranic Words::Level 43 - Verbs 15 Form IV part 3	أَطَاعَ	to obey
+Quranic Words::Level 43 - Verbs 15 Form IV part 3	أَقَامَ	to establish
+Quranic Words::Level 43 - Verbs 15 Form IV part 3	أَمَاتَ	to cause death
+Quranic Words::Level 44 - Verbs 16 Form IV part 4 & verbs starting with آ	أَحْيَا	to give life
+Quranic Words::Level 44 - Verbs 16 Form IV part 4 & verbs starting with آ	أَخْفِىَ	to conceal
+Quranic Words::Level 44 - Verbs 16 Form IV part 4 & verbs starting with آ	أَرَى	to show
+Quranic Words::Level 44 - Verbs 16 Form IV part 4 & verbs starting with آ	أَغْنَى	to enrich, to avail
+Quranic Words::Level 44 - Verbs 16 Form IV part 4 & verbs starting with آ	أَلْقَى	to cast, to throw, to place
+Quranic Words::Level 44 - Verbs 16 Form IV part 4 & verbs starting with آ	أَنجَى	to rescue, to save, to deliver
+Quranic Words::Level 44 - Verbs 16 Form IV part 4 & verbs starting with آ	أَوْحَى	to reveal, to inspire
+Quranic Words::Level 44 - Verbs 16 Form IV part 4 & verbs starting with آ	أَوْفَى	to fulfill
+Quranic Words::Level 44 - Verbs 16 Form IV part 4 & verbs starting with آ	آمَنَ	to believe
+Quranic Words::Level 44 - Verbs 16 Form IV part 4 & verbs starting with آ	آتَى	to give
+Quranic Words::Level 44 - Verbs 16 Form IV part 4 & verbs starting with آ	آذَى	to give trouble, to harm, to annoy
+Quranic Words::Level 45 - Verbs 17 Form V &amp; VI	تَفَكَّرَ	to think over, to reflect
+Quranic Words::Level 45 - Verbs 17 Form V &amp; VI	تَذَكَّرَ	to receive admonition, to remember
+Quranic Words::Level 45 - Verbs 17 Form V &amp; VI	تَوَكَّلَ	to put trust
+Quranic Words::Level 45 - Verbs 17 Form V &amp; VI	تَبَيَّنَ	to become clear
+Quranic Words::Level 45 - Verbs 17 Form V &amp; VI	تَرَبَّصَ	to wait, to await
+Quranic Words::Level 45 - Verbs 17 Form V &amp; VI	تَوَلَّى	to turn away, to take for friend
+Quranic Words::Level 45 - Verbs 17 Form V &amp; VI	تَوَفَّى	to make somebody die, to receive in full
+Quranic Words::Level 45 - Verbs 17 Form V &amp; VI	تَبَارَكَ	to be blessed, to be exalted
+Quranic Words::Level 45 - Verbs 17 Form V &amp; VI	تَسَاءَلَ	to ask each other
+Quranic Words::Level 46 - Verbs 18 Form VII &amp; VIII	اِنْقَلَبَ	to turn around, to return
+Quranic Words::Level 46 - Verbs 18 Form VII &amp; VIII	اِخْتَلَفَ	to differ
+Quranic Words::Level 46 - Verbs 18 Form VII &amp; VIII	اِتَّبَعَ	to follow
+Quranic Words::Level 46 - Verbs 18 Form VII &amp; VIII	اِتَّخَذَ	to take, to adopt
+Quranic Words::Level 46 - Verbs 18 Form VII &amp; VIII	اِتَّقَى	to fear (God), to be on guard
+Quranic Words::Level 46 - Verbs 18 Form VII &amp; VIII	اِفْتَرَى	to fabricate (a lie)
+Quranic Words::Level 46 - Verbs 18 Form VII &amp; VIII	اِهْتَدَى	to be rightly guided, to find the right path, to follow the right path
+Quranic Words::Level 46 - Verbs 18 Form VII &amp; VIII	اِبْتَغَى	to seek
+Quranic Words::Level 46 - Verbs 18 Form VII &amp; VIII	اِنتَهَى	to refrain, to end
+Quranic Words::Level 47 - Verbs 19 Form IX &amp; X	اِسْوَدَّ	to become black
+Quranic Words::Level 47 - Verbs 19 Form IX &amp; X	اِبْيَضَّ	to become white
+Quranic Words::Level 47 - Verbs 19 Form IX &amp; X	اسْتَعْجَلَ	to seek (somebody) to hasten
+Quranic Words::Level 47 - Verbs 19 Form IX &amp; X	اسْتِغْفَر	to ask forgiveness
+Quranic Words::Level 47 - Verbs 19 Form IX &amp; X	اِسْتَكْبَرَ	to act arrogantly
+Quranic Words::Level 47 - Verbs 19 Form IX &amp; X	اِسْتَهْزَأَ	to mock
+Quranic Words::Level 47 - Verbs 19 Form IX &amp; X	اِسْتَجَابَ	to respond
+Quranic Words::Level 47 - Verbs 19 Form IX &amp; X	ٱسْتَطَاعَ	to be able to
+Quranic Words::Level 47 - Verbs 19 Form IX &amp; X	اِسْتَقَامَ	to be straight, to act straight

@@ -1,0 +1,395 @@
+/**
+ * Matches Quranki's 547 study words/phrases (src/data/quranic-words.json) against every word of
+ * the Qur'an, so the reader can know which on-screen words the user has already studied - and
+ * later, whether they've mastered them - in order to hide/reveal their word-by-word translation.
+ *
+ * A citation-form vocabulary word (e.g. the verb "هَدَى") doesn't literally reappear everywhere
+ * it's relevant - Arabic morphology means the same word surfaces as many different letter
+ * sequences ("يَهْدِى", "اهْتَدَىٰ", "هُدًى", "مُهْتَدٍ", ...), and nouns are almost always fused
+ * with a leading "ال" or other single-letter prefixes with no space ("الشَّمْس" is one Qur'an
+ * word, not "شَمْس" with a separate "ال"). Simple diacritic-insensitive string matching alone
+ * only reaches ~20k of the deck's documented 64,282-word coverage for exactly this reason.
+ *
+ * To close that gap, this uses the Qur'anic Arabic Corpus's morphological segmentation
+ * (scripts/data/quran-morphology.txt, from https://github.com/mustafa0x/quran-morphology, an
+ * Arabic-script transliteration of the Quranic Arabic Corpus v0.4, (c) Kais Dukes, GNU GPL -
+ * kept verbatim as downloaded, see its header for the license/attribution terms): every Qur'an
+ * word is pre-split into prefix/stem/suffix segments, and each stem segment is tagged with its
+ * dictionary LEMMA and (usually) its ROOT.
+ *
+ * Matching happens in two normalization tiers, tried in order, because stripping *all* short
+ * vowels (as the first version of this script did) is a double-edged sword: it's necessary to
+ * unify inflected surface forms with a lemma, but it also erases distinctions that are the
+ * *entire difference* between two unrelated words - e.g. "مَنْ" (man, "who") and "مِنْ" (min,
+ * "from") both collapse to "من", and would otherwise get assigned to whichever study entry
+ * happened to be processed first, mislabeling thousands of the loser's real occurrences:
+ *
+ *   1. "Light" matching keeps *stem-internal* short vowels and only strips the ones that are
+ *      grammatically non-distinctive rather than part of a word's identity: a word-final case
+ *      vowel/sukun/tanween (i'rāb - it marks grammatical role, not word identity, and the study
+ *      deck and the morphology corpus disagree constantly on whether to write it at all, e.g.
+ *      deck "مَنْ" vs. corpus lemma "مَن"), and a hamzat waṣl's contextual opening vowel (the
+ *      elidable connecting hamza that opens verb forms VII/VIII/X, e.g. deck "اِهْتَدَى" vs.
+ *      corpus lemma "اهْتَدَى"). Every *stem-internal* vowel survives, so homographs distinguished
+ *      only by an internal vowel - like "مَنْ" ("man", who) vs. "مِنْ" ("min", from) - still
+ *      resolve correctly instead of colliding.
+ *   2. "Heavy" matching (strip all short vowels) is only used as a fallback for a study word
+ *      that light matching found zero occurrences for, and only when that heavy-normalized
+ *      token isn't *also* the heavy form of some other, distinct study word - an ambiguous
+ *      fallback is dropped rather than guessed at.
+ *
+ * Root-family expansion (tag every word sharing a matched word's root, e.g. unifying "هَدَى" and
+ * "اهتدى") only ever runs off of confidently-seeded matches, and only when every seed agrees on
+ * a single root, so it can't itself introduce a cross-word mix-up.
+ */
+const fs = require('fs');
+const path = require('path');
+
+const ROOT = path.join(__dirname, '..');
+const DATA_DIR = path.join(ROOT, 'src', 'data');
+const MORPHOLOGY_PATH = path.join(__dirname, 'data', 'quran-morphology.txt');
+
+const ALEF_FAMILY = '\u0627\u0622\u0623\u0625\u0671';
+
+/** Removes an elidable hamzat-waṣl's contextual vowel (see the module doc comment) - only ever
+ *  the very first character of a word, and only if it's some alef variant. */
+function stripInitialWaslVowel(text) {
+  return text.replace(new RegExp(`^([${ALEF_FAMILY}])[\\u064b-\\u0652]+`), '$1');
+}
+
+/** Removes a trailing case vowel/tanween/sukun (i'rāb) - the very last character, and only if
+ *  it's one of those marks. Deliberately excludes shadda (\u0651, gemination - part of a word's
+ *  root pattern, not a case ending): a word ending "consonant+shadda+case-vowel" (e.g. "رَبِّ")
+ *  should end up as "consonant+shadda" (e.g. "رَبّ"), matching how the corpus's lemma writes it. */
+function stripFinalCaseVowel(text) {
+  return text.replace(/[\u064b-\u0650\u0652]$/, '');
+}
+
+/** Spelling-variant-only cleanup shared by both normalization tiers: strips tatweel/joiners and
+ *  Qur'anic annotation marks, and unifies letters that are typically written inconsistently
+ *  between "clean" dictionary text and the Uthmani mushaf script for the same word (hamza-seat
+ *  and alef variants, dagger alif, alef maksura vs. yeh) - without touching stem-internal short
+ *  vowels. */
+function normalizeLight(text) {
+  const cleaned = stripFinalCaseVowel(
+    stripInitialWaslVowel(
+      text
+        .normalize('NFC')
+        .replace(/[\u0640\u200c\u200d]/g, '') // tatweel, ZWNJ, ZWJ
+        .replace(/[\u0653-\u0655]/g, '') // combining maddah/hamza-above/hamza-below
+        .replace(/[\u06d6-\u06ed]/g, ''), // small Qur'anic pause/annotation marks
+    ),
+  );
+  return cleaned
+    .replace(/\u0670/g, '\u0627') // dagger alif -> plain alef (spelling variant, not a vowel choice)
+    .replace(new RegExp(`[${ALEF_FAMILY}]`, 'g'), '\u0627')
+    .replace(/\u0624/g, '\u0648') // waw with hamza above -> waw
+    .replace(/\u0626/g, '\u064a') // yeh with hamza above -> yeh
+    .replace(/\u0649/g, '\u064a') // alef maksura -> yeh (Uthmani rasm often spells word-final
+    // "yeh" this way - e.g. "فى"/"على"/"إلى" - where standard dictionary spelling uses "ي")
+    .replace(/[^\u0600-\u06ff]/g, '') // drop anything left that isn't an Arabic-block character
+    .trim();
+}
+
+/** Full normalization: light normalization plus stripping every remaining short vowel mark.
+ *  Used for the heavy-matching fallback, for root text (already vowel-free), and to detect
+ *  which study words are only distinguishable *with* their vowels (see loadStudyForms). */
+function normalizeArabic(text) {
+  return normalizeLight(text).replace(/[\u064b-\u0652]/g, '');
+}
+
+/** Whether a study word's own citation form ends in a bare fatha - the standard citation
+ *  convention for a 3rd-person-masculine-past-tense verb (e.g. "ذَكَرَ", "عَبَدَ"), as opposed to
+ *  the bare/pausal citation of a noun or adjective (e.g. "ذَكَر" "male", "عَبْد" "slave"). Used
+ *  only to break a rare kind of tie: a verb's *final* case vowel is stripped by normalizeLight
+ *  (see its doc comment), which can coincidentally make it collide with an unrelated noun that
+ *  never had a final vowel to begin with (e.g. both become "ذَكَر") - this distinguishes the two
+ *  well enough to route each occurrence to the right one by POS instead of guessing. */
+function endsWithBareFatha(word) {
+  return /\u064e$/.test(word.normalize('NFC'));
+}
+
+/** One matchable unit derived from a study word: parallel light/heavy normalized token arrays
+ *  (both representing the same run of 1+ words) plus the id it should tag matching Qur'an words
+ *  with. `looksLikeVerb` (single-token forms only) is this word's own citation-form verb guess -
+ *  see endsWithBareFatha. */
+function loadStudyForms() {
+  const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'quranic-words.json'), 'utf8'));
+  const forms = [];
+  for (const level of raw.levels) {
+    for (const word of level.words) {
+      for (const commaForm of word.arabic.split(/[,\u060c]/)) {
+        for (const piece of commaForm.split('...')) {
+          const words = piece.split(/\s+/).filter(Boolean);
+          const lightTokens = words.map(normalizeLight).filter(Boolean);
+          if (lightTokens.length === 0) continue;
+          const heavyTokens = words.map(normalizeArabic).filter(Boolean);
+          forms.push({ id: word.id, lightTokens, heavyTokens, looksLikeVerb: endsWithBareFatha(words[0]) });
+        }
+      }
+    }
+  }
+  return forms;
+}
+
+/** Parses the morphology corpus into `"surah:ayah:word" -> { lightLemma, heavyLemma, root, pos,
+ *  lightSurface, heavySurface }`. `lightLemma`/`heavyLemma`/`root`/`pos` come from the word's
+ *  first segment that isn't itself a prefix or suffix (its "stem"); words entirely made of
+ *  affixes (rare) or missing a lemma leave those four unset. `pos` is `'V'` for verbs and `'N'`
+ *  for everything else (nouns, adjectives, proper nouns, ...) - just enough to tell apart the
+ *  verb sense of a root from its noun/adjective sense (see buildVocabMatches).
+ *
+ *  `lightSurface`/`heavySurface` are built differently, and always set: they're every segment's
+ *  own literal text *except* a leading single-letter preposition/conjunction (a "PREF" segment,
+ *  e.g. "وَ" and, "بِ" by, "لِ" for/to, "كَ" like) glued back together. A one-letter prefix like
+ *  that is written with no space, fused onto the next mushaf word (e.g. "وَأُو۟لَٰٓئِكَ" and-those
+ *  is one word on the page) - so the reader data's own whole-word surface text, matched directly
+ *  against a study word's citation form, only ever matches the *unprefixed* occurrences of a
+ *  word. Reconstructing the prefix-stripped surface from the morphology segments (rather than
+ *  slicing characters off the reader data's text) means the two independent datasets never need
+ *  to be character-aligned - it's entirely self-contained within this file. A trailing suffix
+ *  (e.g. an attached object/possessive pronoun) is deliberately *kept*, since the study deck's
+ *  own citation forms often include one (e.g. "أُوْلَآئِكَ" already ends with the "-ka" this
+ *  corpus tags as a separate SUFF segment). */
+function loadMorphologyStems() {
+  const lines = fs.readFileSync(MORPHOLOGY_PATH, 'utf8').split('\n');
+  const segmentsByWord = new Map(); // wordKey -> [{ text, pos, feats }, ...] in segment order
+  for (const line of lines) {
+    if (!line || line.startsWith('#')) continue;
+    const [loc, text, pos, featuresRaw] = line.split('\t');
+    if (!loc || !text || !featuresRaw) continue;
+    const parts = loc.split(':');
+    if (parts.length !== 4) continue;
+    const wordKey = `${parts[0]}:${parts[1]}:${parts[2]}`;
+    if (!segmentsByWord.has(wordKey)) segmentsByWord.set(wordKey, []);
+    segmentsByWord.get(wordKey).push({ text, pos, feats: featuresRaw.split('|') });
+  }
+
+  const stemByLocation = new Map();
+  for (const [wordKey, segments] of segmentsByWord) {
+    const surfaceRaw = segments
+      .filter((s) => !s.feats.includes('PREF'))
+      .map((s) => s.text)
+      .join('');
+    const stem = segments.find((s) => !s.feats.includes('PREF') && !s.feats.includes('SUFF'));
+    const lemFeat = stem?.feats.find((f) => f.startsWith('LEM:'));
+    const rootFeat = stem?.feats.find((f) => f.startsWith('ROOT:'));
+    stemByLocation.set(wordKey, {
+      lightLemma: lemFeat ? normalizeLight(lemFeat.slice(4)) : null,
+      heavyLemma: lemFeat ? normalizeArabic(lemFeat.slice(4)) : null,
+      root: rootFeat ? normalizeArabic(rootFeat.slice(5)) : null,
+      pos: stem?.pos === 'V' ? 'V' : 'N',
+      lightSurface: normalizeLight(surfaceRaw),
+      heavySurface: normalizeArabic(surfaceRaw),
+    });
+  }
+  return stemByLocation;
+}
+
+function addToIndex(index, key, value) {
+  if (!key) return;
+  if (!index.has(key)) index.set(key, []);
+  index.get(key).push(value);
+}
+
+/** Builds the full location -> study-id map for the whole Qur'an in one pass.
+ *  `rawSurfaceByLocation` is `"surah:ayah:word" -> rawArabicText` (undiacritic-stripped, as
+ *  rendered), and `ayahWordOrder` is `"surah:ayah" -> ["surah:ayah:word", ...]` in word order
+ *  (both derived by the caller from the same per-surah reader data used to render the app, so
+ *  positions always agree with what's on screen). */
+function buildVocabMatches(rawSurfaceByLocation, ayahWordOrder) {
+  const studyForms = loadStudyForms();
+  const stemByLocation = loadMorphologyStems();
+
+  const lightLemmaIndex = new Map();
+  const heavyLemmaIndex = new Map();
+  const rootIndex = new Map();
+  // Indexed separately from the reader data's whole-word surface text below because it's already
+  // prefix-stripped (see loadMorphologyStems) - this is what lets an attached "وَ"/"بِ"/"لِ"/"كَ"
+  // prefix not prevent a study word's citation form from matching that occurrence.
+  const lightStemSurfaceIndex = new Map();
+  const heavyStemSurfaceIndex = new Map();
+  for (const [loc, stem] of stemByLocation) {
+    addToIndex(lightLemmaIndex, stem.lightLemma, loc);
+    addToIndex(heavyLemmaIndex, stem.heavyLemma, loc);
+    addToIndex(rootIndex, stem.root, loc);
+    addToIndex(lightStemSurfaceIndex, stem.lightSurface, loc);
+    addToIndex(heavyStemSurfaceIndex, stem.heavySurface, loc);
+  }
+  const lightSurfaceIndex = new Map();
+  const heavySurfaceIndex = new Map();
+  const lightSurfaceByLocation = new Map();
+  const heavySurfaceByLocation = new Map();
+  for (const [loc, rawText] of rawSurfaceByLocation) {
+    const light = normalizeLight(rawText);
+    const heavy = normalizeArabic(rawText);
+    lightSurfaceByLocation.set(loc, light);
+    heavySurfaceByLocation.set(loc, heavy);
+    addToIndex(lightSurfaceIndex, light, loc);
+    addToIndex(heavySurfaceIndex, heavy, loc);
+  }
+
+  const matchByLocation = new Map(); // "surah:ayah:word" -> study id
+
+  const singleTokenForms = studyForms.filter((f) => f.lightTokens.length === 1);
+
+  // The prefix-stripped stem-surface index is deliberately treated as a lower-confidence,
+  // fill-the-gaps-only source: an exact *whole-word* match for some study word (any study word,
+  // not just the one being seeded) means that occurrence already has a precise owner and
+  // shouldn't also be pulled in by a broader, prefix-stripped match. This matters because the
+  // deck teaches some prefix+word combinations as their own vocabulary item (e.g. "09-001" is
+  // "بِمَا", not just "ب" + "06-001" "مَا") - without this, every "بِمَا" occurrence would look
+  // identical to a stripped "مَا" and get misattributed to the bare word instead.
+  //
+  // Deliberately *not* using lemma matches for this: a lemma can legitimately be a broad,
+  // multi-sense umbrella (e.g. the corpus lemmatizes every demonstrative pronoun - "هَذَا",
+  // "ذَلِكَ", "أُولَٰئِكَ" - under one shared root lemma "ذا", which also happens to be one of
+  // "07-001"'s own citation forms, "ذُو، ذَا، ذِي" "possessor of"). Treating that lemma match as
+  // an exact claim would wrongly block *other* demonstrative words' own prefix-stripped matches
+  // on the mere coincidence of sharing a lemma with an unrelated word.
+  const exactLightMatchLocations = new Set();
+  for (const form of singleTokenForms) {
+    for (const loc of lightSurfaceIndex.get(form.lightTokens[0]) ?? []) exactLightMatchLocations.add(loc);
+  }
+
+  // Pass 1: vowel-exact ("light") seeding. Every form is tried independently - two study words
+  // legitimately keeping distinct vowels (like "مَنْ" vs "مِنْ") simply seed two disjoint sets.
+  // A handful of tokens are shared by more than one study word even at this tier - almost always
+  // the verb/noun final-case-vowel coincidence described on endsWithBareFatha (e.g. the verb
+  // "ذَكَرَ" and the noun "ذَكَر" "male" both normalize to "ذَكَر"). Those are split by POS using
+  // each id's own looksLikeVerb guess when it cleanly separates the colliding ids; otherwise the
+  // shared candidates are left unseeded for all of them rather than guessed at.
+  const seedsById = new Map(); // id -> Set<location>, own direct (lemma/surface) matches only
+  const unseeded = [];
+  const lightTokenOwners = new Map();
+  for (const form of singleTokenForms) {
+    if (!lightTokenOwners.has(form.lightTokens[0])) lightTokenOwners.set(form.lightTokens[0], []);
+    lightTokenOwners.get(form.lightTokens[0]).push(form);
+  }
+  for (const form of singleTokenForms) {
+    const [lightToken] = form.lightTokens;
+    const stemSurfaceMatches = (lightStemSurfaceIndex.get(lightToken) ?? []).filter(
+      (loc) => !exactLightMatchLocations.has(loc),
+    );
+    const candidates = new Set([
+      ...(lightLemmaIndex.get(lightToken) ?? []),
+      ...(lightSurfaceIndex.get(lightToken) ?? []),
+      ...stemSurfaceMatches,
+    ]);
+    const owners = lightTokenOwners.get(lightToken);
+    let seed = candidates;
+    if (owners.length > 1) {
+      const sameClassOwners = owners.filter((o) => o.looksLikeVerb === form.looksLikeVerb);
+      if (sameClassOwners.length === 1) {
+        seed = new Set([...candidates].filter((loc) => (stemByLocation.get(loc)?.pos === 'V') === form.looksLikeVerb));
+      } else if (owners[0] !== form) {
+        // Still ambiguous even split by POS (e.g. two colliding verbs, or the same word entered
+        // twice in the deck by mistake) - rather than guess, or drop the shared occurrences for
+        // everyone, keep this deterministic: only the first-listed (earliest level) owner claims
+        // the shared candidates, exactly as if this token had only ever had one owner.
+        seed = new Set();
+      }
+    }
+    if (seed.size > 0) seedsById.set(form.id, seed);
+    else unseeded.push(form);
+  }
+
+  // Pass 2: fallback ("heavy") seeding for study words light matching found nothing for -
+  // skipped entirely when the heavy-normalized token is shared by more than one such word, since
+  // there's then no way to tell which of them a given occurrence really belongs to.
+  const exactHeavyMatchLocations = new Set();
+  for (const form of singleTokenForms) {
+    for (const loc of heavySurfaceIndex.get(form.heavyTokens[0]) ?? []) exactHeavyMatchLocations.add(loc);
+  }
+  const heavyTokenOwners = new Map();
+  for (const form of unseeded) {
+    if (!heavyTokenOwners.has(form.heavyTokens[0])) heavyTokenOwners.set(form.heavyTokens[0], new Set());
+    heavyTokenOwners.get(form.heavyTokens[0]).add(form.id);
+  }
+  for (const form of unseeded) {
+    const [heavyToken] = form.heavyTokens;
+    if ((heavyTokenOwners.get(heavyToken)?.size ?? 0) > 1) continue; // ambiguous - skip, don't guess
+    const stemSurfaceMatches = (heavyStemSurfaceIndex.get(heavyToken) ?? []).filter(
+      (loc) => !exactHeavyMatchLocations.has(loc),
+    );
+    const seed = new Set([
+      ...(heavyLemmaIndex.get(heavyToken) ?? []),
+      ...(heavySurfaceIndex.get(heavyToken) ?? []),
+      ...stemSurfaceMatches,
+    ]);
+    if (seed.size > 0) seedsById.set(form.id, seed);
+  }
+
+  // A root is only a safe basis for family-wide expansion (e.g. unifying "هَدَى" and "اهتدى")
+  // when exactly one study word's own seeds resolve to it. Many roots cover *several* separately
+  // taught deck words - most commonly a verb sense and a noun/adjective sense (e.g. "نَصَرَ" "to
+  // help" and "نَصِير" "helper" both come from root نصر) - and expanding either of those into the
+  // whole family would silently swallow the other's occurrences. Ownership is resolved globally,
+  // up front, before any expansion happens, instead of processing forms one at a time and letting
+  // whichever runs first claim the shared territory. When a root is shared, it's still split
+  // safely along the verb/non-verb line whenever that line cleanly separates the co-owners (the
+  // dominant real-world pattern), using each occurrence's own POS tag; a root shared by two
+  // co-owners of the *same* POS class is genuinely ambiguous and is left unexpanded for both.
+  const rootById = new Map();
+  for (const [id, seed] of seedsById) {
+    const roots = new Set();
+    for (const loc of seed) {
+      const root = stemByLocation.get(loc)?.root;
+      if (root) roots.add(root);
+    }
+    if (roots.size === 1) rootById.set(id, [...roots][0]);
+  }
+  function classify(seed) {
+    let verbs = 0;
+    let nonVerbs = 0;
+    for (const loc of seed) {
+      if (stemByLocation.get(loc)?.pos === 'V') verbs++;
+      else nonVerbs++;
+    }
+    return verbs > nonVerbs ? 'V' : 'N';
+  }
+  const rootBuckets = new Map(); // root -> { V: Set<id>, N: Set<id> }
+  for (const [id, root] of rootById) {
+    if (!rootBuckets.has(root)) rootBuckets.set(root, { V: new Set(), N: new Set() });
+    rootBuckets.get(root)[classify(seedsById.get(id))].add(id);
+  }
+
+  for (const [id, seed] of seedsById) {
+    const allLocations = new Set(seed);
+    const root = rootById.get(id);
+    if (root) {
+      const buckets = rootBuckets.get(root);
+      const soleOwner = buckets.V.size + buckets.N.size === 1;
+      const myClass = classify(seed);
+      if (soleOwner) {
+        for (const loc of rootIndex.get(root) ?? []) allLocations.add(loc);
+      } else if (buckets[myClass].size === 1) {
+        for (const loc of rootIndex.get(root) ?? []) {
+          if (stemByLocation.get(loc)?.pos === myClass) allLocations.add(loc);
+        }
+      }
+    }
+    for (const loc of allLocations) {
+      if (!matchByLocation.has(loc)) matchByLocation.set(loc, id);
+    }
+  }
+
+  // Phrases (contiguous multi-word forms) match vowel-exact surface text within one ayah.
+  const phraseForms = studyForms.filter((f) => f.lightTokens.length > 1);
+  for (const form of phraseForms) {
+    for (const locations of ayahWordOrder.values()) {
+      for (let i = 0; i + form.lightTokens.length <= locations.length; i += 1) {
+        const matches = form.lightTokens.every((tok, j) => lightSurfaceByLocation.get(locations[i + j]) === tok);
+        if (!matches) continue;
+        for (let j = 0; j < form.lightTokens.length; j += 1) {
+          const loc = locations[i + j];
+          if (!matchByLocation.has(loc)) matchByLocation.set(loc, form.id);
+        }
+      }
+    }
+  }
+
+  return matchByLocation;
+}
+
+module.exports = { normalizeArabic, normalizeLight, loadStudyForms, loadMorphologyStems, buildVocabMatches };

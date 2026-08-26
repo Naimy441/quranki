@@ -1,0 +1,3218 @@
+{
+  "deck": "Quranic Words",
+  "levelCount": 47,
+  "wordCount": 547,
+  "levels": [
+    {
+      "number": 1,
+      "id": "01",
+      "title": "Articles (This, That)",
+      "words": [
+        {
+          "arabic": "هَٰذَا",
+          "english": "this (male)",
+          "id": "01-001"
+        },
+        {
+          "arabic": "هَٰذِهِ",
+          "english": "this (female), these (for broken plural)",
+          "id": "01-002"
+        },
+        {
+          "arabic": "هَٰؤُلَاءِ",
+          "english": "these",
+          "id": "01-003"
+        },
+        {
+          "arabic": "ذالِكَ",
+          "english": "that (male)",
+          "id": "01-004"
+        },
+        {
+          "arabic": "تِلْكَ",
+          "english": "that (female), those (for broken plural)",
+          "id": "01-005"
+        },
+        {
+          "arabic": "أُوْلَآئِكَ",
+          "english": "those",
+          "id": "01-006"
+        },
+        {
+          "arabic": "الَّذِي",
+          "english": "he who",
+          "id": "01-007"
+        },
+        {
+          "arabic": "الَّتِي",
+          "english": "she who, those who (for broken plural)",
+          "id": "01-008"
+        },
+        {
+          "arabic": "الَّذِينَ",
+          "english": "those who",
+          "id": "01-009"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "id": "02",
+      "title": "No and Yes",
+      "words": [
+        {
+          "arabic": "لَا إِلهَ",
+          "english": "(There is) no god",
+          "id": "02-001"
+        },
+        {
+          "arabic": "إِلَّا الله",
+          "english": "except Allah",
+          "id": "02-002"
+        },
+        {
+          "arabic": "كَلّا",
+          "english": "never, certainly not",
+          "id": "02-003"
+        },
+        {
+          "arabic": "لَنْ",
+          "english": "not (for future)",
+          "id": "02-004"
+        },
+        {
+          "arabic": "لَمْ",
+          "english": "not (for past)",
+          "id": "02-005"
+        },
+        {
+          "arabic": "مَا",
+          "english": "not",
+          "id": "02-006"
+        },
+        {
+          "arabic": "لَيْسَ",
+          "english": "not, it is not (male)",
+          "id": "02-007"
+        },
+        {
+          "arabic": "لَيْسَتْ",
+          "english": "not, it is not (female)",
+          "id": "02-008"
+        },
+        {
+          "arabic": "بَلَى",
+          "english": "yes indeed",
+          "id": "02-009"
+        },
+        {
+          "arabic": "غَيْر",
+          "english": "not, other than",
+          "id": "02-010"
+        },
+        {
+          "arabic": "دُونَ",
+          "english": "besides",
+          "id": "02-011"
+        },
+        {
+          "arabic": "إِلَّا",
+          "english": "except, unless, if not",
+          "id": "02-012"
+        },
+        {
+          "arabic": "نَعَمْ",
+          "english": "yes",
+          "id": "02-013"
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "id": "03",
+      "title": "Possessive Pronoun Endings",
+      "words": [
+        {
+          "isSuffix": true,
+          "arabic": "هُ",
+          "english": "his",
+          "id": "03-001"
+        },
+        {
+          "isSuffix": true,
+          "arabic": "هَا",
+          "english": "her, their (for broken plural)",
+          "id": "03-002"
+        },
+        {
+          "isSuffix": true,
+          "arabic": "كَ",
+          "english": "your (male)",
+          "id": "03-003"
+        },
+        {
+          "isSuffix": true,
+          "arabic": "كِ",
+          "english": "your (female)",
+          "id": "03-004"
+        },
+        {
+          "isSuffix": true,
+          "arabic": "يْ",
+          "variant": "نِي",
+          "english": "my, me",
+          "id": "03-005"
+        },
+        {
+          "isSuffix": true,
+          "arabic": "هُمْ",
+          "english": "their (male)",
+          "id": "03-006"
+        },
+        {
+          "isSuffix": true,
+          "arabic": "هُنَّ",
+          "english": "their (female)",
+          "id": "03-007"
+        },
+        {
+          "isSuffix": true,
+          "arabic": "كُمْ",
+          "english": "your (male plural)",
+          "id": "03-008"
+        },
+        {
+          "isSuffix": true,
+          "arabic": "كُنَّ",
+          "english": "your (female plural)",
+          "id": "03-009"
+        },
+        {
+          "isSuffix": true,
+          "arabic": "نَا",
+          "english": "our",
+          "id": "03-010"
+        },
+        {
+          "isSuffix": true,
+          "arabic": "هُمَا",
+          "english": "their (dual)",
+          "id": "03-011"
+        },
+        {
+          "isSuffix": true,
+          "arabic": "كُمَا",
+          "english": "your (dual)",
+          "id": "03-012"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "id": "04",
+      "title": "Pronouns",
+      "words": [
+        {
+          "arabic": "هُوَ",
+          "english": "he",
+          "id": "04-001"
+        },
+        {
+          "arabic": "هِيَ",
+          "english": "she, they (for broken plural)",
+          "id": "04-002"
+        },
+        {
+          "arabic": "أَنْتَ",
+          "english": "you (male)",
+          "id": "04-003"
+        },
+        {
+          "arabic": "أَنْتِ",
+          "english": "you (female)",
+          "id": "04-004"
+        },
+        {
+          "arabic": "أَنَا",
+          "english": "I",
+          "id": "04-005"
+        },
+        {
+          "arabic": "هُمْ",
+          "english": "they (male)",
+          "id": "04-006"
+        },
+        {
+          "arabic": "هُنَّ",
+          "english": "they (female)",
+          "id": "04-007"
+        },
+        {
+          "arabic": "أَنْتُم",
+          "english": "you (male plural)",
+          "id": "04-008"
+        },
+        {
+          "arabic": "أَنْتُنَّ",
+          "english": "you (female plural)",
+          "id": "04-009"
+        },
+        {
+          "arabic": "نَحْنُ",
+          "english": "we",
+          "id": "04-010"
+        },
+        {
+          "arabic": "هُمَا",
+          "english": "they (dual)",
+          "id": "04-011"
+        },
+        {
+          "arabic": "أَنْتُمَا",
+          "english": "you (dual)",
+          "id": "04-012"
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "id": "05",
+      "title": "Prepositions - I",
+      "words": [
+        {
+          "arabic": "فَوْقَ",
+          "english": "above, up",
+          "id": "05-001"
+        },
+        {
+          "arabic": "تَحْتَ",
+          "english": "under",
+          "id": "05-002"
+        },
+        {
+          "arabic": "بَيْنَ أَيْدَي، بَيْنَ يَدَيْ",
+          "forms": [
+            "بَيْنَ أَيْدَي",
+            "بَيْنَ يَدَيْ"
+          ],
+          "english": "in front of",
+          "id": "05-003"
+        },
+        {
+          "arabic": "خَلْفَ",
+          "english": "back, after",
+          "id": "05-004"
+        },
+        {
+          "arabic": "أَمَامَ",
+          "english": "in front of",
+          "id": "05-005"
+        },
+        {
+          "arabic": "وَرَاء",
+          "english": "behind",
+          "id": "05-006"
+        },
+        {
+          "arabic": "يَمِيْن",
+          "plural": "أَيْمَان",
+          "english": "right, oath",
+          "id": "05-007"
+        },
+        {
+          "arabic": "شِمَال",
+          "plural": "شَمَائِل",
+          "english": "left",
+          "id": "05-008"
+        },
+        {
+          "arabic": "بَيْنَ",
+          "english": "between",
+          "id": "05-009"
+        },
+        {
+          "arabic": "حَوْل",
+          "english": "around, approximately",
+          "id": "05-010"
+        },
+        {
+          "arabic": "حَيْثُ",
+          "english": "wherever",
+          "id": "05-011"
+        },
+        {
+          "arabic": "أيْنَمَا",
+          "english": "wherever",
+          "id": "05-012"
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "id": "06",
+      "title": "Interrogative",
+      "words": [
+        {
+          "arabic": "مَا",
+          "english": "what, that which",
+          "id": "06-001"
+        },
+        {
+          "arabic": "مَنْ",
+          "english": "who, the one who",
+          "id": "06-002"
+        },
+        {
+          "arabic": "مَتى",
+          "english": "when, the time when",
+          "id": "06-003"
+        },
+        {
+          "arabic": "أَيْنَ",
+          "english": "where",
+          "id": "06-004"
+        },
+        {
+          "arabic": "كَيْفَ",
+          "english": "how",
+          "id": "06-005"
+        },
+        {
+          "arabic": "كَمْ",
+          "english": "how many",
+          "id": "06-006"
+        },
+        {
+          "arabic": "أَيُّ",
+          "english": "which (ا)",
+          "id": "06-007"
+        },
+        {
+          "arabic": "أَنّى",
+          "english": "wherefrom, why, how",
+          "id": "06-008"
+        },
+        {
+          "arabic": "أَ، هَل",
+          "forms": [
+            "أَ",
+            "هَل"
+          ],
+          "english": "question particle",
+          "id": "06-009"
+        },
+        {
+          "arabic": "مَاذَا",
+          "english": "what (م)",
+          "id": "06-010"
+        },
+        {
+          "arabic": "لِمَ، لِمَاذَا",
+          "forms": [
+            "لِمَ",
+            "لِمَاذَا"
+          ],
+          "english": "why",
+          "id": "06-011"
+        },
+        {
+          "arabic": "لَوْ لَا",
+          "english": "if not, even if",
+          "id": "06-012"
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "id": "07",
+      "title": "Adjectives - 1",
+      "words": [
+        {
+          "arabic": "ذُو، ذَا، ذِي",
+          "forms": [
+            "ذُو",
+            "ذَا",
+            "ذِي"
+          ],
+          "english": "endowed with, owner of (male)",
+          "id": "07-001"
+        },
+        {
+          "arabic": "ذَات",
+          "english": "endowed with, owner of (female)",
+          "id": "07-002"
+        },
+        {
+          "arabic": "أُوْلُواْ، أُوْلِي",
+          "forms": [
+            "أُوْلُواْ",
+            "أُوْلِي"
+          ],
+          "english": "people of, owners of",
+          "id": "07-003"
+        },
+        {
+          "arabic": "أهْل",
+          "english": "people of, relatives",
+          "id": "07-004"
+        },
+        {
+          "arabic": "آل",
+          "english": "family, relatives, people",
+          "id": "07-005"
+        },
+        {
+          "arabic": "أَلَا",
+          "english": "lo!, is it not?",
+          "id": "07-006"
+        },
+        {
+          "arabic": "نِعْمَ",
+          "english": "what an excellent",
+          "id": "07-007"
+        },
+        {
+          "arabic": "بِئْسَ",
+          "english": "what an evil",
+          "id": "07-008"
+        },
+        {
+          "arabic": "بِئْسَمَا",
+          "english": "evil is that which",
+          "id": "07-009"
+        },
+        {
+          "arabic": "مِثْل",
+          "english": "similar",
+          "id": "07-010"
+        },
+        {
+          "arabic": "مَثَل",
+          "plural": "أَمْثَال",
+          "english": "similitude, example",
+          "id": "07-011"
+        },
+        {
+          "arabic": "مِمَّنْ",
+          "contractionOf": "مِنْ+مَنْ",
+          "english": "than the one who, from those who (م)",
+          "id": "07-012"
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "id": "08",
+      "title": "When",
+      "words": [
+        {
+          "arabic": "قَبْلَ",
+          "english": "before",
+          "id": "08-001"
+        },
+        {
+          "arabic": "بَعْد",
+          "english": "after",
+          "id": "08-002"
+        },
+        {
+          "arabic": "حِين",
+          "english": "time, period, at the time",
+          "id": "08-003"
+        },
+        {
+          "arabic": "إِذْ",
+          "english": "when (for past)",
+          "id": "08-004"
+        },
+        {
+          "arabic": "إِذَا",
+          "english": "when (for future)",
+          "id": "08-005"
+        },
+        {
+          "arabic": "ثُمَّ",
+          "english": "moreover (ث)",
+          "id": "08-006"
+        },
+        {
+          "arabic": "فَ",
+          "english": "then, thus, therefore",
+          "id": "08-007"
+        },
+        {
+          "arabic": "بَل",
+          "english": "nay, rather, but",
+          "id": "08-008"
+        },
+        {
+          "arabic": "عِنْدَ، لَدى، لَدُنْ",
+          "forms": [
+            "عِنْدَ",
+            "لَدى",
+            "لَدُنْ"
+          ],
+          "english": "near, with",
+          "id": "08-009"
+        },
+        {
+          "arabic": "إِنْ ... إِلَّا",
+          "english": "nothing...but (ا)",
+          "id": "08-010"
+        },
+        {
+          "arabic": "مَا... إِلَّا",
+          "english": "nothing...but (م)",
+          "id": "08-011"
+        },
+        {
+          "arabic": "أَلَّا",
+          "contractionOf": "أَنْ+لَا",
+          "english": "that... not, so as not (ا)",
+          "id": "08-012"
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "id": "09",
+      "title": "Prepositions + مَا",
+      "words": [
+        {
+          "arabic": "بِمَا",
+          "english": "with what, because",
+          "id": "09-001"
+        },
+        {
+          "arabic": "عَمَّا",
+          "english": "about what",
+          "id": "09-002"
+        },
+        {
+          "arabic": "فِيمَا",
+          "english": "in what",
+          "id": "09-003"
+        },
+        {
+          "arabic": "كَمَا",
+          "english": "as, just as (ك)",
+          "id": "09-004"
+        },
+        {
+          "arabic": "لِمَا",
+          "english": "for what, for that which",
+          "id": "09-005"
+        },
+        {
+          "arabic": "مِمَّا",
+          "english": "out of what (م)",
+          "id": "09-006"
+        },
+        {
+          "arabic": "أَمَّا",
+          "english": "as to, as for",
+          "id": "09-007"
+        },
+        {
+          "arabic": "إِمَّا",
+          "english": "if, either, or",
+          "id": "09-008"
+        },
+        {
+          "arabic": "أَنَّمَا",
+          "english": "that (4 letters)",
+          "id": "09-009"
+        },
+        {
+          "arabic": "إِنَّمَا",
+          "english": "verily, only",
+          "id": "09-010"
+        },
+        {
+          "arabic": "كَأَنَّمَا",
+          "english": "as if",
+          "id": "09-011"
+        },
+        {
+          "arabic": "كُلَّمَا",
+          "english": "whenever",
+          "id": "09-012"
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "id": "10",
+      "title": "Prepositions",
+      "words": [
+        {
+          "arabic": "بِ",
+          "english": "with, in, from",
+          "id": "10-001"
+        },
+        {
+          "arabic": "عَنْ",
+          "english": "about",
+          "id": "10-002"
+        },
+        {
+          "arabic": "فِي",
+          "english": "in",
+          "id": "10-003"
+        },
+        {
+          "arabic": "كَ",
+          "english": "as, like",
+          "id": "10-004"
+        },
+        {
+          "arabic": "لِ، لَ",
+          "forms": [
+            "لِ",
+            "لَ"
+          ],
+          "english": "for",
+          "id": "10-005"
+        },
+        {
+          "arabic": "مِنْ",
+          "english": "from",
+          "id": "10-006"
+        },
+        {
+          "arabic": "إِلَى",
+          "english": "towards",
+          "id": "10-007"
+        },
+        {
+          "arabic": "تَ",
+          "english": "by (of oath)",
+          "id": "10-008"
+        },
+        {
+          "arabic": "حَتَّى",
+          "english": "until",
+          "id": "10-009"
+        },
+        {
+          "arabic": "عَلَى",
+          "english": "on",
+          "id": "10-010"
+        },
+        {
+          "arabic": "مَعَ",
+          "english": "with (م)",
+          "id": "10-011"
+        },
+        {
+          "arabic": "وَ",
+          "english": "and, by (of oath)",
+          "id": "10-012"
+        }
+      ]
+    },
+    {
+      "number": 11,
+      "id": "11",
+      "title": "Prefix for Verbs",
+      "words": [
+        {
+          "arabic": "قَدْ",
+          "attachesTo": "verb",
+          "english": "has (with past tense); surely (with present tense)",
+          "id": "11-001"
+        },
+        {
+          "arabic": "سَ",
+          "attachesTo": "verb",
+          "english": "will (for near future)",
+          "id": "11-002"
+        },
+        {
+          "arabic": "سَوْفَ",
+          "attachesTo": "verb",
+          "english": "will (for future)",
+          "id": "11-003"
+        },
+        {
+          "arabic": "لَ+فعل+نَّ",
+          "english": "will surely",
+          "id": "11-004"
+        },
+        {
+          "arabic": "لَقَدْ",
+          "english": "indeed (3 letters)",
+          "id": "11-005"
+        },
+        {
+          "arabic": "لَ",
+          "english": "indeed, surely",
+          "id": "11-006"
+        },
+        {
+          "arabic": "لِ، لْ",
+          "variant": "أَمْر",
+          "english": "let (somebody) do (imperative)",
+          "id": "11-007"
+        },
+        {
+          "arabic": "الْ",
+          "english": "the",
+          "id": "11-008"
+        },
+        {
+          "arabic": "أَمْ",
+          "english": "or? (م)",
+          "id": "11-009"
+        },
+        {
+          "arabic": "أَوْ",
+          "english": "or (و)",
+          "id": "11-010"
+        },
+        {
+          "arabic": "بَعْض",
+          "english": "some of",
+          "id": "11-011"
+        },
+        {
+          "arabic": "كُلَّ",
+          "english": "everyone, all",
+          "id": "11-012"
+        }
+      ]
+    },
+    {
+      "number": 12,
+      "id": "12",
+      "title": "Inna",
+      "words": [
+        {
+          "arabic": "إِنَّ",
+          "english": "verily, truly",
+          "id": "12-001"
+        },
+        {
+          "arabic": "أَنَّ",
+          "english": "that (more active)",
+          "id": "12-002"
+        },
+        {
+          "arabic": "كَأَنَّ",
+          "english": "as if",
+          "id": "12-003"
+        },
+        {
+          "arabic": "لكِنَّ",
+          "variant": "لكِنْ",
+          "english": "but, however",
+          "id": "12-004"
+        },
+        {
+          "arabic": "لَعَلَّ",
+          "english": "perhaps, maybe",
+          "id": "12-005"
+        },
+        {
+          "arabic": "أَنْ",
+          "english": "that (less active)",
+          "id": "12-006"
+        },
+        {
+          "arabic": "إِنْ",
+          "english": "if (ا)",
+          "id": "12-007"
+        },
+        {
+          "arabic": "إِيَّا",
+          "english": "alone",
+          "id": "12-008"
+        },
+        {
+          "arabic": "عَسَى",
+          "english": "possibly",
+          "id": "12-009"
+        },
+        {
+          "arabic": "لَمَّا",
+          "english": "when",
+          "id": "12-010"
+        },
+        {
+          "arabic": "لَوْ",
+          "english": "if (ل)",
+          "id": "12-011"
+        },
+        {
+          "arabic": "يَا، يَاأَيُّهَا",
+          "forms": [
+            "يَا",
+            "يَاأَيُّهَا"
+          ],
+          "english": "O!",
+          "id": "12-012"
+        }
+      ]
+    },
+    {
+      "number": 13,
+      "id": "13",
+      "title": "Some attributes (of Allah and others) Part 1",
+      "words": [
+        {
+          "arabic": "خَبِير",
+          "english": "knowing, ever aware",
+          "id": "13-001"
+        },
+        {
+          "arabic": "رَبّ",
+          "english": "Lord",
+          "id": "13-002"
+        },
+        {
+          "arabic": "رَحْمَٰن",
+          "english": "Compassionate, merciful",
+          "id": "13-003"
+        },
+        {
+          "arabic": "سَلَام",
+          "english": "peace",
+          "id": "13-004"
+        },
+        {
+          "arabic": "سَمِيع",
+          "english": "one who listens, all-hearing",
+          "id": "13-005"
+        },
+        {
+          "arabic": "شَكُور",
+          "english": "grateful",
+          "id": "13-006"
+        },
+        {
+          "arabic": "عَزِيز",
+          "english": "mighty",
+          "id": "13-007"
+        },
+        {
+          "arabic": "غَفُور",
+          "english": "most forgiving",
+          "id": "13-008"
+        },
+        {
+          "arabic": "قَدِير",
+          "english": "All-powerful",
+          "id": "13-009"
+        },
+        {
+          "arabic": "نَذِير",
+          "english": "warner",
+          "id": "13-010"
+        },
+        {
+          "arabic": "نَصِير",
+          "english": "helper",
+          "id": "13-011"
+        },
+        {
+          "arabic": "وَكِيل",
+          "english": "representative, trustee",
+          "id": "13-012"
+        }
+      ]
+    },
+    {
+      "number": 14,
+      "id": "14",
+      "title": "Some attributes (of Allah and others) Part 2",
+      "words": [
+        {
+          "arabic": "أَوَّل",
+          "feminine": "أُولَى",
+          "english": "first",
+          "id": "14-001"
+        },
+        {
+          "arabic": "آخِر",
+          "feminine": "آخِرَة",
+          "english": "last",
+          "id": "14-002"
+        },
+        {
+          "arabic": "آخَر",
+          "feminine": "أُخْرَى",
+          "english": "other",
+          "id": "14-003"
+        },
+        {
+          "arabic": "أَمِين",
+          "english": "trustworthy",
+          "id": "14-004"
+        },
+        {
+          "arabic": "بَصِير",
+          "english": "one who sees clearly, all-Seer",
+          "id": "14-005"
+        },
+        {
+          "arabic": "بَعِيد",
+          "english": "far",
+          "id": "14-006"
+        },
+        {
+          "arabic": "تَوَّاب",
+          "english": "most forgiving",
+          "id": "14-007"
+        },
+        {
+          "arabic": "حَفِيظ",
+          "english": "protector, guardian",
+          "id": "14-008"
+        },
+        {
+          "arabic": "حَكِيم",
+          "english": "wise",
+          "id": "14-009"
+        },
+        {
+          "arabic": "حَلِيم",
+          "english": "forbearing",
+          "id": "14-010"
+        },
+        {
+          "arabic": "حَمِيد",
+          "english": "praiseworthy",
+          "id": "14-011"
+        },
+        {
+          "arabic": "حَمِيم",
+          "english": "warm (friend), boiling water",
+          "id": "14-012"
+        }
+      ]
+    },
+    {
+      "number": 15,
+      "id": "15",
+      "title": "Noun of Superiority",
+      "words": [
+        {
+          "arabic": "أَشَدّ",
+          "english": "most severe",
+          "id": "15-001"
+        },
+        {
+          "arabic": "أَعْلَى",
+          "english": "higher, superior",
+          "id": "15-002"
+        },
+        {
+          "arabic": "أَعْلَم",
+          "english": "better-knowing, more informed",
+          "id": "15-003"
+        },
+        {
+          "arabic": "أَقْرَب",
+          "english": "nearer, nearest, nearest relatives",
+          "id": "15-004"
+        },
+        {
+          "arabic": "أََكْبَر",
+          "english": "bigger",
+          "id": "15-005"
+        },
+        {
+          "arabic": "أَكْثَر",
+          "english": "more, most",
+          "id": "15-006"
+        },
+        {
+          "arabic": "أَحَقّ",
+          "english": "more entitled, more worthy",
+          "id": "15-007"
+        },
+        {
+          "arabic": "أَحْسَن",
+          "english": "better, best",
+          "id": "15-008"
+        },
+        {
+          "arabic": "أَدْنَى",
+          "english": "nearer, more likely, lower, less",
+          "id": "15-009"
+        },
+        {
+          "arabic": "أَظْلَم",
+          "english": "more unjust",
+          "id": "15-010"
+        },
+        {
+          "arabic": "أَهْدَى",
+          "english": "better guided",
+          "id": "15-011"
+        },
+        {
+          "arabic": "أَوْلَى",
+          "english": "nearer, more entitled, woe",
+          "id": "15-012"
+        }
+      ]
+    },
+    {
+      "number": 16,
+      "id": "16",
+      "title": "Some attributes",
+      "words": [
+        {
+          "arabic": "شَدِيد",
+          "english": "severe, strong",
+          "id": "16-001"
+        },
+        {
+          "arabic": "عَلِيّ",
+          "english": "high, exalted",
+          "id": "16-002"
+        },
+        {
+          "arabic": "عَلِيم",
+          "english": "knower",
+          "id": "16-003"
+        },
+        {
+          "arabic": "قَرِيب‌",
+          "english": "near",
+          "id": "16-004"
+        },
+        {
+          "arabic": "كَبِير",
+          "english": "big",
+          "id": "16-005"
+        },
+        {
+          "arabic": "كَثِير",
+          "english": "plenty, much",
+          "id": "16-006"
+        },
+        {
+          "arabic": "سَرِيع",
+          "english": "quick, swift, fast",
+          "id": "16-007"
+        },
+        {
+          "arabic": "رَحِيم",
+          "english": "merciful",
+          "id": "16-008"
+        },
+        {
+          "arabic": "عَظِيم",
+          "english": "supreme",
+          "id": "16-009"
+        },
+        {
+          "arabic": "قَلِيل",
+          "english": "little",
+          "id": "16-010"
+        },
+        {
+          "arabic": "كَرِيم",
+          "english": "noble, honorable, generous",
+          "id": "16-011"
+        },
+        {
+          "arabic": "لَطِيف",
+          "english": "subtle, nice",
+          "id": "16-012"
+        }
+      ]
+    },
+    {
+      "number": 17,
+      "id": "17",
+      "title": "Prophets and More",
+      "words": [
+        {
+          "arabic": "رَسُول",
+          "plural": "رُسُل",
+          "english": "Messenger",
+          "id": "17-001"
+        },
+        {
+          "arabic": "نَبِيّ",
+          "english": "Prophet",
+          "id": "17-002"
+        },
+        {
+          "arabic": "أَنْبِيَاءَ , نَبِيِّيْن, نَبِيُّون",
+          "forms": [
+            "أَنْبِيَاءَ",
+            "نَبِيِّيْن",
+            "نَبِيُّون"
+          ],
+          "english": "prophets",
+          "id": "17-003"
+        },
+        {
+          "arabic": "آدم, نوح, إبراهيم, لوط, إسماعيل,إسحاق, يعقوب, إسرائيل, يوسف, هود, شعيب,صالح, موسى, عيسى بن مريم",
+          "forms": [
+            "آدم",
+            "نوح",
+            "إبراهيم",
+            "لوط",
+            "إسماعيل",
+            "إسحاق",
+            "يعقوب",
+            "إسرائيل",
+            "يوسف",
+            "هود",
+            "شعيب",
+            "صالح",
+            "موسى",
+            "عيسى بن مريم"
+          ],
+          "english": "Adam, Nuh, Ibrahim, Lut, Isma'eel, Ishaq, Ya'qub, Isra'eel, Yusuf, Hud, Shu'ayb, Salih, Musa, 'Isa ibnu Maryam",
+          "id": "17-004"
+        },
+        {
+          "arabic": "شَيْطَان",
+          "plural": "شَيَاطِين",
+          "english": "Satan",
+          "id": "17-005"
+        },
+        {
+          "arabic": "فِرْعَوْن",
+          "english": "Pharaoh",
+          "id": "17-006"
+        },
+        {
+          "arabic": "عَاد",
+          "english": "People of Hud",
+          "id": "17-007"
+        },
+        {
+          "arabic": "ثَمُود",
+          "english": "People of Salih",
+          "id": "17-008"
+        }
+      ]
+    },
+    {
+      "number": 18,
+      "id": "18",
+      "title": "Allah's Signs",
+      "words": [
+        {
+          "arabic": "آيَة",
+          "plural": "آيَات",
+          "english": "sign",
+          "id": "18-001"
+        },
+        {
+          "arabic": "بَيِّنَة",
+          "plural": "بَيِّنَات",
+          "english": "evidence",
+          "id": "18-002"
+        },
+        {
+          "arabic": "قُرْآن",
+          "english": "Qur'an, reading, recitation",
+          "id": "18-003"
+        },
+        {
+          "arabic": "أنْعَام",
+          "english": "cattle",
+          "id": "18-004"
+        },
+        {
+          "arabic": "جَبَل",
+          "plural": "جِبَال",
+          "english": "mountain",
+          "id": "18-005"
+        },
+        {
+          "arabic": "بَحْر",
+          "english": "sea, large river",
+          "id": "18-006"
+        },
+        {
+          "arabic": "شَمْس",
+          "english": "sun",
+          "id": "18-007"
+        },
+        {
+          "arabic": "قَمَر",
+          "english": "moon",
+          "id": "18-008"
+        },
+        {
+          "arabic": "لَيْلَة",
+          "plural": "لَيَالِيْ",
+          "english": "night",
+          "id": "18-009"
+        },
+        {
+          "arabic": "نَهَار",
+          "english": "day",
+          "id": "18-010"
+        },
+        {
+          "arabic": "أَرْض",
+          "english": "earth",
+          "id": "18-011"
+        },
+        {
+          "arabic": "سَمَاء",
+          "plural": "سَمَاوات",
+          "english": "sky",
+          "id": "18-012"
+        }
+      ]
+    },
+    {
+      "number": 19,
+      "id": "19",
+      "title": "Last Day 1",
+      "words": [
+        {
+          "arabic": "صَاحِب",
+          "plural": "أَصْحَاب",
+          "english": "companion, fellow",
+          "id": "19-001"
+        },
+        {
+          "arabic": "عَاقِبَة",
+          "english": "end",
+          "id": "19-002"
+        },
+        {
+          "arabic": "عَذَاب",
+          "english": "torment, punishment",
+          "id": "19-003"
+        },
+        {
+          "arabic": "عِقَاب",
+          "english": "punishment, chastisement",
+          "id": "19-004"
+        },
+        {
+          "arabic": "قِيَامَة",
+          "english": "Resurrection",
+          "id": "19-005"
+        },
+        {
+          "arabic": "لِقَاء",
+          "english": "meeting",
+          "id": "19-006"
+        },
+        {
+          "arabic": "مُسَمَّى",
+          "english": "fixed",
+          "id": "19-007"
+        },
+        {
+          "arabic": "نَار",
+          "english": "fire",
+          "id": "19-008"
+        },
+        {
+          "arabic": "نَهَر",
+          "plural": "أَنْهَار",
+          "english": "river",
+          "id": "19-009"
+        },
+        {
+          "arabic": "وَيْل",
+          "english": "woe unto",
+          "id": "19-010"
+        },
+        {
+          "arabic": "يَوْم",
+          "plural": "أَيَّام",
+          "english": "day",
+          "id": "19-011"
+        },
+        {
+          "arabic": "يَوْمَئِذٍ",
+          "english": "that day",
+          "id": "19-012"
+        }
+      ]
+    },
+    {
+      "number": 20,
+      "id": "20",
+      "title": "Last Day 2",
+      "words": [
+        {
+          "arabic": "أَبَدًا",
+          "english": "forever, ever",
+          "id": "20-001"
+        },
+        {
+          "arabic": "أَجْر",
+          "plural": "أُجُور",
+          "english": "reward",
+          "id": "20-002"
+        },
+        {
+          "arabic": "أَجَل",
+          "english": "term",
+          "id": "20-003"
+        },
+        {
+          "arabic": "الْآخِرَة",
+          "english": "the Hereafter",
+          "id": "20-004"
+        },
+        {
+          "arabic": "أَلِيم",
+          "english": "painful",
+          "id": "20-005"
+        },
+        {
+          "arabic": "ثَوَاب",
+          "english": "reward",
+          "id": "20-006"
+        },
+        {
+          "arabic": "جَحِيم",
+          "english": "hellfire",
+          "id": "20-007"
+        },
+        {
+          "arabic": "جَزَاء",
+          "english": "reward",
+          "id": "20-008"
+        },
+        {
+          "arabic": "جَنَّة",
+          "plural": "جَنَّات",
+          "english": "garden, paradise",
+          "id": "20-009"
+        },
+        {
+          "arabic": "جَهَنَّم",
+          "english": "the hell",
+          "id": "20-010"
+        },
+        {
+          "arabic": "حِسَاب",
+          "english": "reckoning",
+          "id": "20-011"
+        },
+        {
+          "arabic": "سَاعَة",
+          "english": "hour (day of resurrection)",
+          "id": "20-012"
+        }
+      ]
+    },
+    {
+      "number": 21,
+      "id": "21",
+      "title": "Deen",
+      "words": [
+        {
+          "arabic": "أَمْر",
+          "plural": "أَمُور",
+          "english": "command, matter, affair",
+          "id": "21-001"
+        },
+        {
+          "arabic": "تَقْوَى",
+          "english": "piety, fear",
+          "id": "21-002"
+        },
+        {
+          "arabic": "حَقّ",
+          "english": "truth, true, right",
+          "id": "21-003"
+        },
+        {
+          "arabic": "بَاطِل",
+          "english": "falsehood",
+          "id": "21-004"
+        },
+        {
+          "arabic": "حِكْمَة",
+          "english": "wisdom",
+          "id": "21-005"
+        },
+        {
+          "arabic": "حَمْد",
+          "english": "praise",
+          "id": "21-006"
+        },
+        {
+          "arabic": "دِين",
+          "english": "religion, judgement",
+          "id": "21-007"
+        },
+        {
+          "arabic": "زَكَاة",
+          "english": "poor-due, purity",
+          "id": "21-008"
+        },
+        {
+          "arabic": "شَهِيد",
+          "plural": "شُهَدَاء",
+          "english": "witness",
+          "id": "21-009"
+        },
+        {
+          "arabic": "صَلَاة",
+          "english": "prayer",
+          "id": "21-010"
+        },
+        {
+          "arabic": "مُبِين",
+          "english": "clear, self-expressive",
+          "id": "21-011"
+        },
+        {
+          "arabic": "نوُر",
+          "english": "light",
+          "id": "21-012"
+        }
+      ]
+    },
+    {
+      "number": 22,
+      "id": "22",
+      "title": "Faith",
+      "words": [
+        {
+          "arabic": "أَحَد",
+          "plural": "إِحْدَى",
+          "english": "one, anyone",
+          "id": "22-001"
+        },
+        {
+          "arabic": "إِله",
+          "plural": "آلِهَة",
+          "english": "god, deity",
+          "id": "22-002"
+        },
+        {
+          "arabic": "شَرِيك",
+          "plural": "شُرَكَاء",
+          "english": "partner, associate",
+          "id": "22-003"
+        },
+        {
+          "arabic": "شَهَادَة",
+          "english": "witness, testemony",
+          "id": "22-004"
+        },
+        {
+          "arabic": "عَرْش",
+          "english": "throne",
+          "id": "22-005"
+        },
+        {
+          "arabic": "عَهْد",
+          "english": "covenant, promise",
+          "id": "22-006"
+        },
+        {
+          "arabic": "غَيْب",
+          "english": "unseen",
+          "id": "22-007"
+        },
+        {
+          "arabic": "كِتَاب",
+          "plural": "كُتُب",
+          "english": "book",
+          "id": "22-008"
+        },
+        {
+          "arabic": "كَلِمَة",
+          "english": "word",
+          "id": "22-009"
+        },
+        {
+          "arabic": "مَلَك",
+          "plural": "مَلَائِكَة",
+          "english": "angel",
+          "id": "22-010"
+        },
+        {
+          "arabic": "مِيثَاق",
+          "english": "covenant, treaty",
+          "id": "22-011"
+        },
+        {
+          "arabic": "وَاحِد",
+          "english": "one",
+          "id": "22-012"
+        }
+      ]
+    },
+    {
+      "number": 23,
+      "id": "23",
+      "title": "Deeds",
+      "words": [
+        {
+          "arabic": "عَمَل",
+          "plural": "أَعْمَال",
+          "english": "actions, deeds, works",
+          "id": "23-001"
+        },
+        {
+          "arabic": "حَسَنَة",
+          "english": "good (deed)",
+          "id": "23-002"
+        },
+        {
+          "arabic": "سَيِّئَة",
+          "plural": "سَيِّئَات",
+          "english": "evil, bad",
+          "id": "23-003"
+        },
+        {
+          "arabic": "خَيْر",
+          "english": "good, better",
+          "id": "23-004"
+        },
+        {
+          "arabic": "شَرّ",
+          "english": "evil, bad, worse",
+          "id": "23-005"
+        },
+        {
+          "arabic": "إِثْم",
+          "english": "sin",
+          "id": "23-006"
+        },
+        {
+          "arabic": "ذَنْب",
+          "plural": "ذُنُوب",
+          "english": "sin",
+          "id": "23-007"
+        },
+        {
+          "arabic": "جُنَاح",
+          "english": "sin",
+          "id": "23-008"
+        },
+        {
+          "arabic": "حَرَام",
+          "english": "sacred, unlawful",
+          "id": "23-009"
+        },
+        {
+          "arabic": "اِسْم",
+          "plural": "أَسْمَاء",
+          "english": "name",
+          "id": "23-010"
+        },
+        {
+          "arabic": "حَدِيث",
+          "plural": "أَحَادِيث",
+          "english": "discourse, speech",
+          "id": "23-011"
+        },
+        {
+          "arabic": "طَيِّبَة",
+          "english": "good",
+          "id": "23-012"
+        }
+      ]
+    },
+    {
+      "number": 24,
+      "id": "24",
+      "title": "Blessings",
+      "words": [
+        {
+          "arabic": "آلَاء",
+          "english": "favors",
+          "id": "24-001"
+        },
+        {
+          "arabic": "سُلْطَان",
+          "english": "authority, warrant",
+          "id": "24-002"
+        },
+        {
+          "arabic": "فَضْل",
+          "english": "grace",
+          "id": "24-003"
+        },
+        {
+          "arabic": "مَاء",
+          "english": "water",
+          "id": "24-004"
+        },
+        {
+          "arabic": "مُلْك",
+          "english": "dominion, reign",
+          "id": "24-005"
+        },
+        {
+          "arabic": "نِعْمَة",
+          "english": "favor",
+          "id": "24-006"
+        },
+        {
+          "arabic": "أَجْمَعِين أَجْمَعُون",
+          "english": "all",
+          "id": "24-007"
+        },
+        {
+          "arabic": "إِذْن",
+          "english": "permission",
+          "id": "24-008"
+        },
+        {
+          "arabic": "بَأْس",
+          "english": "punishment, power",
+          "id": "24-009"
+        },
+        {
+          "arabic": "جَمِيع",
+          "english": "all, everybody",
+          "id": "24-010"
+        },
+        {
+          "arabic": "سَوَاء",
+          "english": "same, equal, level, fair",
+          "id": "24-011"
+        },
+        {
+          "arabic": "فَرِيق",
+          "english": "party, group",
+          "id": "24-012"
+        }
+      ]
+    },
+    {
+      "number": 25,
+      "id": "25",
+      "title": "Relatives",
+      "words": [
+        {
+          "arabic": "أُمّ",
+          "plural": "أُمَّهَات",
+          "english": "mother",
+          "id": "25-001"
+        },
+        {
+          "arabic": "أَب",
+          "plural": "آبَاء",
+          "english": "father",
+          "id": "25-002"
+        },
+        {
+          "arabic": "زَوْج",
+          "plural": "أَزْوَاج",
+          "english": "wife, husband",
+          "id": "25-003"
+        },
+        {
+          "arabic": "رَجُل",
+          "plural": "رِجَال",
+          "english": "man",
+          "id": "25-004"
+        },
+        {
+          "arabic": "اِمْرَأَة",
+          "plural": "نِسَاء",
+          "english": "woman",
+          "id": "25-005"
+        },
+        {
+          "arabic": "وَلَد",
+          "plural": "أَوْلَاد",
+          "english": "child",
+          "id": "25-006"
+        },
+        {
+          "arabic": "وَالِد",
+          "plural": "وَالِدَيْن",
+          "english": "parent",
+          "id": "25-007"
+        },
+        {
+          "arabic": "ذُرِّيَّة",
+          "english": "descendants, children",
+          "id": "25-008"
+        },
+        {
+          "arabic": "اِبْن",
+          "english": "son",
+          "id": "25-009"
+        },
+        {
+          "arabic": "بَنُون، بَنِين، أَبْنَاء",
+          "forms": [
+            "بَنُون",
+            "بَنِين",
+            "أَبْنَاء"
+          ],
+          "english": "sons",
+          "id": "25-010"
+        },
+        {
+          "arabic": "أخ",
+          "forms": [
+            "أَخُو",
+            "أَخَا",
+            "أَخِي"
+          ],
+          "english": "brother",
+          "id": "25-011"
+        },
+        {
+          "arabic": "إِخْوَان",
+          "english": "brothers",
+          "id": "25-012"
+        }
+      ]
+    },
+    {
+      "number": 26,
+      "id": "26",
+      "title": "Self (Body Parts)",
+      "words": [
+        {
+          "arabic": "وجْه",
+          "plural": "وُجُوه",
+          "english": "face",
+          "id": "26-001"
+        },
+        {
+          "arabic": "عَيْن",
+          "plural": "عُيُون",
+          "english": "eye, spring",
+          "id": "26-002"
+        },
+        {
+          "arabic": "بَصَر",
+          "plural": "أَبْصَار",
+          "english": "sight",
+          "id": "26-003"
+        },
+        {
+          "arabic": "أفْوَاه",
+          "isPluralForm": true,
+          "english": "mouths",
+          "id": "26-004"
+        },
+        {
+          "arabic": "لِسَان",
+          "plural": "أَلْسِنَة",
+          "english": "tongue, language",
+          "id": "26-005"
+        },
+        {
+          "arabic": "قَلْب",
+          "plural": "قُلُوب",
+          "english": "heart",
+          "id": "26-006"
+        },
+        {
+          "arabic": "صَدْر",
+          "plural": "صُدُور",
+          "english": "breast",
+          "id": "26-007"
+        },
+        {
+          "arabic": "يَد",
+          "plural": "أَيْدِي",
+          "english": "hand",
+          "id": "26-008"
+        },
+        {
+          "arabic": "رَجُل",
+          "plural": "أَرْجُل",
+          "english": "foot",
+          "id": "26-009"
+        },
+        {
+          "arabic": "نَفْس",
+          "plural": "أَنْفُس",
+          "english": "soul",
+          "id": "26-010"
+        },
+        {
+          "arabic": "رُوح",
+          "english": "soul, spirit",
+          "id": "26-011"
+        },
+        {
+          "arabic": "قُوَّة",
+          "english": "power, strength",
+          "id": "26-012"
+        }
+      ]
+    },
+    {
+      "number": 27,
+      "id": "27",
+      "title": "World",
+      "words": [
+        {
+          "arabic": "بَيْت",
+          "plural": "بُيُوت",
+          "english": "house",
+          "id": "27-001"
+        },
+        {
+          "arabic": "دَار",
+          "plural": "دِيَار",
+          "english": "home, abode",
+          "id": "27-002"
+        },
+        {
+          "arabic": "دُنْيَا",
+          "english": "world",
+          "id": "27-003"
+        },
+        {
+          "arabic": "سَبِيل",
+          "plural": "سُبُل",
+          "english": "way",
+          "id": "27-004"
+        },
+        {
+          "arabic": "صِرَاط",
+          "english": "path",
+          "id": "27-005"
+        },
+        {
+          "arabic": "عَالَم",
+          "plural": "عَالَمِين",
+          "english": "world",
+          "id": "27-006"
+        },
+        {
+          "arabic": "فِتْنَة",
+          "english": "trial, persecution",
+          "id": "27-007"
+        },
+        {
+          "arabic": "قَرْيَة",
+          "plural": "قُرَى",
+          "english": "town",
+          "id": "27-008"
+        },
+        {
+          "arabic": "مَال",
+          "plural": "أَمْوَال",
+          "english": "wealth",
+          "id": "27-009"
+        },
+        {
+          "arabic": "مَتَاع",
+          "english": "provision, enjoyment",
+          "id": "27-010"
+        },
+        {
+          "arabic": "مَسْجِد",
+          "plural": "مَسَاجِد",
+          "english": "mosque",
+          "id": "27-011"
+        },
+        {
+          "arabic": "مَكَان",
+          "plural": "مَكَانَة",
+          "english": "place, abode",
+          "id": "27-012"
+        }
+      ]
+    },
+    {
+      "number": 28,
+      "id": "28",
+      "title": "People",
+      "words": [
+        {
+          "arabic": "أُمَّة",
+          "plural": "أُمَم",
+          "english": "community",
+          "id": "28-001"
+        },
+        {
+          "arabic": "قَوْم",
+          "english": "people, nation",
+          "id": "28-002"
+        },
+        {
+          "arabic": "إِنسَان",
+          "english": "man",
+          "id": "28-003"
+        },
+        {
+          "arabic": "نَاس",
+          "english": "men, people",
+          "id": "28-004"
+        },
+        {
+          "arabic": "ذَكَر",
+          "plural": "ذُكُور",
+          "english": "male",
+          "id": "28-005"
+        },
+        {
+          "arabic": "أُنْثَى",
+          "plural": "إِنَاث",
+          "english": "female",
+          "id": "28-006"
+        },
+        {
+          "arabic": "عَبْد",
+          "plural": "عِبَاد",
+          "english": "slave",
+          "id": "28-007"
+        },
+        {
+          "arabic": "عَدُوّ",
+          "plural": "أَعْدَاء",
+          "english": "enemy",
+          "id": "28-008"
+        },
+        {
+          "arabic": "كَافِر",
+          "plural": "كُفَّار",
+          "english": "disbeliever",
+          "id": "28-009"
+        },
+        {
+          "arabic": "مُجْرِم",
+          "english": "criminal",
+          "id": "28-010"
+        },
+        {
+          "arabic": "مَلَأ",
+          "english": "chiefs, leaders",
+          "id": "28-011"
+        },
+        {
+          "arabic": "وَلِيّ",
+          "plural": "أَوْلِيَاء",
+          "english": "protecting friend, guardian",
+          "id": "28-012"
+        }
+      ]
+    },
+    {
+      "number": 29,
+      "id": "29",
+      "title": "Verbs 1",
+      "words": [
+        {
+          "arabic": "فَعَلَ",
+          "english": "to do",
+          "id": "29-001"
+        },
+        {
+          "arabic": "فَتَحَ",
+          "english": "to open",
+          "id": "29-002"
+        },
+        {
+          "arabic": "بَعَثَ",
+          "english": "to raise, to resurrect, to send",
+          "id": "29-003"
+        },
+        {
+          "arabic": "جَعَلَ",
+          "english": "to make, to place, to set up",
+          "id": "29-004"
+        },
+        {
+          "arabic": "جَمَعَ",
+          "english": "to gather, to collect",
+          "id": "29-005"
+        },
+        {
+          "arabic": "ذَهَبَ",
+          "english": "to go, to take away",
+          "id": "29-006"
+        },
+        {
+          "arabic": "رَفَعَ",
+          "english": "to raise",
+          "id": "29-007"
+        },
+        {
+          "arabic": "سَحَرَ",
+          "english": "to enchant, to bewitch",
+          "id": "29-008"
+        },
+        {
+          "arabic": "صَلَحَ",
+          "english": "to be righteous",
+          "id": "29-009"
+        },
+        {
+          "arabic": "لَعَنَ",
+          "english": "to curse",
+          "id": "29-010"
+        },
+        {
+          "arabic": "نَفَعَ",
+          "english": "to profit",
+          "id": "29-011"
+        }
+      ]
+    },
+    {
+      "number": 30,
+      "id": "30",
+      "title": "Verbs 2",
+      "words": [
+        {
+          "arabic": "نَصَرَ",
+          "english": "to help",
+          "id": "30-001"
+        },
+        {
+          "arabic": "بَلَغَ",
+          "english": "to reach",
+          "id": "30-002"
+        },
+        {
+          "arabic": "تَرَكَ",
+          "english": "to leave",
+          "id": "30-003"
+        },
+        {
+          "arabic": "حَشَرَ",
+          "english": "to gather, to bring together",
+          "id": "30-004"
+        },
+        {
+          "arabic": "حَكَمَ",
+          "english": "to judge, to rule",
+          "id": "30-005"
+        },
+        {
+          "arabic": "خَرَجَ",
+          "english": "to come out",
+          "id": "30-006"
+        },
+        {
+          "arabic": "خَلَدَ",
+          "english": "to live forever",
+          "id": "30-007"
+        },
+        {
+          "arabic": "خَلَقَ",
+          "english": "to create",
+          "id": "30-008"
+        },
+        {
+          "arabic": "دَخَلَ",
+          "english": "to enter",
+          "id": "30-009"
+        },
+        {
+          "arabic": "ذَكَرَ",
+          "english": "to remember, to mention",
+          "id": "30-010"
+        },
+        {
+          "arabic": "رَزَقَ",
+          "english": "to provide",
+          "id": "30-011"
+        }
+      ]
+    },
+    {
+      "number": 31,
+      "id": "31",
+      "title": "Verbs 3",
+      "words": [
+        {
+          "arabic": "سَجَدَ",
+          "english": "to prostrate",
+          "id": "31-001"
+        },
+        {
+          "arabic": "شَعَرَ",
+          "english": "to perceive",
+          "id": "31-002"
+        },
+        {
+          "arabic": "شَكَرَ",
+          "english": "to be grateful, to give thanks",
+          "id": "31-003"
+        },
+        {
+          "arabic": "صَدَقَ",
+          "english": "to be true, to say the truth",
+          "id": "31-004"
+        },
+        {
+          "arabic": "عَبَدَ",
+          "english": "to worship, to serve",
+          "id": "31-005"
+        },
+        {
+          "arabic": "فَسَقَ",
+          "english": "to transgress",
+          "id": "31-006"
+        },
+        {
+          "arabic": "قَتَلَ",
+          "english": "to kill",
+          "id": "31-007"
+        },
+        {
+          "arabic": "قَعَدَ",
+          "english": "to sit",
+          "id": "31-008"
+        },
+        {
+          "arabic": "كَتَبَ",
+          "english": "to write, to prescribe",
+          "id": "31-009"
+        },
+        {
+          "arabic": "كَفَرَ",
+          "english": "to disbelieve, to be ungrateful",
+          "id": "31-010"
+        },
+        {
+          "arabic": "مَكَرَ",
+          "english": "to plot",
+          "id": "31-011"
+        },
+        {
+          "arabic": "نَظَرَ",
+          "english": "to look, to wait",
+          "id": "31-012"
+        },
+        {
+          "arabic": "ضَرَبَ",
+          "english": "to strike, to set forth",
+          "id": "31-013"
+        },
+        {
+          "arabic": "حَمَلَ",
+          "english": "to carry, to bear",
+          "id": "31-014"
+        },
+        {
+          "arabic": "صَبَرَ",
+          "english": "to be patient",
+          "id": "31-015"
+        },
+        {
+          "arabic": "ظَلَمَ",
+          "english": "to wrong",
+          "id": "31-016"
+        },
+        {
+          "arabic": "عَرَفَ",
+          "english": "to recognize, to know",
+          "id": "31-017"
+        },
+        {
+          "arabic": "عَقَلَ",
+          "english": "to understand, to comprehend",
+          "id": "31-018"
+        },
+        {
+          "arabic": "غَفَرَ",
+          "english": "to forgive",
+          "id": "31-019"
+        },
+        {
+          "arabic": "قَدَرَ",
+          "english": "to decree, to have power",
+          "id": "31-020"
+        },
+        {
+          "arabic": "كَذَبَ",
+          "english": "to lie, to deny",
+          "id": "31-021"
+        },
+        {
+          "arabic": "كَسَبَ",
+          "english": "to earn",
+          "id": "31-022"
+        },
+        {
+          "arabic": "مَلَكَ",
+          "english": "to possess, to have power",
+          "id": "31-023"
+        }
+      ]
+    },
+    {
+      "number": 32,
+      "id": "32",
+      "title": "Verbs 4",
+      "words": [
+        {
+          "arabic": "ضَرَبَ",
+          "english": "to strike, to set forth",
+          "id": "32-001"
+        },
+        {
+          "arabic": "حَمَلَ",
+          "english": "to carry, to bear",
+          "id": "32-002"
+        },
+        {
+          "arabic": "صَبَرَ",
+          "english": "to be patient",
+          "id": "32-003"
+        },
+        {
+          "arabic": "ظَلَمَ",
+          "english": "to wrong",
+          "id": "32-004"
+        },
+        {
+          "arabic": "عَرَفَ",
+          "english": "to recognize, to know",
+          "id": "32-005"
+        },
+        {
+          "arabic": "عَقَلَ",
+          "english": "to understand, to comprehend",
+          "id": "32-006"
+        },
+        {
+          "arabic": "غَفَرَ",
+          "english": "to forgive",
+          "id": "32-007"
+        },
+        {
+          "arabic": "قَدَرَ",
+          "english": "to decree, to have power",
+          "id": "32-008"
+        },
+        {
+          "arabic": "كَذَبَ",
+          "english": "to lie, to deny",
+          "id": "32-009"
+        },
+        {
+          "arabic": "كَسَبَ",
+          "english": "to earn",
+          "id": "32-010"
+        },
+        {
+          "arabic": "مَلَكَ",
+          "english": "to possess, to have power",
+          "id": "32-011"
+        }
+      ]
+    },
+    {
+      "number": 33,
+      "id": "33",
+      "title": "Verbs 5",
+      "words": [
+        {
+          "arabic": "سَمِعَ",
+          "english": "to hear",
+          "id": "33-001"
+        },
+        {
+          "arabic": "حَزِنَ",
+          "english": "to be grieved",
+          "id": "33-002"
+        },
+        {
+          "arabic": "حَسِبَ",
+          "english": "to think, to consider",
+          "id": "33-003"
+        },
+        {
+          "arabic": "حَفِظَ",
+          "english": "to guard, to protect",
+          "id": "33-004"
+        },
+        {
+          "arabic": "خَسِرَ",
+          "english": "to lose",
+          "id": "33-005"
+        },
+        {
+          "arabic": "رَحِمَ",
+          "english": "to have mercy (on)",
+          "id": "33-006"
+        },
+        {
+          "arabic": "شَهِدَ",
+          "english": "to bear witness, to be present, to testify",
+          "id": "33-007"
+        },
+        {
+          "arabic": "عَلِمَ",
+          "english": "to know",
+          "id": "33-008"
+        },
+        {
+          "arabic": "عَمِلَ",
+          "english": "to do, to work",
+          "id": "33-009"
+        },
+        {
+          "arabic": "كَرِهَ",
+          "english": "to dislike, to hate",
+          "id": "33-010"
+        },
+        {
+          "arabic": "بَصُرَ",
+          "english": "to watch, to see",
+          "id": "33-011"
+        }
+      ]
+    },
+    {
+      "number": 34,
+      "id": "34",
+      "title": "Verbs 6 The last two letters of the root -  same",
+      "words": [
+        {
+          "arabic": "حَيَّ",
+          "english": "to live",
+          "id": "34-001"
+        },
+        {
+          "arabic": "رَدَّ",
+          "english": "to return",
+          "id": "34-002"
+        },
+        {
+          "arabic": "صَدَّ",
+          "english": "to turn away, to hinder",
+          "id": "34-003"
+        },
+        {
+          "arabic": "ضَرَّ",
+          "english": "to hurt, to harm",
+          "id": "34-004"
+        },
+        {
+          "arabic": "ضَلَّ",
+          "english": "to go astray, to err, to lose",
+          "id": "34-005"
+        },
+        {
+          "arabic": "ظَنَّ",
+          "english": "to think, to believe",
+          "id": "34-006"
+        },
+        {
+          "arabic": "عَدَّ",
+          "english": "to count",
+          "id": "34-007"
+        },
+        {
+          "arabic": "غَرَّ",
+          "english": "to beguile, to deceive",
+          "id": "34-008"
+        },
+        {
+          "arabic": "مَدَّ",
+          "english": "to spread out, to stretch",
+          "id": "34-009"
+        },
+        {
+          "arabic": "مَسَّ",
+          "english": "to touch",
+          "id": "34-010"
+        },
+        {
+          "arabic": "وَدَّ",
+          "english": "to love, to wish",
+          "id": "34-011"
+        }
+      ]
+    },
+    {
+      "number": 35,
+      "id": "35",
+      "title": "Verbs 7 the first letter of the root is و",
+      "words": [
+        {
+          "arabic": "وَذَرَ",
+          "english": "to leave behind",
+          "id": "35-001"
+        },
+        {
+          "arabic": "وَضَعَ",
+          "english": "to put, to set, to give birth",
+          "id": "35-002"
+        },
+        {
+          "arabic": "وَقَعَ",
+          "english": "to befall, to fall, to fulfil",
+          "id": "35-003"
+        },
+        {
+          "arabic": "وَهَبَ",
+          "english": "to grant, to bestow",
+          "id": "35-004"
+        },
+        {
+          "arabic": "وَجَدَ",
+          "english": "to find",
+          "id": "35-005"
+        },
+        {
+          "arabic": "وَرِثَ",
+          "english": "to inherit",
+          "id": "35-006"
+        },
+        {
+          "arabic": "وَزَرَ",
+          "english": "to bear a load",
+          "id": "35-007"
+        },
+        {
+          "arabic": "وَصَفَ",
+          "english": "to describe, to ascribe, to attribute",
+          "id": "35-008"
+        },
+        {
+          "arabic": "وَعَدَ",
+          "english": "to promise",
+          "id": "35-009"
+        },
+        {
+          "arabic": "وَقَى",
+          "english": "to save, to protect",
+          "id": "35-010"
+        },
+        {
+          "arabic": "وَسِعَ",
+          "english": "to encompass, to comprehend",
+          "id": "35-011"
+        }
+      ]
+    },
+    {
+      "number": 36,
+      "id": "36",
+      "title": "Verbs 8 Second letter of the root is و or ي",
+      "words": [
+        {
+          "arabic": "تَابَ",
+          "english": "to repent",
+          "id": "36-001"
+        },
+        {
+          "arabic": "ذَاقَ",
+          "english": "to taste",
+          "id": "36-002"
+        },
+        {
+          "arabic": "فَازَ",
+          "english": "to succeed, to gain victory",
+          "id": "36-003"
+        },
+        {
+          "arabic": "قَالَ",
+          "english": "to say",
+          "id": "36-004"
+        },
+        {
+          "arabic": "قَامَ",
+          "english": "to stand up, to rise",
+          "id": "36-005"
+        },
+        {
+          "arabic": "كَانَ",
+          "english": "to be",
+          "id": "36-006"
+        },
+        {
+          "arabic": "مَاتَ",
+          "english": "to die",
+          "id": "36-007"
+        },
+        {
+          "arabic": "خَافَ",
+          "english": "to fear, to be afraid",
+          "id": "36-008"
+        },
+        {
+          "arabic": "كَادَ",
+          "english": "to be close to, to almost do",
+          "id": "36-009"
+        },
+        {
+          "arabic": "كَادَ",
+          "english": "to plot against",
+          "id": "36-010"
+        },
+        {
+          "arabic": "زَادَ",
+          "english": "to increase",
+          "id": "36-011"
+        }
+      ]
+    },
+    {
+      "number": 37,
+      "id": "37",
+      "title": "Verbs 9 Last letter of the root is و or ي",
+      "words": [
+        {
+          "arabic": "تَلَا",
+          "english": "to recite",
+          "id": "37-001"
+        },
+        {
+          "arabic": "دَعَا",
+          "english": "to call, to pray",
+          "id": "37-002"
+        },
+        {
+          "arabic": "عَفَا",
+          "english": "to forgive, to excuse, to forgo",
+          "id": "37-003"
+        },
+        {
+          "arabic": "بَغَى",
+          "english": "to seek, to opress",
+          "id": "37-004"
+        },
+        {
+          "arabic": "جَرَى",
+          "english": "to flow",
+          "id": "37-005"
+        },
+        {
+          "arabic": "جَزَى",
+          "english": "to reward",
+          "id": "37-006"
+        },
+        {
+          "arabic": "قَضَى",
+          "english": "to decree, to fulfil, to judge",
+          "id": "37-007"
+        },
+        {
+          "arabic": "كَفَى",
+          "english": "to suffice",
+          "id": "37-008"
+        },
+        {
+          "arabic": "هَدَى",
+          "english": "to guide, to direct",
+          "id": "37-009"
+        },
+        {
+          "arabic": "خَشِىَ",
+          "english": "to fear",
+          "id": "37-010"
+        },
+        {
+          "arabic": "رَضِيَ",
+          "english": "to be satisfied, to be content, to be pleased",
+          "id": "37-011"
+        },
+        {
+          "arabic": "نَسِىَ",
+          "english": "to forget",
+          "id": "37-012"
+        }
+      ]
+    },
+    {
+      "number": 38,
+      "id": "38",
+      "title": "Verbs 10 one of the letters of the root is a hamza",
+      "words": [
+        {
+          "arabic": "سَأَلَ",
+          "english": "to ask",
+          "id": "38-001"
+        },
+        {
+          "arabic": "قَرَأَ",
+          "english": "to read, to recite (ق)",
+          "id": "38-002"
+        },
+        {
+          "arabic": "أَخَذَ",
+          "english": "to take, to catch",
+          "id": "38-003"
+        },
+        {
+          "arabic": "أَكَلَ",
+          "english": "to eat",
+          "id": "38-004"
+        },
+        {
+          "arabic": "أَمَرَ",
+          "english": "to command",
+          "id": "38-005"
+        },
+        {
+          "arabic": "أَمِنَ",
+          "english": "to be safe, to feel safe, to trust",
+          "id": "38-006"
+        },
+        {
+          "arabic": "أَبَى",
+          "english": "to refuse",
+          "id": "38-007"
+        },
+        {
+          "arabic": "رَءَا",
+          "english": "to see",
+          "id": "38-008"
+        },
+        {
+          "arabic": "أَتَى",
+          "english": "to come",
+          "id": "38-009"
+        },
+        {
+          "arabic": "شَآءَ",
+          "english": "to will, to wish",
+          "id": "38-010"
+        },
+        {
+          "arabic": "سَآءَ",
+          "english": "to be evil",
+          "id": "38-011"
+        },
+        {
+          "arabic": "جَآءَ",
+          "english": "to come",
+          "id": "38-012"
+        }
+      ]
+    },
+    {
+      "number": 39,
+      "id": "39",
+      "title": "Verbs 11 Form II part 1",
+      "words": [
+        {
+          "arabic": "بَدَّلَ",
+          "english": "to change",
+          "id": "39-001"
+        },
+        {
+          "arabic": "بَشَّرَ",
+          "english": "to give good news",
+          "id": "39-002"
+        },
+        {
+          "arabic": "بَيَّنَ",
+          "english": "to make clear",
+          "id": "39-003"
+        },
+        {
+          "arabic": "زَيَّنَ",
+          "english": "to adorn, to make something seem fair",
+          "id": "39-004"
+        },
+        {
+          "arabic": "سَبَّحَ",
+          "english": "to glorify, to praise",
+          "id": "39-005"
+        },
+        {
+          "arabic": "سَخَّرَ",
+          "english": "to bring under control",
+          "id": "39-006"
+        },
+        {
+          "arabic": "صَدَّقَ",
+          "english": "to accept as true, to pronounce to be true",
+          "id": "39-007"
+        },
+        {
+          "arabic": "عَذَّبَ",
+          "english": "to punish, to torment",
+          "id": "39-008"
+        },
+        {
+          "arabic": "عَلَّمَ",
+          "english": "to teach",
+          "id": "39-009"
+        },
+        {
+          "arabic": "قَدَّمَ",
+          "english": "to send forward",
+          "id": "39-010"
+        },
+        {
+          "arabic": "كَذَّبَ",
+          "english": "to accuse of falsehood, to deny",
+          "id": "39-011"
+        }
+      ]
+    },
+    {
+      "number": 40,
+      "id": "40",
+      "title": "Verbs 12 Form II part 2 & form III",
+      "words": [
+        {
+          "arabic": "نَبَّأَ",
+          "english": "to declare, to apprise, to inform",
+          "id": "40-001"
+        },
+        {
+          "arabic": "نَزَّلَ",
+          "english": "to send down, to reveal",
+          "id": "40-002"
+        },
+        {
+          "arabic": "نَجَّى",
+          "english": "to deliver, to rescue",
+          "id": "40-003"
+        },
+        {
+          "arabic": "وَلَّى",
+          "english": "to turn",
+          "id": "40-004"
+        },
+        {
+          "arabic": "جَاهَدَ",
+          "english": "to struggle, to strive",
+          "id": "40-005"
+        },
+        {
+          "arabic": "قَاتَلَ",
+          "english": "to fight",
+          "id": "40-006"
+        },
+        {
+          "arabic": "نَادَى",
+          "english": "to call out, to cry unto",
+          "id": "40-007"
+        },
+        {
+          "arabic": "نَافَقَ",
+          "english": "to be hypocritical",
+          "id": "40-008"
+        },
+        {
+          "arabic": "هَاجَرَ",
+          "english": "to migrate",
+          "id": "40-009"
+        }
+      ]
+    },
+    {
+      "number": 41,
+      "id": "41",
+      "title": "Verbs 13 Form IV part 1",
+      "words": [
+        {
+          "arabic": "أَبْصَرَ",
+          "english": "to see, to watch",
+          "id": "41-001"
+        },
+        {
+          "arabic": "أَحْسَنَ",
+          "english": "to do good, to do excellently",
+          "id": "41-002"
+        },
+        {
+          "arabic": "أَخْرَجَ",
+          "english": "to bring forth, to drive out",
+          "id": "41-003"
+        },
+        {
+          "arabic": "أَدْخَلَ",
+          "english": "to admit, to make enter",
+          "id": "41-004"
+        },
+        {
+          "arabic": "أَرْجَعَ",
+          "english": "to send back, to take back",
+          "id": "41-005"
+        },
+        {
+          "arabic": "أَرْسَلَ",
+          "english": "to send",
+          "id": "41-006"
+        },
+        {
+          "arabic": "أَسْرَفَ",
+          "english": "to exceed, to be extravagant",
+          "id": "41-007"
+        },
+        {
+          "arabic": "أَسْلَمَ",
+          "english": "to submit, to surrender",
+          "id": "41-008"
+        },
+        {
+          "arabic": "أَشْرَكَ",
+          "english": "to ascribe a partner",
+          "id": "41-009"
+        },
+        {
+          "arabic": "أَصْبَحَ",
+          "english": "to become",
+          "id": "41-010"
+        },
+        {
+          "arabic": "أَصْلَحَ",
+          "english": "to reform, to improve, to make peace",
+          "id": "41-011"
+        }
+      ]
+    },
+    {
+      "number": 42,
+      "id": "42",
+      "title": "Verbs 14 Form IV part 2",
+      "words": [
+        {
+          "arabic": "أَعْرَضَ",
+          "english": "to turn away",
+          "id": "42-001"
+        },
+        {
+          "arabic": "أَغْرَقَ",
+          "english": "to drown",
+          "id": "42-002"
+        },
+        {
+          "arabic": "أَفْسَدَ",
+          "english": "to spread corruption",
+          "id": "42-003"
+        },
+        {
+          "arabic": "أَفْلَحَ",
+          "english": "to be successful",
+          "id": "42-004"
+        },
+        {
+          "arabic": "أَنْبَتَ",
+          "english": "to make grow",
+          "id": "42-005"
+        },
+        {
+          "arabic": "أَنذَرَ",
+          "english": "to warn",
+          "id": "42-006"
+        },
+        {
+          "arabic": "أَنزَلَ",
+          "english": "to send down, to reveal",
+          "id": "42-007"
+        },
+        {
+          "arabic": "أَنشَأَ",
+          "english": "to produce, to raise",
+          "id": "42-008"
+        },
+        {
+          "arabic": "أَنْعَمَ",
+          "english": "to favor, to bestow grace",
+          "id": "42-009"
+        },
+        {
+          "arabic": "أَنفَقَ",
+          "english": "to spend",
+          "id": "42-010"
+        },
+        {
+          "arabic": "أَنْكَرَ",
+          "english": "to not recognize, to deny",
+          "id": "42-011"
+        },
+        {
+          "arabic": "أَهْلَكَ",
+          "english": "to destroy",
+          "id": "42-012"
+        }
+      ]
+    },
+    {
+      "number": 43,
+      "id": "43",
+      "title": "Verbs 15 Form IV part 3",
+      "words": [
+        {
+          "arabic": "أَتَمَّ",
+          "english": "to complete",
+          "id": "43-001"
+        },
+        {
+          "arabic": "أَحْبَّ",
+          "english": "to love",
+          "id": "43-002"
+        },
+        {
+          "arabic": "أَحَلَّ",
+          "english": "to make lawful, to cause to dwell",
+          "id": "43-003"
+        },
+        {
+          "arabic": "أَسَرَّ",
+          "english": "to conceal, to speak secretly",
+          "id": "43-004"
+        },
+        {
+          "arabic": "أَضَلَّ",
+          "english": "to leave in error, to send astray",
+          "id": "43-005"
+        },
+        {
+          "arabic": "أَعَدَّ",
+          "english": "to prepare",
+          "id": "43-006"
+        },
+        {
+          "arabic": "أَذَاقَ",
+          "english": "to make taste",
+          "id": "43-007"
+        },
+        {
+          "arabic": "أَرَادَ",
+          "english": "to intend, to wish",
+          "id": "43-008"
+        },
+        {
+          "arabic": "أَصَابَ",
+          "english": "to befall, to inflict",
+          "id": "43-009"
+        },
+        {
+          "arabic": "أَطَاعَ",
+          "english": "to obey",
+          "id": "43-010"
+        },
+        {
+          "arabic": "أَقَامَ",
+          "english": "to establish",
+          "id": "43-011"
+        },
+        {
+          "arabic": "أَمَاتَ",
+          "english": "to cause death",
+          "id": "43-012"
+        }
+      ]
+    },
+    {
+      "number": 44,
+      "id": "44",
+      "title": "Verbs 16 Form IV part 4 & verbs starting with آ",
+      "words": [
+        {
+          "arabic": "أَحْيَا",
+          "english": "to give life",
+          "id": "44-001"
+        },
+        {
+          "arabic": "أَخْفِىَ",
+          "english": "to conceal",
+          "id": "44-002"
+        },
+        {
+          "arabic": "أَرَى",
+          "english": "to show",
+          "id": "44-003"
+        },
+        {
+          "arabic": "أَغْنَى",
+          "english": "to enrich, to avail",
+          "id": "44-004"
+        },
+        {
+          "arabic": "أَلْقَى",
+          "english": "to cast, to throw, to place",
+          "id": "44-005"
+        },
+        {
+          "arabic": "أَنجَى",
+          "english": "to rescue, to save, to deliver",
+          "id": "44-006"
+        },
+        {
+          "arabic": "أَوْحَى",
+          "english": "to reveal, to inspire",
+          "id": "44-007"
+        },
+        {
+          "arabic": "أَوْفَى",
+          "english": "to fulfill",
+          "id": "44-008"
+        },
+        {
+          "arabic": "آمَنَ",
+          "english": "to believe",
+          "id": "44-009"
+        },
+        {
+          "arabic": "آتَى",
+          "english": "to give",
+          "id": "44-010"
+        },
+        {
+          "arabic": "آذَى",
+          "english": "to give trouble, to harm, to annoy",
+          "id": "44-011"
+        }
+      ]
+    },
+    {
+      "number": 45,
+      "id": "45",
+      "title": "Verbs 17 Form V & VI",
+      "words": [
+        {
+          "arabic": "تَفَكَّرَ",
+          "english": "to think over, to reflect",
+          "id": "45-001"
+        },
+        {
+          "arabic": "تَذَكَّرَ",
+          "english": "to receive admonition, to remember",
+          "id": "45-002"
+        },
+        {
+          "arabic": "تَوَكَّلَ",
+          "english": "to put trust",
+          "id": "45-003"
+        },
+        {
+          "arabic": "تَبَيَّنَ",
+          "english": "to become clear",
+          "id": "45-004"
+        },
+        {
+          "arabic": "تَرَبَّصَ",
+          "english": "to wait, to await",
+          "id": "45-005"
+        },
+        {
+          "arabic": "تَوَلَّى",
+          "english": "to turn away, to take for friend",
+          "id": "45-006"
+        },
+        {
+          "arabic": "تَوَفَّى",
+          "english": "to make somebody die, to receive in full",
+          "id": "45-007"
+        },
+        {
+          "arabic": "تَبَارَكَ",
+          "english": "to be blessed, to be exalted",
+          "id": "45-008"
+        },
+        {
+          "arabic": "تَسَاءَلَ",
+          "english": "to ask each other",
+          "id": "45-009"
+        }
+      ]
+    },
+    {
+      "number": 46,
+      "id": "46",
+      "title": "Verbs 18 Form VII & VIII",
+      "words": [
+        {
+          "arabic": "اِنْقَلَبَ",
+          "english": "to turn around, to return",
+          "id": "46-001"
+        },
+        {
+          "arabic": "اِخْتَلَفَ",
+          "english": "to differ",
+          "id": "46-002"
+        },
+        {
+          "arabic": "اِتَّبَعَ",
+          "english": "to follow",
+          "id": "46-003"
+        },
+        {
+          "arabic": "اِتَّخَذَ",
+          "english": "to take, to adopt",
+          "id": "46-004"
+        },
+        {
+          "arabic": "اِتَّقَى",
+          "english": "to fear (God), to be on guard",
+          "id": "46-005"
+        },
+        {
+          "arabic": "اِفْتَرَى",
+          "english": "to fabricate (a lie)",
+          "id": "46-006"
+        },
+        {
+          "arabic": "اِهْتَدَى",
+          "english": "to be rightly guided, to find the right path, to follow the right path",
+          "id": "46-007"
+        },
+        {
+          "arabic": "اِبْتَغَى",
+          "english": "to seek",
+          "id": "46-008"
+        },
+        {
+          "arabic": "اِنتَهَى",
+          "english": "to refrain, to end",
+          "id": "46-009"
+        }
+      ]
+    },
+    {
+      "number": 47,
+      "id": "47",
+      "title": "Verbs 19 Form IX & X",
+      "words": [
+        {
+          "arabic": "اِسْوَدَّ",
+          "english": "to become black",
+          "id": "47-001"
+        },
+        {
+          "arabic": "اِبْيَضَّ",
+          "english": "to become white",
+          "id": "47-002"
+        },
+        {
+          "arabic": "اسْتَعْجَلَ",
+          "english": "to seek (somebody) to hasten",
+          "id": "47-003"
+        },
+        {
+          "arabic": "اسْتِغْفَر",
+          "english": "to ask forgiveness",
+          "id": "47-004"
+        },
+        {
+          "arabic": "اِسْتَكْبَرَ",
+          "english": "to act arrogantly",
+          "id": "47-005"
+        },
+        {
+          "arabic": "اِسْتَهْزَأَ",
+          "english": "to mock",
+          "id": "47-006"
+        },
+        {
+          "arabic": "اِسْتَجَابَ",
+          "english": "to respond",
+          "id": "47-007"
+        },
+        {
+          "arabic": "ٱسْتَطَاعَ",
+          "english": "to be able to",
+          "id": "47-008"
+        },
+        {
+          "arabic": "اِسْتَقَامَ",
+          "english": "to be straight, to act straight",
+          "id": "47-009"
+        }
+      ]
+    }
+  ]
+}
