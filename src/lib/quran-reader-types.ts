@@ -9,9 +9,16 @@ export interface ReaderWord {
   p: number;
   ar: TextSegment[];
   en: TextSegment[];
-  /** id of the src/data/quranic-words.json study word this Qur'an word was matched to (by
-   *  lemma/root via the Qur'anic Arabic Corpus morphology data), if any. Used to hide/reveal its
-   *  word-by-word translation based on whether the user has mastered that study word. */
+  /** Unified vocabulary id for this Qur'an word, if one could be resolved (see
+   *  scripts/build-quran-reader-data.js). Either:
+   *   - one of the 547 curated src/data/quranic-words.json study word ids ("01-001"), matched by
+   *     lemma/root/surface text via the Qur'anic Arabic Corpus morphology data, or
+   *   - for a word outside the curriculum, a generated "lem:<lemma>" id (see
+   *     scripts/vocab-word-matcher.js's buildLemmaFallbackTags) shared by every occurrence of
+   *     that same corpus dictionary lemma.
+   *  Used to hide/reveal this word's translation once the user has mastered it (curated ids,
+   *  via FSRS - see getMasteredVocabIds) or manually marked it known (either kind of id - see
+   *  useKnownWordsStore), whichever comes first. */
   v?: string;
 }
 

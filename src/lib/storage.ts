@@ -5,11 +5,13 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import type { KnownWordsMap } from '@/lib/known-words';
 import type { ProgressMap } from '@/lib/levels';
 
 const PROGRESS_KEY = 'quranki:progress:v1';
 const SETTINGS_KEY = 'quranki:settings:v1';
 const META_KEY = 'quranki:meta:v1';
+const KNOWN_WORDS_KEY = 'quranki:known-words:v1';
 
 export interface Settings {
   wordsPerSession: number;
@@ -74,6 +76,20 @@ export function saveMetaAsync(meta: Meta): Promise<void> {
   return AsyncStorage.setItem(META_KEY, JSON.stringify(meta));
 }
 
+export async function loadKnownWordsAsync(): Promise<KnownWordsMap> {
+  const raw = await AsyncStorage.getItem(KNOWN_WORDS_KEY);
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) as KnownWordsMap;
+  } catch {
+    return {};
+  }
+}
+
+export function saveKnownWordsAsync(knownWords: KnownWordsMap): Promise<void> {
+  return AsyncStorage.setItem(KNOWN_WORDS_KEY, JSON.stringify(knownWords));
+}
+
 export async function resetAllAsync(): Promise<void> {
-  await AsyncStorage.multiRemove([PROGRESS_KEY, SETTINGS_KEY, META_KEY]);
+  await AsyncStorage.multiRemove([PROGRESS_KEY, SETTINGS_KEY, META_KEY, KNOWN_WORDS_KEY]);
 }

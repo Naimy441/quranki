@@ -10,7 +10,7 @@ import { WordCell } from '@/components/quran/word-cell';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { buildAyahShareText } from '@/lib/quran-reader';
-import type { ReaderAyah } from '@/lib/quran-reader-types';
+import type { ReaderAyah, ReaderWord } from '@/lib/quran-reader-types';
 
 interface AyahBlockProps {
   ayah: ReaderAyah;
@@ -19,6 +19,8 @@ interface AyahBlockProps {
   arabicSize: number;
   glossSize: number;
   masteredVocabIds: Set<string>;
+  knownWordIds: Set<string>;
+  onLongPressWord?: (word: ReaderWord) => void;
 }
 
 /**
@@ -39,6 +41,8 @@ export const AyahBlock = memo(function AyahBlock({
   arabicSize,
   glossSize,
   masteredVocabIds,
+  knownWordIds,
+  onLongPressWord,
 }: AyahBlockProps) {
   const theme = useTheme();
   const [showFullTranslation, setShowFullTranslation] = useState(false);
@@ -98,6 +102,8 @@ export const AyahBlock = memo(function AyahBlock({
             arabicSize={arabicSize}
             glossSize={glossSize}
             masteredVocabIds={masteredVocabIds}
+            knownWordIds={knownWordIds}
+            onLongPressWord={onLongPressWord}
           />
         ))}
       </View>

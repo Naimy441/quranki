@@ -14,14 +14,24 @@ const { totalWords: TOTAL_QURAN_WORDS, occurrenceCounts } = vocabCoverageData as
 
 export { TOTAL_QURAN_WORDS };
 
-/** How many of the Qur'an's actual words the user would now recognize, given the study words
- *  they've mastered - i.e. real text coverage, not just "N of 547 vocab items". One mastered
- *  word like "the/that" can single-handedly cover thousands of on-screen occurrences, so this
- *  is a very different (and much more telling) number than the vocab-list mastery count. */
-export function countMemorizedQuranWords(masteredVocabIds: Set<string>): number {
+/** How many of the Qur'an's actual words the user would now recognize, given a set of
+ *  recognized vocabulary ids - i.e. real text coverage, not just "N of 547 vocab items". One
+ *  mastered word like "the/that" can single-handedly cover thousands of on-screen occurrences,
+ *  so this is a very different (and much more telling) number than the vocab-list mastery count.
+ *  The caller decides what "recognized" means - the progress screen passes the union of FSRS-
+ *  mastered study words and manually-marked-known words (see useKnownWordsStore), so a word
+ *  outside the 547-word curriculum still counts once the user has marked it known, the same way
+ *  it already does for hiding its translation in the reader. */
+export function countMemorizedQuranWords(recognizedVocabIds: Set<string>): number {
   let count = 0;
-  for (const id of masteredVocabIds) {
+  for (const id of recognizedVocabIds) {
     count += occurrenceCounts[id] ?? 0;
   }
   return count;
+}
+
+/** How many times a single vocabulary id (curated or "lem:...") occurs across the whole Qur'an -
+ *  used to show "appears N times" when the user is deciding whether to mark a word known. */
+export function getWordOccurrenceCount(id: string): number {
+  return occurrenceCounts[id] ?? 0;
 }

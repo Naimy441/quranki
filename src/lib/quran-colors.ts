@@ -1,9 +1,9 @@
 /**
  * Color palettes for the Qur'an reader.
  *
- * Tajweed colors follow the standard scheme popularized by the Qatar/Bahrain "colour-coded"
- * Mushaf (the same rule-to-color mapping used across most tajweed apps), adapted with brighter
- * dark-mode variants for contrast against a near-black background.
+ * Tajweed rule colors: ghunnah orange, ikhfa red, idgham purple, idgham without ghunnah grey,
+ * iqlab blue, qalqalah green. Madd stays in the blue family; silent letters stay grey. Dark-mode
+ * variants are brighter for contrast against a near-black background.
  *
  * Word-by-word gloss colors are a lighter, decorative categorization of the translation's part
  * of speech (`n` noun, `v` verb, `pn` proper noun, `p` particle, `paren` clarifying aside,
@@ -21,15 +21,15 @@ export const TajweedColors: Record<string, SchemeColors> = {
   madda_necessary: { light: '#000EBC', dark: '#5C6DFF' },
   madda_obligatory_mottasel: { light: '#2144C1', dark: '#6079E8' },
   madda_obligatory_monfasel: { light: '#2144C1', dark: '#6079E8' },
-  qalaqah: { light: '#DD0008', dark: '#FF5A5F' },
-  ikhafa: { light: '#9400A8', dark: '#D470E0' },
-  ikhafa_shafawi: { light: '#D500B7', dark: '#F06FDD' },
-  idgham_shafawi: { light: '#58B800', dark: '#7FDB2E' },
-  idgham_ghunnah: { light: '#169777', dark: '#3AC9A8' },
-  idgham_wo_ghunnah: { light: '#169200', dark: '#4FCB1E' },
-  idgham_mutajanisayn: { light: '#A1A1A1', dark: '#B8B8B8' },
-  idgham_mutaqaribayn: { light: '#A1A1A1', dark: '#B8B8B8' },
-  iqlab: { light: '#26BFFD', dark: '#4FCCFF' },
+  qalaqah: { light: '#1B9E4B', dark: '#3DDB70' },
+  ikhafa: { light: '#D61F26', dark: '#FF5A5F' },
+  ikhafa_shafawi: { light: '#D61F26', dark: '#FF5A5F' },
+  idgham_shafawi: { light: '#8B2FC9', dark: '#C77DFF' },
+  idgham_ghunnah: { light: '#8B2FC9', dark: '#C77DFF' },
+  idgham_wo_ghunnah: { light: '#8A8A8A', dark: '#B0B0B0' },
+  idgham_mutajanisayn: { light: '#8A8A8A', dark: '#B0B0B0' },
+  idgham_mutaqaribayn: { light: '#8A8A8A', dark: '#B0B0B0' },
+  iqlab: { light: '#1876D2', dark: '#4EA3F5' },
   ghunnah: { light: '#FF7E1E', dark: '#FF9A47' },
 };
 
@@ -59,6 +59,7 @@ export const TajweedLegend: { label: string; classes: string[] }[] = [
   { label: 'Madd (prolongation)', classes: ['madda_normal', 'madda_permissible'] },
   { label: 'Madd (obligatory / necessary)', classes: ['madda_necessary', 'madda_obligatory_mottasel', 'madda_obligatory_monfasel'] },
   { label: 'Ikhafa (hidden pronunciation)', classes: ['ikhafa', 'ikhafa_shafawi'] },
-  { label: 'Idgham (assimilation)', classes: ['idgham_shafawi', 'idgham_ghunnah', 'idgham_wo_ghunnah', 'idgham_mutajanisayn', 'idgham_mutaqaribayn'] },
+  { label: 'Idgham (assimilation)', classes: ['idgham_shafawi', 'idgham_ghunnah'] },
+  { label: 'Idgham without ghunnah', classes: ['idgham_wo_ghunnah', 'idgham_mutajanisayn', 'idgham_mutaqaribayn'] },
   { label: 'Iqlab (conversion to meem)', classes: ['iqlab'] },
 ];

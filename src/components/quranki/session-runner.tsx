@@ -15,7 +15,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getArabicVoiceAsync, toSpeechText } from '@/lib/arabic-speech';
-import { createNewCard, deserializeCard, previewGrades, type GradeName } from '@/lib/fsrs';
+import { createNewCard, deserializeCard, previewGrades, State, type GradeName } from '@/lib/fsrs';
 import type { SessionWord } from '@/lib/levels';
 import { useProgressStore } from '@/store/progress-store';
 
@@ -50,8 +50,15 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [phase, setPhase] = useState<'review' | 'summary'>(queue.length === 0 ? 'summary' : 'review');
   const [ratingCounts, setRatingCounts] = useState<Record<GradeName, number>>(EMPTY_RATING_COUNTS);
+  // A card graded into Learning/Relearning (rather than graduating to Review) is due again
+  // within minutes, not tomorrow - see ts-fsrs's learning_steps/relearning_steps. Anki resurfaces
+  // such cards later in the very same sitting (its "Learn ahead" limit) instead of only showing
+  // them the next time a session happens to be built, so this session's queue is a growable copy
+  // of the frozen `queue` prop rather than the prop itself, letting handleGrade append a word
+  // back onto the end for a second (or third...) pass this session.
+  const [sessionQueue, setSessionQueue] = useState(() => queue);
 
-  const currentEntry = queue[index];
+  const currentEntry = sessionQueue[index];
   const currentProgress = currentEntry ? progress[currentEntry.word.id] : undefined;
 
   const currentCard = useMemo(() => {
@@ -113,10 +120,18 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
     if (Platform.OS !== 'web') {
       void Haptics.impactAsync(HAPTICS_BY_GRADE[grade]);
     }
-    gradeWord(currentEntry.word.id, grade);
+    const nextCard = gradeWord(currentEntry.word.id, grade);
     setRatingCounts((prev) => ({ ...prev, [grade]: prev[grade] + 1 }));
 
-    if (index + 1 < queue.length) {
+    // Still Learning/Relearning (not yet graduated to Review) means it's due again in minutes -
+    // requeue it at the end of this session, the same "you'll see it again soon" behavior Anki
+    // gives a card that hasn't graduated yet, rather than only showing it next time a session is
+    // built (which, for same-day intervals, could otherwise be tomorrow).
+    const needsRequeue = nextCard.state !== State.Review;
+    const nextLength = sessionQueue.length + (needsRequeue ? 1 : 0);
+    if (needsRequeue) setSessionQueue((prev) => [...prev, currentEntry]);
+
+    if (index + 1 < nextLength) {
       setIndex(index + 1);
       setRevealed(false);
     } else {
@@ -193,9 +208,9 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
           <Pressable onPress={handleClose} hitSlop={12} style={styles.closeButton}>
             <Ionicons name="close" size={24} color={theme.textSecondary} />
           </Pressable>
-          <ProgressBar progress={index / queue.length} color={theme.primary} style={styles.progressBar} />
+          <ProgressBar progress={index / sessionQueue.length} color={theme.primary} style={styles.progressBar} />
           <ThemedText type="small" themeColor="textSecondary" style={styles.progressLabel}>
-            {index + 1}/{queue.length}
+            {index + 1}/{sessionQueue.length}
           </ThemedText>
         </View>
 

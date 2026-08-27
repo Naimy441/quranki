@@ -14,7 +14,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ArabicTextStyle, BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getSurahAyahs, getSurahMeta } from '@/lib/quran-reader';
-import type { ReaderAyah } from '@/lib/quran-reader-types';
+import type { ReaderAyah, ReaderWord } from '@/lib/quran-reader-types';
 
 // Long surahs (Al-Baqarah has 286 ayahs / 6400+ words) are too heavy to mount all at once, but a
 // FlatList/virtualized list re-measures constantly against such wildly variable ayah heights and
@@ -36,6 +36,8 @@ interface SurahPageProps {
   arabicSize: number;
   glossSize: number;
   masteredVocabIds: Set<string>;
+  knownWordIds: Set<string>;
+  onLongPressWord?: (word: ReaderWord) => void;
   /** How many ayahs to render up front. The focused surah gets a full batch; the adjacent
    *  surahs a swipe away only need a handful pre-rendered so the page already has real content
    *  the instant it slides fully into view, without paying to mount an entire long surah for a
@@ -46,7 +48,16 @@ interface SurahPageProps {
 /** One surah's scrollable reading view: Bismillah + title header, then its ayahs, incrementally
  *  rendered. Meant to be mounted three at a time (previous/current/next) side by side so swiping
  *  between chapters is an instant slide instead of an unmount/remount. */
-export function SurahPage({ surahNumber, showTranslation, arabicSize, glossSize, masteredVocabIds, initialBatch }: SurahPageProps) {
+export function SurahPage({
+  surahNumber,
+  showTranslation,
+  arabicSize,
+  glossSize,
+  masteredVocabIds,
+  knownWordIds,
+  onLongPressWord,
+  initialBatch,
+}: SurahPageProps) {
   const meta = getSurahMeta(surahNumber);
   const [visibleCount, setVisibleCount] = useState(initialBatch);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -98,6 +109,8 @@ export function SurahPage({ surahNumber, showTranslation, arabicSize, glossSize,
               arabicSize={arabicSize}
               glossSize={glossSize}
               masteredVocabIds={masteredVocabIds}
+              knownWordIds={knownWordIds}
+              onLongPressWord={onLongPressWord}
             />
           )}
         </View>
@@ -111,6 +124,8 @@ export function SurahPage({ surahNumber, showTranslation, arabicSize, glossSize,
             arabicSize={arabicSize}
             glossSize={glossSize}
             masteredVocabIds={masteredVocabIds}
+            knownWordIds={knownWordIds}
+            onLongPressWord={onLongPressWord}
           />
         ))}
       </View>

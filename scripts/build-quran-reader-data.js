@@ -15,7 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const { buildVocabMatches } = require('./vocab-word-matcher');
+const { buildVocabMatches, buildLemmaFallbackTags, loadMorphologyStems } = require('./vocab-word-matcher');
 
 const ROOT = path.join(__dirname, '..');
 const DATA_DIR = path.join(ROOT, 'src', 'data');
@@ -36,14 +36,13 @@ const TOKEN_RE = /<rule class=(?:"([a-zA-Z_]+)"[^>]*|'([a-zA-Z_]+)'|([a-zA-Z_]+)
 // have no width of their own - they're positioned by the font purely via GPOS mark-to-base
 // attachment onto the glyph before them. The tajweed markup frequently closes/opens a <rule>
 // tag right between a letter and its own trailing mark (e.g. a qalqalah letter tagged alone,
-// with its tanween left outside the tag), which - once each run becomes its own sibling <Text>
-// for coloring - splits the mark from its base letter across two separate rendered text nodes.
-// Android's text shaper then has nothing for the mark to attach to and renders it unattached
-// (typically dropped down near the baseline instead of sitting on the letter); iOS happens to
-// reshape nested Text runs together and isn't affected. Folding any run of pure combining marks
-// into the immediately preceding run - regardless of the two runs' rule classes - keeps every
-// base letter and its diacritics in one Text node so they always shape as intended.
-const COMBINING_MARK_RE = /^[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]+$/;
+// with its tanween left outside the tag, or a madd rule that starts with the previous letter's
+// fatha). Once each run becomes its own sibling <Text> for coloring, that split detaches the
+// mark from its base - and inserting a ZWJ between runs for Android joining makes it worse,
+// because the mark then attaches to the ZWJ. Fold any leading (or entire-run) combining marks
+// into the immediately preceding run, regardless of the two runs' rule classes, so every base
+// letter and its diacritics stay in one Text node.
+const LEADING_COMBINING_MARKS = /^[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]+/;
 
 function parseArabicSegments(raw) {
   const segments = [];
@@ -52,14 +51,18 @@ function parseArabicSegments(raw) {
   TOKEN_RE.lastIndex = 0;
   while ((m = TOKEN_RE.exec(raw))) {
     if (m[4] !== undefined) {
-      const text = m[4];
+      let text = m[4];
       const prev = segments[segments.length - 1];
-      if (prev && COMBINING_MARK_RE.test(text)) {
-        prev.t += text;
-      } else {
-        const cls = stack[stack.length - 1];
-        segments.push(cls ? { t: text, c: cls } : { t: text });
+      if (prev) {
+        const marks = text.match(LEADING_COMBINING_MARKS)?.[0];
+        if (marks) {
+          prev.t += marks;
+          text = text.slice(marks.length);
+        }
       }
+      if (!text) continue;
+      const cls = stack[stack.length - 1];
+      segments.push(cls ? { t: text, c: cls } : { t: text });
     } else if (m[0] === '</rule>') {
       stack.pop();
     } else {
@@ -193,11 +196,29 @@ function main() {
 
   console.log('Matching study words (src/data/quranic-words.json) against every Qur\'an word...');
   const vocabMatches = buildVocabMatches(surfaceByLocation, ayahWordOrder);
+
+  console.log('Grouping remaining words by corpus lemma (for user-marked "known words")...');
+  const stemByLocation = loadMorphologyStems(ayahWordOrder);
+  const lemmaFallbackTags = buildLemmaFallbackTags(stemByLocation, vocabMatches);
+  const lemmaIdCount = new Set(lemmaFallbackTags.values()).size;
+  console.log(
+    `Grouped ${lemmaFallbackTags.size} otherwise-untagged words into ${lemmaIdCount} corpus-lemma ids ` +
+      "outside the curriculum.",
+  );
+
+  // The unified id space every ReaderWord.v draws from: curated study-word ids take priority
+  // (buildVocabMatches already resolved those with the deck's own citation forms), and every
+  // remaining word with a resolvable dictionary lemma gets a generated "lem:<lemma>" id instead
+  // of being left untagged - see buildLemmaFallbackTags's doc comment for why this doesn't
+  // fragment or collide with curated ids.
+  const unifiedTags = new Map(vocabMatches);
+  for (const [loc, id] of lemmaFallbackTags) unifiedTags.set(loc, id);
+
   let taggedCount = 0;
   for (const [surahNumber, ayahs] of ayahsBySurah) {
     for (const ayah of ayahs) {
       for (const word of ayah.w) {
-        const vocabId = vocabMatches.get(`${surahNumber}:${ayah.a}:${word.p}`);
+        const vocabId = unifiedTags.get(`${surahNumber}:${ayah.a}:${word.p}`);
         if (vocabId) {
           word.v = vocabId;
           taggedCount += 1;
@@ -207,15 +228,31 @@ function main() {
     const outPath = path.join(SURAHS_OUT_DIR, `${String(surahNumber).padStart(3, '0')}.json`);
     fs.writeFileSync(outPath, JSON.stringify(ayahs));
   }
-  console.log(`Tagged ${taggedCount} of ${surfaceByLocation.size} Qur'an words with a study word id.`);
+  console.log(`Tagged ${taggedCount} of ${surfaceByLocation.size} Qur'an words with a vocabulary id.`);
 
-  // How many times each study word actually occurs across the whole Qur'an - lets the app show
-  // "X of the Qur'an's Y words are ones you know" (real text coverage) rather than just "X of 547
-  // vocab items mastered" (see src/lib/quran-coverage.ts).
+  // How many times each vocab id (curated study word OR generated lemma id) actually occurs
+  // across the whole Qur'an - lets the app show "X of the Qur'an's Y words are ones you know"
+  // (real text coverage) rather than just "X of 547 vocab items mastered" (see
+  // src/lib/quran-coverage.ts), and lets the reader show "appears N times" when a user marks an
+  // arbitrary word as known.
   const occurrenceCounts = {};
-  for (const vocabId of vocabMatches.values()) {
+  for (const vocabId of unifiedTags.values()) {
     occurrenceCounts[vocabId] = (occurrenceCounts[vocabId] ?? 0) + 1;
   }
+
+  // The 4 Bismillah words are also rendered a second way: BismillahHeader repeats the exact same
+  // 4 tagged words (see `bismillahWords` above) as a decorative header before ayah 1 of every
+  // surah with `bismillah_pre: true` (112 of the 114 - all but Al-Fatihah, where it already *is*
+  // ayah 1, and At-Tawbah, which has none). Marking one of those words "known" hides it in every
+  // one of those headers too, so its on-screen occurrence count should include them - otherwise
+  // e.g. "بِسْمِ" ("name", id 23-010) would show a misleadingly small 39 (just its real-ayah
+  // occurrences) despite visually appearing 151 times across the app.
+  const bismillahHeaderCount = surahIndex.filter((s) => s.b).length;
+  for (const word of bismillahWords ?? []) {
+    if (!word.v) continue;
+    occurrenceCounts[word.v] = (occurrenceCounts[word.v] ?? 0) + bismillahHeaderCount;
+  }
+
   const vocabCoverage = { totalWords: surfaceByLocation.size, occurrenceCounts };
   fs.writeFileSync(path.join(OUT_DIR, 'vocab-coverage.json'), JSON.stringify(vocabCoverage));
 

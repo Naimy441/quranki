@@ -10,6 +10,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { getAllLevelStatuses, getMasteredVocabIds, totalMasteredWords, WORD_COUNT } from '@/lib/levels';
 import { countMemorizedQuranWords, TOTAL_QURAN_WORDS } from '@/lib/quran-coverage';
 import { computeStreak, formatCount } from '@/lib/stats';
+import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 
 export default function ProgressScreen() {
@@ -17,6 +18,7 @@ export default function ProgressScreen() {
   const progress = useProgressStore((state) => state.progress);
   const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
   const reviewDates = useProgressStore((state) => state.reviewDates);
+  const knownWords = useKnownWordsStore((state) => state.knownWords);
 
   const now = new Date();
   const statuses = getAllLevelStatuses(progress, now);
@@ -26,8 +28,16 @@ export default function ProgressScreen() {
   // "Overall memorization" is real Qur'an text coverage, not just "N of 547 vocab items": one
   // mastered word like "the/that" can single-handedly cover thousands of on-screen occurrences,
   // so this is a very different (and much more telling) number than the vocab-list stat above.
-  const masteredVocabIds = useMemo(() => getMasteredVocabIds(progress), [progress]);
-  const memorizedQuranWords = useMemo(() => countMemorizedQuranWords(masteredVocabIds), [masteredVocabIds]);
+  // Unioned with manually-marked-known word ids (see useKnownWordsStore) so a word the user
+  // already recognized outside the 547-word curriculum - which has no FSRS review of its own to
+  // "master" - still counts toward real text coverage here, the same way it already does for
+  // hiding its translation in the reader.
+  const recognizedVocabIds = useMemo(() => {
+    const ids = getMasteredVocabIds(progress);
+    for (const id of Object.keys(knownWords)) ids.add(id);
+    return ids;
+  }, [progress, knownWords]);
+  const memorizedQuranWords = useMemo(() => countMemorizedQuranWords(recognizedVocabIds), [recognizedVocabIds]);
   const overallProgress = TOTAL_QURAN_WORDS === 0 ? 0 : memorizedQuranWords / TOTAL_QURAN_WORDS;
 
   return (

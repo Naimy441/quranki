@@ -1,12 +1,18 @@
-import { Alert, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, SegmentedButtons } from 'react-native-paper';
 
 import { WordsPerSessionPicker } from '@/components/quranki/words-per-session-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { ArabicTextStyle, BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { isCuratedWordId } from '@/lib/known-words';
+import { getWord } from '@/lib/levels';
+import { getWordOccurrenceCount } from '@/lib/quran-coverage';
+import { formatCount } from '@/lib/stats';
+import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 
 function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -27,6 +33,26 @@ export default function SettingsScreen() {
   const updateSettings = useProgressStore((state) => state.updateSettings);
   const resetProgress = useProgressStore((state) => state.resetProgress);
   const masterAllWords = useProgressStore((state) => state.masterAllWords);
+  const knownWords = useKnownWordsStore((state) => state.knownWords);
+  const unmarkKnown = useKnownWordsStore((state) => state.unmarkKnown);
+  const clearAllKnown = useKnownWordsStore((state) => state.clearAllKnown);
+
+  const knownEntries = Object.entries(knownWords).sort((a, b) => b[1].addedAt.localeCompare(a[1].addedAt));
+
+  const handleClearKnown = () => {
+    if (Platform.OS === 'web') {
+      clearAllKnown();
+      return;
+    }
+    Alert.alert(
+      'Clear all known words?',
+      'This un-hides every word you\u2019ve manually marked as known in the Qur\u2019an reader. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Clear', style: 'destructive', onPress: () => clearAllKnown() },
+      ],
+    );
+  };
 
   const handleReset = () => {
     if (Platform.OS === 'web') {
@@ -73,6 +99,47 @@ export default function SettingsScreen() {
                 { value: 'dark', label: 'Dark' },
               ]}
             />
+          </SettingsSection>
+
+          <SettingsSection title="Known words">
+            <ThemedText type="small" themeColor="textSecondary" style={styles.description}>
+              Long-press any word in the Qur&apos;an reader to mark it as already known (or forget
+              it again) - its translation stays hidden everywhere that word appears, even if it
+              isn&apos;t part of the 547-word curriculum.
+            </ThemedText>
+            {knownEntries.length === 0 ? (
+              <ThemedText type="small" themeColor="textMuted">
+                None yet.
+              </ThemedText>
+            ) : (
+              <View style={styles.knownList}>
+                {knownEntries.map(([id, entry]) => {
+                  const studyWord = isCuratedWordId(id) ? getWord(id) : undefined;
+                  const label = studyWord?.arabic ?? entry.sampleArabic;
+                  const sub = studyWord
+                    ? studyWord.english
+                    : `${formatCount(getWordOccurrenceCount(id))} occurrences`;
+                  return (
+                    <View key={id} style={[styles.knownRow, { borderColor: theme.border }]}>
+                      <View style={styles.knownTextCol}>
+                        <ThemedText style={ArabicTextStyle}>{label}</ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {sub}
+                        </ThemedText>
+                      </View>
+                      <Pressable onPress={() => unmarkKnown(id)} hitSlop={10}>
+                        <Ionicons name="close-circle" size={20} color={theme.textMuted} />
+                      </Pressable>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+            {knownEntries.length > 0 && (
+              <Button mode="outlined" textColor={theme.danger} onPress={handleClearKnown}>
+                Clear all known words
+              </Button>
+            )}
           </SettingsSection>
 
           <SettingsSection title="Pronunciation">
@@ -152,6 +219,20 @@ const styles = StyleSheet.create({
   },
   description: {
     lineHeight: 18,
+  },
+  knownList: {
+    gap: Spacing.two,
+  },
+  knownRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.two,
+    borderTopWidth: 1,
+  },
+  knownTextCol: {
+    flex: 1,
+    gap: 2,
   },
   footer: {
     textAlign: 'center',

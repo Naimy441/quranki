@@ -19,6 +19,12 @@ export interface WordProgress {
   card: SerializedCard;
   lastGrade: GradeName | null;
   reviewedAt: string;
+  /** True only when this progress entry was fabricated by marking the word "known" in the
+   *  Qur'an reader (see useKnownWordsStore), rather than earned through a real flashcard review.
+   *  Lets "forget this word" safely undo *only* that fabricated mastery - a real review always
+   *  writes a fresh entry without this flag, so genuine progress is never at risk of being wiped
+   *  by an unrelated "forget" action. */
+  autoMastered?: boolean;
 }
 
 export type ProgressMap = Record<string, WordProgress>;

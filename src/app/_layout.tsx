@@ -8,6 +8,7 @@ import { PaperProvider } from 'react-native-paper';
 import { PaperDarkTheme, PaperLightTheme } from '@/constants/paper-theme';
 import { ArabicFont } from '@/constants/theme';
 import { useAppColorScheme } from '@/hooks/use-theme';
+import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 
 SplashScreen.preventAutoHideAsync();
@@ -16,19 +17,22 @@ export default function RootLayout() {
   const scheme = useAppColorScheme();
   const hydrate = useProgressStore((state) => state.hydrate);
   const hydrated = useProgressStore((state) => state.hydrated);
+  const hydrateKnownWords = useKnownWordsStore((state) => state.hydrate);
+  const knownWordsHydrated = useKnownWordsStore((state) => state.hydrated);
   const [fontsLoaded] = useFonts({ [ArabicFont]: require('@/assets/fonts/UthmanicHafs1Ver18.ttf') });
 
   useEffect(() => {
     void hydrate();
-  }, [hydrate]);
+    void hydrateKnownWords();
+  }, [hydrate, hydrateKnownWords]);
 
   useEffect(() => {
-    if (fontsLoaded && hydrated) {
+    if (fontsLoaded && hydrated && knownWordsHydrated) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, hydrated]);
+  }, [fontsLoaded, hydrated, knownWordsHydrated]);
 
-  if (!fontsLoaded || !hydrated) {
+  if (!fontsLoaded || !hydrated || !knownWordsHydrated) {
     return null;
   }
 
