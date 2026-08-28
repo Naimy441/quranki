@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { FootnoteSheet } from '@/components/quran/footnote-sheet';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { hapticSelection } from '@/lib/haptics';
 import type { TranslationPart } from '@/lib/quran-reader-types';
 
 interface AyahTranslationProps {
@@ -47,7 +48,10 @@ export function AyahTranslation({ parts, fontSize }: AyahTranslationProps) {
           token.footnote ? (
             <Pressable
               key={token.key}
-              onPress={() => setActiveFootnote(token.footnote!)}
+              onPress={() => {
+                hapticSelection();
+                setActiveFootnote(token.footnote!);
+              }}
               hitSlop={8}
               style={({ pressed }) => pressed && styles.pressed}>
               <Text style={[styles.word, styles.footnote, { color: theme.primary, fontSize: fontSize * 0.85 }]}>

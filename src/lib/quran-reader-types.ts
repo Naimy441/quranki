@@ -16,9 +16,9 @@ export interface ReaderWord {
    *   - for a word outside the curriculum, a generated "lem:<lemma>" id (see
    *     scripts/vocab-word-matcher.js's buildLemmaFallbackTags) shared by every occurrence of
    *     that same corpus dictionary lemma.
-   *  Used to hide/reveal this word's translation once the user has mastered it (curated ids,
-   *  via FSRS - see getMasteredVocabIds) or manually marked it known (either kind of id - see
-   *  useKnownWordsStore), whichever comes first. */
+   *  Used to hide/reveal this word's translation once the user is supposed to know it (curated
+   *  ids in FSRS Review/Learning - see getHiddenVocabIds) or has manually marked it known (either
+   *  kind of id - see useKnownWordsStore), whichever comes first. */
   v?: string;
 }
 

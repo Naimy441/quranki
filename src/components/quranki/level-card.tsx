@@ -6,55 +6,61 @@ import { ProgressRing } from '@/components/quranki/progress-ring';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { LevelStatus } from '@/lib/levels';
+import { hapticSelection } from '@/lib/haptics';
+import { getCoverageThroughLevel, type LevelStatus } from '@/lib/levels';
+import { formatCount } from '@/lib/stats';
 
 interface LevelCardProps {
   status: LevelStatus;
-  isUnlocked: boolean;
+  /** True for the level sequential new-card introduction is currently drawing from. */
   isCurrent: boolean;
 }
 
-export function LevelCard({ status, isUnlocked, isCurrent }: LevelCardProps) {
+export function LevelCard({ status, isCurrent }: LevelCardProps) {
   const theme = useTheme();
-  const { level, masteredCount, totalCount, dueCount } = status;
+  const { level, masteredCount, totalCount, dueCount, newCount } = status;
   const progress = totalCount === 0 ? 0 : masteredCount / totalCount;
+  const introduced = totalCount - newCount;
+  const coverage = getCoverageThroughLevel(level.number);
 
   return (
     <Pressable
-      disabled={!isUnlocked}
-      onPress={() => router.push(`/level/${level.number}`)}
+      onPress={() => {
+        hapticSelection();
+        router.push(`/level/${level.number}`);
+      }}
       style={({ pressed }) => [
         styles.card,
         { backgroundColor: theme.card, borderColor: isCurrent ? theme.primary : theme.border },
-        pressed && isUnlocked && styles.pressed,
-        !isUnlocked && styles.locked,
+        pressed && styles.pressed,
       ]}>
       <ProgressRing progress={progress} color={theme.primary} trackColor={theme.backgroundElement} size={52} strokeWidth={4}>
-        {isUnlocked ? (
-          <ThemedText type="smallBold">{level.number}</ThemedText>
-        ) : (
-          <Ionicons name="lock-closed" size={16} color={theme.textMuted} />
-        )}
+        <ThemedText type="smallBold">{level.number}</ThemedText>
       </ProgressRing>
 
       <View style={styles.info}>
-        <ThemedText type="smallBold" numberOfLines={1}>
+        <ThemedText type="smallBold" numberOfLines={2}>
           {level.title}
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {isUnlocked ? `${masteredCount}/${totalCount} mastered` : `${totalCount} words - locked`}
+          {introduced === 0
+            ? `${totalCount} words - not yet introduced`
+            : `${masteredCount}/${totalCount} mastered`}
+        </ThemedText>
+        <ThemedText type="small" themeColor="textMuted">
+          {coverage.percent}% · {formatCount(coverage.quranWords)} words
         </ThemedText>
       </View>
 
-      {isUnlocked && dueCount > 0 ? (
+      {dueCount > 0 ? (
         <View style={[styles.badge, { backgroundColor: theme.primary }]}>
           <ThemedText type="small" themeColor="onPrimary" style={styles.badgeText}>
             {dueCount}
           </ThemedText>
         </View>
-      ) : isUnlocked ? (
+      ) : (
         <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
-      ) : null}
+      )}
     </Pressable>
   );
 }
@@ -70,9 +76,6 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.75,
-  },
-  locked: {
-    opacity: 0.55,
   },
   info: {
     flex: 1,

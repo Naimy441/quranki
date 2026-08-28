@@ -19,9 +19,26 @@ export interface Settings {
   themePreference: 'system' | 'light' | 'dark';
 }
 
+/** Inclusive bounds for the Settings "new words per session" slider. */
+export const WORDS_PER_SESSION_MIN = 3;
+export const WORDS_PER_SESSION_MAX = 30;
+
+export function clampWordsPerSession(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_SETTINGS.wordsPerSession;
+  return Math.min(WORDS_PER_SESSION_MAX, Math.max(WORDS_PER_SESSION_MIN, Math.round(value)));
+}
+
 export interface Meta {
   maxUnlockedLevel: number;
   reviewDates: string[];
+  /** Calendar day (`YYYY-MM-DD`) that `reviewsToday` was last incremented. */
+  reviewCountDate: string;
+  /** How many Review-state cards have been graded on `reviewCountDate`. Caps the daily review
+   *  queue at DAILY_REVIEW_LIMIT without touching new-word introductions. */
+  reviewsToday: number;
+  /** True once the first-launch explainer has been finished. Absent on older installs - hydrate
+   *  infers it from existing progress so an update doesn't replay onboarding for current users. */
+  onboardingCompleted?: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -33,6 +50,8 @@ export const DEFAULT_SETTINGS: Settings = {
 export const DEFAULT_META: Meta = {
   maxUnlockedLevel: 1,
   reviewDates: [],
+  reviewCountDate: '',
+  reviewsToday: 0,
 };
 
 function safeParse<T>(raw: string | null, fallback: T): T {
@@ -60,7 +79,8 @@ export function saveProgressAsync(progress: ProgressMap): Promise<void> {
 
 export async function loadSettingsAsync(): Promise<Settings> {
   const raw = await AsyncStorage.getItem(SETTINGS_KEY);
-  return safeParse(raw, DEFAULT_SETTINGS);
+  const settings = safeParse(raw, DEFAULT_SETTINGS);
+  return { ...settings, wordsPerSession: clampWordsPerSession(settings.wordsPerSession) };
 }
 
 export function saveSettingsAsync(settings: Settings): Promise<void> {

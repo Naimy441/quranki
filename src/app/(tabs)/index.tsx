@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { SectionList, StyleSheet, View } from 'react-native';
 import { Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,46 +9,61 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { buildGlobalSessionQueue, getAllLevelStatuses, totalMasteredWords, WORD_COUNT } from '@/lib/levels';
+import { hapticMedium } from '@/lib/haptics';
+import { buildGlobalSessionQueue, getAllLevelStatuses, getIntroductionFrontier, LEVEL_COUNT, THEMATIC_LEVEL_COUNT, totalMasteredWords, WORD_COUNT } from '@/lib/levels';
 import { computeStreak } from '@/lib/stats';
-import { useProgressStore } from '@/store/progress-store';
+import { reviewsCompletedToday, useProgressStore } from '@/store/progress-store';
 
 export default function LearnScreen() {
   const theme = useTheme();
   const progress = useProgressStore((state) => state.progress);
   const wordsPerSession = useProgressStore((state) => state.settings.wordsPerSession);
+  const reviewsToday = useProgressStore((state) => state.reviewsToday);
+  const reviewCountDate = useProgressStore((state) => state.reviewCountDate);
   const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
   const reviewDates = useProgressStore((state) => state.reviewDates);
   const hydrated = useProgressStore((state) => state.hydrated);
 
   const now = new Date();
   const statuses = getAllLevelStatuses(progress, now);
-  const todaySession = buildGlobalSessionQueue(progress, now, wordsPerSession, maxUnlockedLevel);
+  const todaySession = buildGlobalSessionQueue(
+    progress,
+    now,
+    wordsPerSession,
+    reviewsCompletedToday(reviewCountDate, reviewsToday, now),
+  );
   const dueCount = todaySession.filter((entry) => entry.reason === 'due').length;
   const newCount = todaySession.filter((entry) => entry.reason === 'new').length;
   const mastered = totalMasteredWords(progress, now);
   const streak = computeStreak(reviewDates, now);
+  const frontier = getIntroductionFrontier(progress);
+  const sections = [
+    { key: 'thematic', title: null as string | null, subtitle: null as string | null, data: statuses.slice(0, THEMATIC_LEVEL_COUNT) },
+    {
+      key: 'frequency',
+      title: 'By frequency',
+      subtitle: 'How often each word appears in the Qur’an',
+      data: statuses.slice(THEMATIC_LEVEL_COUNT),
+    },
+  ];
 
   if (!hydrated) {
     return <ThemedView style={styles.flex} />;
   }
 
   return (
-    <ThemedView style={styles.flex}>
-      <SafeAreaView style={styles.flex} edges={['top']}>
-        <FlatList
-          data={statuses}
+    <ThemedView style={styles.flex} collapsable={false}>
+      <SafeAreaView style={styles.flex} edges={['top']} collapsable={false}>
+        <SectionList
+          sections={sections}
           keyExtractor={(item) => item.level.id}
           contentContainerStyle={[styles.listContent, { paddingBottom: BottomTabInset + Spacing.four }]}
           style={styles.list}
+          stickySectionHeadersEnabled={false}
           ListHeaderComponent={
             <View style={styles.header}>
-              <ThemedText type="title" style={styles.title}>
-                Quranki
-              </ThemedText>
-              <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-                {WORD_COUNT} Quranic words, 47 levels, at your own pace.
-              </ThemedText>
+
+
 
               <View style={[styles.heroCard, { backgroundColor: theme.primary }]}>
                 <View style={styles.heroTextBlock}>
@@ -75,7 +90,10 @@ export default function LearnScreen() {
                     contentStyle={styles.heroButtonContent}
                     buttonColor={theme.onPrimary}
                     textColor={theme.primary}
-                    onPress={() => router.push('/session/review')}>
+                    onPress={() => {
+                      hapticMedium();
+                      router.push('/session/review');
+                    }}>
                     Start
                   </Button>
                 )}
@@ -84,23 +102,32 @@ export default function LearnScreen() {
               <View style={styles.statsRow}>
                 <StatCard icon="checkmark-done" label="Mastered" value={`${mastered}/${WORD_COUNT}`} />
                 <StatCard icon="flame" label="Day streak" value={String(streak)} />
-                <StatCard icon="albums" label="Level" value={`${maxUnlockedLevel}/47`} />
+                <StatCard icon="albums" label="Level" value={`${maxUnlockedLevel}/${LEVEL_COUNT}`} />
               </View>
 
               <View style={styles.sectionHeaderRow}>
                 <ThemedText type="smallBold">Levels</ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  Tap to practice one directly
-                </ThemedText>
               </View>
             </View>
+          }
+          renderSectionHeader={({ section }) =>
+            section.title ? (
+              <View style={styles.dividerBlock}>
+                <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+                <ThemedText type="smallBold">{section.title}</ThemedText>
+                {section.subtitle ? (
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {section.subtitle}
+                  </ThemedText>
+                ) : null}
+              </View>
+            ) : null
           }
           renderItem={({ item }) => (
             <View style={styles.cardWrap}>
               <LevelCard
                 status={item}
-                isUnlocked={item.level.number <= maxUnlockedLevel}
-                isCurrent={item.level.number === maxUnlockedLevel}
+                isCurrent={item.level.number === frontier}
               />
             </View>
           )}
@@ -177,6 +204,15 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
   },
   cardWrap: {
+    marginBottom: Spacing.two,
+  },
+  dividerBlock: {
+    gap: Spacing.one,
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.three,
+  },
+  dividerLine: {
+    height: 1,
     marginBottom: Spacing.two,
   },
 });

@@ -3,13 +3,12 @@
    Compiler, which doesn't know about Reanimated) can't tell that apart from mutating real
    React state. */
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useLayoutEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ReaderSettingsSheet } from '@/components/quran/reader-settings-sheet';
 import { SurahPage } from '@/components/quran/surah-page';
@@ -17,8 +16,9 @@ import { WordDetailSheet } from '@/components/quran/word-detail-sheet';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { hapticLight, hapticSelection } from '@/lib/haptics';
 import { getKnownWordIds } from '@/lib/known-words';
-import { getLevelForWord, getMasteredVocabIds } from '@/lib/levels';
+import { getHiddenVocabIds, getLevelForWord, getMasteredVocabIds } from '@/lib/levels';
 import { getSurahMeta, SURAH_COUNT } from '@/lib/quran-reader';
 import type { ReaderWord } from '@/lib/quran-reader-types';
 import { useKnownWordsStore } from '@/store/known-words-store';
@@ -26,8 +26,8 @@ import { useProgressStore } from '@/store/progress-store';
 
 const ARABIC_SIZE_RANGE = { min: 18, max: 38, step: 4 };
 const GLOSS_SIZE_RANGE = { min: 11, max: 19, step: 2 };
-const DEFAULT_ARABIC_SIZE = 26;
-const DEFAULT_GLOSS_SIZE = 13;
+const DEFAULT_ARABIC_SIZE = 30;
+const DEFAULT_GLOSS_SIZE = 15;
 
 const ACTIVE_INITIAL_BATCH = 12;
 // The neighboring surahs a swipe away only need a handful of ayahs pre-rendered so they already
@@ -61,6 +61,7 @@ export default function SurahReaderScreen() {
   if (paramSurah !== active) setActive(paramSurah);
 
   const progress = useProgressStore((s) => s.progress);
+  const hiddenVocabIds = useMemo(() => getHiddenVocabIds(progress), [progress]);
   const masteredVocabIds = useMemo(() => getMasteredVocabIds(progress), [progress]);
   const knownWords = useKnownWordsStore((s) => s.knownWords);
   const markKnown = useKnownWordsStore((s) => s.markKnown);
@@ -134,12 +135,12 @@ export default function SurahReaderScreen() {
         (event.translationX <= -screenWidth * COMMIT_DISTANCE_FRACTION || event.velocityX <= -COMMIT_VELOCITY_THRESHOLD);
 
       if (goingNext) {
-        runOnJS(Haptics.selectionAsync)();
+        runOnJS(hapticSelection)();
         translateX.value = withTiming(base + screenWidth, { duration: SWIPE_ANIMATION_MS }, (finished) => {
           if (finished) runOnJS(commitShift)(1);
         });
       } else if (goingPrev) {
-        runOnJS(Haptics.selectionAsync)();
+        runOnJS(hapticSelection)();
         translateX.value = withTiming(base - screenWidth, { duration: SWIPE_ANIMATION_MS }, (finished) => {
           if (finished) runOnJS(commitShift)(-1);
         });
@@ -161,7 +162,13 @@ export default function SurahReaderScreen() {
           title: meta.tr,
           headerBackTitle: "Qur'an",
           headerRight: () => (
-            <Pressable onPress={() => setSettingsVisible(true)} hitSlop={10} style={styles.headerButton}>
+            <Pressable
+              onPress={() => {
+                hapticLight();
+                setSettingsVisible(true);
+              }}
+              hitSlop={10}
+              style={styles.headerButton}>
               <Ionicons name="settings-outline" size={22} color={theme.text} />
             </Pressable>
           ),
@@ -181,7 +188,7 @@ export default function SurahReaderScreen() {
                     showTranslation={showTranslation}
                     arabicSize={arabicSize}
                     glossSize={glossSize}
-                    masteredVocabIds={masteredVocabIds}
+                    hiddenVocabIds={hiddenVocabIds}
                     knownWordIds={knownWordIds}
                     onLongPressWord={setSelectedWord}
                     initialBatch={surahNumber === active ? ACTIVE_INITIAL_BATCH : PEEK_INITIAL_BATCH}

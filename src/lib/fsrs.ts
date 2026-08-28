@@ -111,6 +111,13 @@ export function formatInterval(ms: number): string {
   return `${Math.round(years * 10) / 10}y`;
 }
 
+/** Hide this word's gloss in the reader while the learner is still supposed to know it:
+ *  Review (including Hard - still a review card) or Learning (working through 1m/10m). New
+ *  cards and Relearning (just lapsed with Again) stay visible. */
+export function shouldHideInReader(card: Card): boolean {
+  return card.state === State.Review || card.state === State.Learning;
+}
+
 /** A word is considered "at least good" once it has graduated to Review state on a Good/Easy rating. */
 export function isWordMastered(card: Card, lastGrade: GradeName | null): boolean {
   return card.state === State.Review && (lastGrade === 'good' || lastGrade === 'easy');

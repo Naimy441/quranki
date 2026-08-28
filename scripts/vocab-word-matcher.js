@@ -1,5 +1,5 @@
 /**
- * Matches Quranki's 547 study words/phrases (src/data/quranic-words.json) against every word of
+ * Matches Quranki's study words/phrases (src/data/quranic-words.json) against every word of
  * the Qur'an, so the reader can know which on-screen words the user has already studied - and
  * later, whether they've mastered them - in order to hide/reveal their word-by-word translation.
  *
@@ -65,6 +65,65 @@ const MORPHOLOGY_PATH = path.join(__dirname, 'data', 'quran-morphology.txt');
 
 const ALEF_FAMILY = '\u0627\u0622\u0623\u0625\u0671';
 
+/** Study words that share citation text but are different vocabulary. The Qur'anic Arabic Corpus
+ *  tags each occurrence with a feature the deck's own English glosses map onto - without this,
+ *  the earlier card swallows every spelling-identical hit (or a shadda-only surface like 2:29's
+ *  "مَّا" "what" is left untagged because loose matching refuses to pick a winner). */
+const FEATURE_SENSE = {
+  '02-006': (stem) => hasFeat(stem, 'NEG'), // مَا "not"
+  '06-001': (stem) =>
+    hasFeat(stem, 'REL') || hasFeat(stem, 'INTG') || hasFeat(stem, 'COND') || hasFeat(stem, 'SUP'), // مَا "what / that which"
+  '08-011': (stem) => hasFeat(stem, 'PREV'), // مَا ... إِلَّا "nothing but"
+  // Independent pronouns whose citation forms collide once the final vowel (identity here, not
+  // i'rāb) is stripped: أَنْتَ / أَنْتِ both become أَنت. The corpus has no LEM on these, so
+  // lemma matching cannot split them either.
+  '04-003': (stem) => hasFeat(stem, 'PRON') && hasFeat(stem, '2MS'),
+  '04-004': (stem) => hasFeat(stem, 'PRON') && hasFeat(stem, '2FS'),
+};
+
+/** Independent personal pronouns in the corpus are tagged PRON + person, with no LEM - so the
+ *  usual lemma/surface pipeline misses spelling variants (mushaf أَنتَ vs deck أَنْتَ) and
+ *  case-vowel shifts (هُمْ / هِمْ). Map leftover untagged stems onto the Level 4 cards. */
+const INDEPENDENT_PRONOUN_BY_PERSON = {
+  '1S': '04-005',
+  '1P': '04-010',
+  '2MS': '04-003',
+  '2FS': '04-004',
+  '2MP': '04-008',
+  '2FP': '04-009',
+  '2D': '04-012',
+  '3MS': '04-001',
+  '3FS': '04-002',
+  '3MP': '04-006',
+  '3FP': '04-007',
+  '3D': '04-011',
+};
+
+/** One-letter prepositions the mushaf fuses onto a pronoun (بِهِ, لَكُمْ, كَهَا). They never
+ *  appear as their own word, so surface matching finds nothing for the Level 10 cards; the
+ *  pronoun half is a clitic, not independent هو. Tag the whole fused word as the preposition. */
+const PREP_PREFIX_BY_LEMMA = {
+  ب: '10-001',
+  ل: '10-005',
+  ك: '10-004',
+};
+
+function hasFeat(stem, tag) {
+  return (stem?.feats ?? []).includes(tag);
+}
+
+function senseFilter(form, loc, stemByLocation) {
+  const test = FEATURE_SENSE[form.id];
+  if (!test) return true;
+  const stem = stemByLocation.get(loc);
+  return stem != null && test(stem);
+}
+
+function ownersHaveSenses(owners) {
+  const ids = [...new Set(owners.map((owner) => owner.id))];
+  return ids.length > 1 && ids.every((id) => FEATURE_SENSE[id]);
+}
+
 /** Removes an elidable hamzat-waṣl's contextual vowel (see the module doc comment). Only a
  *  leading bare alef (ا) or hamzat waṣl (ٱ) qualifies: the study deck writes form-VII/VIII/X
  *  verbs as "اِهْتَدَى" rather than with ٱ, so both shapes need the same treatment. Alef-with-
@@ -74,12 +133,15 @@ function stripInitialWaslVowel(text) {
   return text.replace(/^([\u0627\u0671])[\u064b-\u0652]+/, '$1');
 }
 
-/** Removes a trailing case vowel/tanween/sukun (i'rāb) - the very last character, and only if
- *  it's one of those marks. Deliberately excludes shadda (\u0651, gemination - part of a word's
- *  root pattern, not a case ending): a word ending "consonant+shadda+case-vowel" (e.g. "رَبِّ")
- *  should end up as "consonant+shadda" (e.g. "رَبّ"), matching how the corpus's lemma writes it. */
+/** Removes a trailing case vowel/tanween/sukun (i'rāb). Accusative tanween is written as
+ *  fathatan plus a carrying alef (نَارًا "a fire") - that alef is not part of the word, so both
+ *  marks go. Remaining tanween (هُدًى, كِتَابٍ) is always grammatical, never part of identity.
+ *  Excludes shadda (\u0651): "رَبِّ" should stay "رَبّ", matching the corpus lemma. */
 function stripFinalCaseVowel(text) {
-  return text.replace(/[\u064b-\u0650\u0652]$/, '');
+  return text
+    .replace(/\u064b\u0627$/, '') // fathatan + carrying alef (نَارًا → نَار)
+    .replace(/[\u064b\u064c\u064d]/g, '') // any remaining tanween
+    .replace(/[\u064e-\u0650\u0652]$/, ''); // final case vowel / sukun
 }
 
 /** Spelling-variant-only cleanup shared by both normalization tiers: strips tatweel/joiners and
@@ -164,13 +226,18 @@ function loadStudyForms() {
   const forms = [];
   for (const level of raw.levels) {
     for (const word of level.words) {
+      // Possessive endings (Level 3) are not standalone mushaf words. Registering them as
+      // ordinary surface forms lets "هُمْ" "their" swallow every independent "هُمْ" "they",
+      // and "كَ" "your" compete with the preposition "كَ" "like". The reader tags whole words,
+      // so suffixes are taught in flashcards only.
+      if (word.isSuffix) continue;
       // A word's own listed "plural" (e.g. "22-002" "إِلَٰه" "god" -> "آلِهَة" "gods") is
       // registered as just another citation form under the very same id, the same as an
       // additional comma-separated singular form would be: it's the same vocabulary concept, not
       // a different word, so a learner who's marked the singular known should have the plural
       // hidden right along with it, exactly like the existing root-family expansion already does
       // for other morphological relatives.
-      const citationForms = word.plural ? `${word.arabic},${word.plural}` : word.arabic;
+      const citationForms = [word.arabic, word.plural, word.variant].filter(Boolean).join(',');
       for (const commaForm of citationForms.split(/[,\u060c]/)) {
         for (const piece of commaForm.split('...')) {
           const words = piece.split(/\s+/).filter(Boolean);
@@ -295,11 +362,18 @@ function loadMorphologyStems(ayahWordOrder) {
     const stem = segments.find((s) => !s.feats.includes('PREF') && !s.feats.includes('SUFF'));
     const lemFeat = stem?.feats.find((f) => f.startsWith('LEM:'));
     const rootFeat = stem?.feats.find((f) => f.startsWith('ROOT:'));
+    const prepSeg = segments.find((s) => s.feats.includes('PREF') && s.feats.includes('P'));
+    const prepLem = prepSeg?.feats.find((f) => f.startsWith('LEM:'));
     stemByLocation.set(wordKey, {
       lightLemma: lemFeat ? normalizeLight(lemFeat.slice(4)) : null,
       heavyLemma: lemFeat ? normalizeArabic(lemFeat.slice(4)) : null,
       root: rootFeat ? normalizeArabic(rootFeat.slice(5)) : null,
       pos: stem?.pos === 'V' ? 'V' : 'N',
+      feats: stem?.feats ?? [],
+      // Preposition+pronoun words (بِهِ "with it") have the clitic as the morphological "stem"
+      // after a PREF tagged P. Those are not independent هو/هِيَ; they belong to the preposition.
+      hasPrepPrefix: prepSeg != null,
+      prepLemma: prepLem ? normalizeArabic(prepLem.slice(4)) : null,
       lightSurface: normalizeLight(surfaceRaw),
       heavySurface: normalizeArabic(surfaceRaw),
       looseSurface: normalizeLightLoose(surfaceRaw),
@@ -427,7 +501,9 @@ function buildVocabMatches(rawSurfaceByLocation, ayahWordOrder) {
       suppressFallback = true;
     } else if (contendingOwners.length > 1) {
       const sameClassOwners = contendingOwners.filter((o) => o.looksLikeVerb === form.looksLikeVerb);
-      if (sameClassOwners.length === 1) {
+      if (ownersHaveSenses(contendingOwners)) {
+        seed = new Set([...candidates].filter((loc) => senseFilter(form, loc, stemByLocation)));
+      } else if (sameClassOwners.length === 1) {
         seed = new Set([...candidates].filter((loc) => (stemByLocation.get(loc)?.pos === 'V') === form.looksLikeVerb));
       } else if (contendingOwners[0] !== form) {
         // Still ambiguous even split by POS (e.g. two colliding verbs, or the same word entered
@@ -464,16 +540,48 @@ function buildVocabMatches(rawSurfaceByLocation, ayahWordOrder) {
   }
   for (const form of unseeded) {
     const [heavyToken] = form.heavyTokens;
-    if ((heavyTokenOwners.get(heavyToken)?.size ?? 0) > 1) continue; // ambiguous - skip, don't guess
+    const heavyOwners = unseeded.filter((owner) => owner.heavyTokens[0] === heavyToken);
+    const heavyOwnerIds = heavyTokenOwners.get(heavyToken);
+    if ((heavyOwnerIds?.size ?? 0) > 1 && !ownersHaveSenses(heavyOwners)) continue;
     const stemSurfaceMatches = (heavyStemSurfaceIndex.get(heavyToken) ?? []).filter(
       (loc) => !exactHeavyMatchLocations.has(loc),
     );
-    const seed = new Set([
+    let seed = new Set([
       ...(heavyLemmaIndex.get(heavyToken) ?? []),
       ...(heavySurfaceIndex.get(heavyToken) ?? []),
       ...stemSurfaceMatches,
     ]);
+    if ((heavyOwnerIds?.size ?? 0) > 1) {
+      seed = new Set([...seed].filter((loc) => senseFilter(form, loc, stemByLocation)));
+    }
     if (seed.size > 0) mergeSeed(form.id, seed);
+  }
+
+  // Pass 2b: heavy-lemma top-up. The corpus often writes lemmas without fathas the deck includes
+  // (كانَ vs كَانَ, نار vs نَار), so light lemma matching misses inflected forms like كَانُوا
+  // even when the citation form itself already seeded. Heavy lemma + POS recovers those without
+  // running the broader unseeded-only heavy pass (which would not run here: these words already
+  // have some light hits). Skipped when two same-POS study words share the skeleton.
+  const heavyNaturalOwners = new Map();
+  for (const form of singleTokenForms) {
+    if (form.synthetic) continue;
+    const heavy = form.heavyTokens[0];
+    if (!heavyNaturalOwners.has(heavy)) heavyNaturalOwners.set(heavy, []);
+    heavyNaturalOwners.get(heavy).push(form);
+  }
+  for (const form of singleTokenForms) {
+    if (form.synthetic) continue;
+    const heavy = form.heavyTokens[0];
+    const owners = heavyNaturalOwners.get(heavy) ?? [];
+    const samePos = owners.filter((owner) => owner.looksLikeVerb === form.looksLikeVerb);
+    const samePosIds = new Set(samePos.map((owner) => owner.id));
+    if (samePosIds.size !== 1 && !ownersHaveSenses(samePos)) continue;
+    const locs = (heavyLemmaIndex.get(heavy) ?? []).filter((loc) => {
+      const stem = stemByLocation.get(loc);
+      if (!stem || (stem.pos === 'V') !== form.looksLikeVerb) return false;
+      return senseFilter(form, loc, stemByLocation);
+    });
+    if (locs.length > 0) mergeSeed(form.id, locs);
   }
 
   // Pass 3: "loose" (shadda/sukun-insensitive, but every other vowel-exact - see
@@ -521,19 +629,19 @@ function buildVocabMatches(rawSurfaceByLocation, ayahWordOrder) {
     if (form.synthetic && naturalOwners.length > 0) continue; // defers, same as passes 1/2
     const contenders = naturalOwners.length > 0 ? naturalOwners : owners;
     const uniqueContenderIds = new Set(contenders.map((o) => o.id));
-    if (uniqueContenderIds.size > 1) {
-      // Ambiguous among multiple *natural* owners (a genuine cross-curriculum collision, e.g. two
-      // colliding verbs) is left unresolved for everyone, same as pass 1. Ambiguous among multiple
-      // *synthetic* owners only (e.g. "لَا إِلهَ" and "لَوْ لَا" both splitting off a "لَا" token) is
-      // resolved the exact same deterministic way pass 1 resolves it: only the first-listed
-      // (earliest level) synthetic owner proceeds, so it isn't wrongly dropped here as if it were
-      // still genuinely contested.
-      if (naturalOwners.length > 0 || contenders[0] !== form) continue;
-    }
     const stemSurfaceMatches = (looseStemSurfaceIndex.get(looseToken) ?? []).filter(
       (loc) => !exactLooseMatchLocations.has(loc),
     );
-    const seed = new Set([...(looseSurfaceIndex.get(looseToken) ?? []), ...stemSurfaceMatches]);
+    let seed = new Set([...(looseSurfaceIndex.get(looseToken) ?? []), ...stemSurfaceMatches]);
+    if (uniqueContenderIds.size > 1) {
+      if (ownersHaveSenses(contenders)) {
+        seed = new Set([...seed].filter((loc) => senseFilter(form, loc, stemByLocation)));
+      } else if (naturalOwners.length > 0 || contenders[0] !== form) {
+        // Ambiguous among multiple *natural* owners with no sense split - leave unresolved.
+        // Multiple *synthetic* owners: only the first-listed proceeds, same as pass 1.
+        continue;
+      }
+    }
     if (seed.size > 0) mergeSeed(form.id, seed);
   }
 
@@ -591,7 +699,29 @@ function buildVocabMatches(rawSurfaceByLocation, ayahWordOrder) {
     }
   }
 
+  tagIndependentPronouns(stemByLocation, matchByLocation);
+  tagPrepPronouns(stemByLocation, matchByLocation);
+
   return matchByLocation;
+}
+
+function tagIndependentPronouns(stemByLocation, matchByLocation) {
+  for (const [loc, stem] of stemByLocation) {
+    if (matchByLocation.has(loc)) continue;
+    if (!hasFeat(stem, 'PRON') || hasFeat(stem, 'SUFF') || stem.hasPrepPrefix) continue;
+    const person = Object.keys(INDEPENDENT_PRONOUN_BY_PERSON).find((tag) => hasFeat(stem, tag));
+    if (!person) continue;
+    matchByLocation.set(loc, INDEPENDENT_PRONOUN_BY_PERSON[person]);
+  }
+}
+
+function tagPrepPronouns(stemByLocation, matchByLocation) {
+  for (const [loc, stem] of stemByLocation) {
+    if (matchByLocation.has(loc)) continue;
+    if (!stem.hasPrepPrefix || !hasFeat(stem, 'PRON')) continue;
+    const id = PREP_PREFIX_BY_LEMMA[stem.prepLemma];
+    if (id) matchByLocation.set(loc, id);
+  }
 }
 
 /**
@@ -653,6 +783,7 @@ function buildLemmaFallbackTags(stemByLocation, matchByLocation) {
 module.exports = {
   normalizeArabic,
   normalizeLight,
+  normalizeLightLoose,
   loadStudyForms,
   loadMorphologyStems,
   buildVocabMatches,

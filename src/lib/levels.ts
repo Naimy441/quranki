@@ -1,5 +1,6 @@
 import quranicWordsData from '@/data/quranic-words.json';
-import { deserializeCard, isCardDue, isWordMastered, type GradeName, type SerializedCard } from '@/lib/fsrs';
+import { deserializeCard, isCardDue, isWordMastered, shouldHideInReader, State, type GradeName, type SerializedCard } from '@/lib/fsrs';
+import { getWordOccurrenceCount, TOTAL_QURAN_WORDS } from '@/lib/quran-coverage';
 
 export interface Word {
   id: string;
@@ -35,12 +36,40 @@ export const DECK_NAME = data.deck;
 export const LEVEL_COUNT = data.levelCount;
 export const WORD_COUNT = data.wordCount;
 export const LEVELS: Level[] = data.levels;
+/** Levels 1–47 are the original thematic curriculum; 48+ are frequency leftovers. */
+export const THEMATIC_LEVEL_COUNT = 47;
+/** Study-word count in the thematic curriculum (levels 1–47). */
+export const THEMATIC_WORD_COUNT = LEVELS.slice(0, THEMATIC_LEVEL_COUNT).reduce(
+  (sum, level) => sum + level.words.length,
+  0,
+);
 
 const wordIndex = new Map<string, { word: Word; level: Level }>();
 for (const level of LEVELS) {
   for (const word of level.words) {
     wordIndex.set(word.id, { word, level });
   }
+}
+
+export interface LevelCoverage {
+  /** Qur'an tokens covered if every study word through this level is known. */
+  quranWords: number;
+  percent: number;
+}
+
+const coverageThroughLevel: LevelCoverage[] = [];
+{
+  let running = 0;
+  for (const level of LEVELS) {
+    for (const word of level.words) running += getWordOccurrenceCount(word.id);
+    const percent = TOTAL_QURAN_WORDS === 0 ? 0 : Math.round((running / TOTAL_QURAN_WORDS) * 100);
+    coverageThroughLevel[level.number] = { quranWords: running, percent };
+  }
+}
+
+/** Qur'an-text coverage the learner would have after mastering every word through `levelNumber`. */
+export function getCoverageThroughLevel(levelNumber: number): LevelCoverage {
+  return coverageThroughLevel[levelNumber] ?? { quranWords: 0, percent: 0 };
 }
 
 export function getLevel(levelNumber: number): Level | undefined {
@@ -63,11 +92,21 @@ export interface WordState {
   isMastered: boolean;
 }
 
-/** All mastered study word ids in one pass - used outside of the review flow, e.g. to decide
- *  whether to hide a matching word's translation in the Qur'an reader (see
- *  src/lib/quran-reader-types.ts's `ReaderWord.v`). Computing this once per progress change is
- *  much cheaper than deserializing every card again for each of the thousands of words a surah
- *  can render. */
+/** Study word ids whose translations should start hidden in the Qur'an reader: anything the
+ *  learner is supposed to know (Review or Learning), but not New or Relearning. Distinct from
+ *  `getMasteredVocabIds`, which is the stricter Good/Easy graduation used for stats and unlocks. */
+export function getHiddenVocabIds(progressMap: ProgressMap): Set<string> {
+  const hidden = new Set<string>();
+  for (const [wordId, progress] of Object.entries(progressMap)) {
+    if (shouldHideInReader(deserializeCard(progress.card))) hidden.add(wordId);
+  }
+  return hidden;
+}
+
+/** All mastered study word ids in one pass - used for stats and the word-detail sheet, not for
+ *  hiding glosses in the reader (that's `getHiddenVocabIds`: Review/Learning rather than only
+ *  Good/Easy graduation). Computing this once per progress change is much cheaper than
+ *  deserializing every card again for each of the thousands of words a surah can render. */
 export function getMasteredVocabIds(progressMap: ProgressMap): Set<string> {
   const mastered = new Set<string>();
   for (const [wordId, progress] of Object.entries(progressMap)) {
@@ -91,16 +130,6 @@ export function getWordState(word: Word, progressMap: ProgressMap, now: Date): W
   };
 }
 
-/** A level's follow-on level unlocks once at least this fraction of its words have been rated
- *  "Good" - deliberately *not* 100%. Curriculum pacing ("what should I be introduced to next")
- *  and SRS scheduling ("when do I need to see this word again") are different concerns: FSRS
- *  already keeps resurfacing a word for review for as long as it needs to regardless of level, via
- *  buildGlobalSessionQueue pulling due reviews from every unlocked level. Requiring literal 100%
- *  per-word perfection here would let a single persistently-tricky word hold the entire rest of
- *  the curriculum hostage, which conflates the two. See `isMastered` below for the separate,
- *  still-strict "every word in this level" flag used for the "fully complete" UI treatment.*/
-const LEVEL_ADVANCE_THRESHOLD = 0.8;
-
 export interface LevelStatus {
   level: Level;
   wordStates: WordState[];
@@ -108,13 +137,8 @@ export interface LevelStatus {
   dueCount: number;
   masteredCount: number;
   totalCount: number;
-  /** True once every single word in the level has been rated Good/Easy at least once - the
-   *  "fully complete" state shown in the level grid. Not what gates the next level - see
-   *  `isReadyToAdvance`. */
+  /** True once every word in the level has been rated Good/Easy at least once. */
   isMastered: boolean;
-  /** True once enough of the level (LEVEL_ADVANCE_THRESHOLD) is mastered to move on - this, not
-   *  `isMastered`, is what unlocks the next level (see computeMaxUnlockedLevel). */
-  isReadyToAdvance: boolean;
 }
 
 export function getLevelStatus(level: Level, progressMap: ProgressMap, now: Date): LevelStatus {
@@ -131,7 +155,6 @@ export function getLevelStatus(level: Level, progressMap: ProgressMap, now: Date
     masteredCount,
     totalCount,
     isMastered: masteredCount === totalCount,
-    isReadyToAdvance: masteredCount >= Math.ceil(totalCount * LEVEL_ADVANCE_THRESHOLD),
   };
 }
 
@@ -139,17 +162,26 @@ export function getAllLevelStatuses(progressMap: ProgressMap, now: Date): LevelS
   return LEVELS.map((level) => getLevelStatus(level, progressMap, now));
 }
 
-/** Levels 1..maxUnlockedLevel are available to the user; the rest are locked. */
-export function computeMaxUnlockedLevel(progressMap: ProgressMap, now: Date, previousMax: number): number {
-  let max = Math.max(previousMax, 1);
-  while (max < LEVEL_COUNT) {
-    const level = getLevel(max);
-    if (!level) break;
-    const status = getLevelStatus(level, progressMap, now);
-    if (!status.isReadyToAdvance) break;
-    max += 1;
+/** How far into the sequential deck the learner has been introduced - the highest level that
+ *  already has at least one studied word. Levels are only an ordering of the one big deck, not
+ *  a lock; this is display ("level reached"), not a gate on new cards. Never decreases. */
+export function computeReachedLevel(progressMap: ProgressMap, previousMax: number = 1): number {
+  let reached = Math.max(previousMax, 1);
+  for (const level of LEVELS) {
+    if (level.words.some((word) => progressMap[word.id])) {
+      reached = Math.max(reached, level.number);
+    }
   }
-  return max;
+  return reached;
+}
+
+/** The first level that still has an unseen word - where sequential new-card introduction is
+ *  currently drawing from. LEVEL_COUNT if the whole deck has been introduced. */
+export function getIntroductionFrontier(progressMap: ProgressMap): number {
+  for (const level of LEVELS) {
+    if (level.words.some((word) => !progressMap[word.id])) return level.number;
+  }
+  return LEVEL_COUNT;
 }
 
 export interface SessionWord {
@@ -162,55 +194,60 @@ function cardDueTime(state: WordState): number {
   return state.progress ? deserializeCard(state.progress.card).due.getTime() : 0;
 }
 
-/** Builds the word queue for a session scoped to a single level: due reviews first, then new words. */
-export function buildSessionQueue(level: Level, progressMap: ProgressMap, now: Date, wordsPerSession: number): SessionWord[] {
-  const wordStates = level.words.map((word) => getWordState(word, progressMap, now));
-  const due = wordStates
-    .filter((w) => w.isDue)
-    .sort((a, b) => cardDueTime(a) - cardDueTime(b))
-    .map((w) => ({ word: w.word, levelNumber: level.number, reason: 'due' as const }));
-
-  const remainingSlots = Math.max(wordsPerSession - due.length, 0);
-  const fresh = wordStates
-    .filter((w) => w.isNew)
-    .slice(0, remainingSlots)
-    .map((w) => ({ word: w.word, levelNumber: level.number, reason: 'new' as const }));
-
-  return [...due, ...fresh];
+function isReviewDue(state: WordState): boolean {
+  return Boolean(state.isDue && state.progress && deserializeCard(state.progress.card).state === State.Review);
 }
 
+function isLearningDue(state: WordState): boolean {
+  if (!state.isDue || !state.progress) return false;
+  const cardState = deserializeCard(state.progress.card).state;
+  return cardState === State.Learning || cardState === State.Relearning;
+}
+
+/** Hard cap on Review-state cards pulled into sessions each calendar day. Learning/relearning
+ *  steps and new-word introductions are independent of this, matching Anki's "Maximum reviews/day"
+ *  vs "New cards/day" split. */
+export const DAILY_REVIEW_LIMIT = 200;
+
 /**
- * Builds today's unified review queue across every unlocked level, the way Anki does: every
- * due card (from any level already unlocked), oldest-due-first, regardless of which level it
- * belongs to, plus new words from the current frontier level to fill out the session. Levels
- * exist to gate *introduction* of new words, not to silo review - once a word has been seen,
- * it resurfaces here whenever FSRS says it's due, no matter how many levels have unlocked since.
+ * Builds today's queue across the whole sequential deck, the way Anki does for one sequential
+ * deck: due learning/relearning first, then up to DAILY_REVIEW_LIMIT Review-state cards
+ * (oldest-due first, minus any already reviewed today), then up to `wordsPerSession` unseen
+ * words in curriculum order (level 1, then 2, …). Levels never lock new cards - they are only
+ * the insertion order. Reviews never consume the new-word quota.
  */
 export function buildGlobalSessionQueue(
   progressMap: ProgressMap,
   now: Date,
   wordsPerSession: number,
-  maxUnlockedLevel: number,
+  reviewsAlreadyToday: number = 0,
 ): SessionWord[] {
-  const due: (SessionWord & { dueTime: number })[] = [];
+  const remainingReviewSlots = Math.max(0, DAILY_REVIEW_LIMIT - reviewsAlreadyToday);
+  const learning: (SessionWord & { dueTime: number })[] = [];
+  const reviews: (SessionWord & { dueTime: number })[] = [];
   const fresh: SessionWord[] = [];
 
   for (const level of LEVELS) {
-    if (level.number > maxUnlockedLevel) break;
     for (const word of level.words) {
       const state = getWordState(word, progressMap, now);
-      if (state.isDue) {
-        due.push({ word, levelNumber: level.number, reason: 'due', dueTime: cardDueTime(state) });
+      if (isLearningDue(state)) {
+        learning.push({ word, levelNumber: level.number, reason: 'due', dueTime: cardDueTime(state) });
+      } else if (isReviewDue(state)) {
+        reviews.push({ word, levelNumber: level.number, reason: 'due', dueTime: cardDueTime(state) });
       } else if (state.isNew) {
         fresh.push({ word, levelNumber: level.number, reason: 'new' });
       }
     }
   }
 
-  due.sort((a, b) => a.dueTime - b.dueTime);
-  const remainingSlots = Math.max(wordsPerSession - due.length, 0);
+  learning.sort((a, b) => a.dueTime - b.dueTime);
+  reviews.sort((a, b) => a.dueTime - b.dueTime);
 
-  return [...due.map(({ dueTime, ...rest }) => rest), ...fresh.slice(0, remainingSlots)];
+  return [
+    ...learning.map(({ dueTime, ...rest }) => rest),
+    ...reviews.slice(0, remainingReviewSlots).map(({ dueTime, ...rest }) => rest),
+    ...fresh.slice(0, wordsPerSession),
+  ];
 }
 
 export function totalMasteredWords(progressMap: ProgressMap, now: Date): number {
@@ -224,10 +261,9 @@ export function totalMasteredWords(progressMap: ProgressMap, now: Date): number 
   return count;
 }
 
-export function totalDueWords(progressMap: ProgressMap, now: Date, maxUnlockedLevel: number): number {
+export function totalDueWords(progressMap: ProgressMap, now: Date): number {
   let count = 0;
   for (const level of LEVELS) {
-    if (level.number > maxUnlockedLevel) continue;
     for (const word of level.words) {
       const state = getWordState(word, progressMap, now);
       if (state.isDue) count += 1;

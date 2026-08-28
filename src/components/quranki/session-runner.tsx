@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { useMemo, useState } from 'react';
@@ -16,15 +15,16 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getArabicVoiceAsync, toSpeechText } from '@/lib/arabic-speech';
 import { createNewCard, deserializeCard, previewGrades, State, type GradeName } from '@/lib/fsrs';
+import { hapticHeavy, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
 import type { SessionWord } from '@/lib/levels';
 import { useProgressStore } from '@/store/progress-store';
 
-const HAPTICS_BY_GRADE: Record<GradeName, Haptics.ImpactFeedbackStyle> = {
-  again: Haptics.ImpactFeedbackStyle.Heavy,
-  hard: Haptics.ImpactFeedbackStyle.Medium,
-  good: Haptics.ImpactFeedbackStyle.Light,
-  easy: Haptics.ImpactFeedbackStyle.Light,
-};
+function hapticGrade(grade: GradeName) {
+  if (grade === 'again') hapticHeavy();
+  else if (grade === 'hard') hapticMedium();
+  else if (grade === 'good') hapticLight();
+  else hapticSuccess();
+}
 
 const EMPTY_RATING_COUNTS: Record<GradeName, number> = { again: 0, hard: 0, good: 0, easy: 0 };
 
@@ -88,6 +88,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
       );
       return;
     }
+    hapticSelection();
     void Speech.stop();
     setIsSpeaking(true);
     Speech.speak(toSpeechText(currentEntry.word.arabic), {
@@ -117,9 +118,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
 
   const handleGrade = (grade: GradeName) => {
     if (!currentEntry) return;
-    if (Platform.OS !== 'web') {
-      void Haptics.impactAsync(HAPTICS_BY_GRADE[grade]);
-    }
+    hapticGrade(grade);
     const nextCard = gradeWord(currentEntry.word.id, grade);
     setRatingCounts((prev) => ({ ...prev, [grade]: prev[grade] + 1 }));
 
@@ -177,9 +176,9 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
               <Animated.View
                 entering={FadeIn.delay(300)}
                 style={[styles.unlockBanner, { backgroundColor: theme.primary }]}>
-                <Ionicons name="lock-open" size={18} color={theme.onPrimary} />
+                <Ionicons name="flag" size={18} color={theme.onPrimary} />
                 <ThemedText themeColor="onPrimary" type="smallBold">
-                  Level {maxUnlockedLevel} unlocked!
+                  Now studying level {maxUnlockedLevel}
                 </ThemedText>
               </Animated.View>
             )}
@@ -188,7 +187,10 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
               mode="contained"
               style={styles.doneButton}
               contentStyle={styles.doneButtonContent}
-              onPress={() => router.back()}>
+              onPress={() => {
+                hapticLight();
+                router.back();
+              }}>
               Done
             </Button>
           </View>
@@ -205,7 +207,13 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex}>
         <View style={styles.topBar}>
-          <Pressable onPress={handleClose} hitSlop={12} style={styles.closeButton}>
+          <Pressable
+            onPress={() => {
+              hapticLight();
+              handleClose();
+            }}
+            hitSlop={12}
+            style={styles.closeButton}>
             <Ionicons name="close" size={24} color={theme.textSecondary} />
           </Pressable>
           <ProgressBar progress={index / sessionQueue.length} color={theme.primary} style={styles.progressBar} />
@@ -239,7 +247,10 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
               mode="contained"
               style={styles.showAnswerButton}
               contentStyle={styles.showAnswerContent}
-              onPress={() => setRevealed(true)}>
+              onPress={() => {
+                hapticLight();
+                setRevealed(true);
+              }}>
               Show answer
             </Button>
           )}

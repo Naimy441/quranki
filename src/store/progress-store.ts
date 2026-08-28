@@ -10,8 +10,9 @@ import {
   type Card,
   type GradeName,
 } from '@/lib/fsrs';
-import { computeMaxUnlockedLevel, getLevel, LEVEL_COUNT, LEVELS, type ProgressMap, type WordProgress } from '@/lib/levels';
+import { computeReachedLevel, getLevel, LEVEL_COUNT, LEVELS, type ProgressMap, type WordProgress } from '@/lib/levels';
 import {
+  clampWordsPerSession,
   DEFAULT_META,
   DEFAULT_SETTINGS,
   loadMetaAsync,
@@ -30,13 +31,27 @@ interface ProgressState {
   settings: Settings;
   maxUnlockedLevel: number;
   reviewDates: string[];
+  reviewCountDate: string;
+  reviewsToday: number;
+  onboardingCompleted: boolean;
+  /** In-memory peek counts for the Qur'an reader (not persisted). A hidden word's first reveal
+   *  is a free hint; the second reveal of that same vocab id lapses it. Cleared when the word
+   *  is graded in a real review. */
+  readerPeeks: Record<string, number>;
   hydrate: () => Promise<void>;
   /** Returns the resulting (post-grade) card so callers - see session-runner.tsx - can tell
    *  whether it graduated to the long-term Review state or is still Learning/Relearning (due
    *  again within minutes, per ts-fsrs's learning_steps/relearning_steps), the same distinction
    *  Anki uses to decide whether a card needs to resurface later in *this* sitting. */
   gradeWord: (wordId: string, grade: GradeName) => Card;
+  /** Increments and returns the number of times this vocab id has been peeked (hidden → shown)
+   *  in the reader since the last real passing grade. */
+  noteReaderPeek: (wordId: string) => number;
+  /** Drops the in-memory peek count so a word can hide again (e.g. after marking it known). */
+  clearReaderPeek: (wordId: string) => void;
   updateSettings: (partial: Partial<Settings>) => void;
+  completeOnboarding: (wordsPerSession: number) => void;
+  setOnboardingCompleted: (value: boolean) => void;
   resetProgress: () => void;
   masterAllWords: () => void;
   autoMasterWord: (wordId: string) => void;
@@ -47,6 +62,30 @@ function todayKey(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+/** How many Review-state cards have already been graded today - used to leave only
+ *  DAILY_REVIEW_LIMIT - this many review slots in the next session queue. */
+export function reviewsCompletedToday(reviewCountDate: string, reviewsToday: number, now: Date = new Date()): number {
+  return reviewCountDate === todayKey(now) ? reviewsToday : 0;
+}
+
+function persistMeta(
+  state: Pick<ProgressState, 'maxUnlockedLevel' | 'reviewDates' | 'reviewCountDate' | 'reviewsToday'> & {
+    onboardingCompleted?: boolean;
+  },
+): void {
+  void saveMetaAsync({
+    maxUnlockedLevel: state.maxUnlockedLevel,
+    reviewDates: state.reviewDates,
+    reviewCountDate: state.reviewCountDate,
+    reviewsToday: state.reviewsToday,
+    onboardingCompleted: state.onboardingCompleted ?? getOnboardingCompleted(),
+  });
+}
+
+function getOnboardingCompleted(): boolean {
+  return useProgressStore.getState().onboardingCompleted;
+}
+
 export const useProgressStore = create<ProgressState>((set, get) => ({
   hydrated: false,
   hydrating: false,
@@ -54,6 +93,10 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   settings: DEFAULT_SETTINGS,
   maxUnlockedLevel: DEFAULT_META.maxUnlockedLevel,
   reviewDates: DEFAULT_META.reviewDates,
+  reviewCountDate: DEFAULT_META.reviewCountDate,
+  reviewsToday: DEFAULT_META.reviewsToday,
+  onboardingCompleted: false,
+  readerPeeks: {},
 
   hydrate: async () => {
     if (get().hydrated || get().hydrating) return;
@@ -63,7 +106,12 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       loadSettingsAsync(),
       loadMetaAsync(),
     ]);
-    const maxUnlockedLevel = computeMaxUnlockedLevel(progress, new Date(), meta.maxUnlockedLevel);
+    const maxUnlockedLevel = computeReachedLevel(progress, meta.maxUnlockedLevel);
+    const now = new Date();
+    const reviewsToday = reviewsCompletedToday(meta.reviewCountDate, meta.reviewsToday ?? 0, now);
+    const reviewCountDate = reviewsToday > 0 ? meta.reviewCountDate : todayKey(now);
+    const onboardingCompleted =
+      meta.onboardingCompleted ?? (Object.keys(progress).length > 0 || meta.reviewDates.length > 0);
     set({
       hydrated: true,
       hydrating: false,
@@ -71,9 +119,18 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       settings,
       maxUnlockedLevel,
       reviewDates: meta.reviewDates,
+      reviewCountDate,
+      reviewsToday,
+      onboardingCompleted,
     });
-    if (maxUnlockedLevel !== meta.maxUnlockedLevel) {
-      void saveMetaAsync({ maxUnlockedLevel, reviewDates: meta.reviewDates });
+    if (maxUnlockedLevel !== meta.maxUnlockedLevel || onboardingCompleted !== meta.onboardingCompleted) {
+      persistMeta({
+        maxUnlockedLevel,
+        reviewDates: meta.reviewDates,
+        reviewCountDate,
+        reviewsToday,
+        onboardingCompleted,
+      });
     }
   },
 
@@ -94,12 +151,44 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const nextProgress: ProgressMap = { ...state.progress, [wordId]: nextWordProgress };
     const key = todayKey(now);
     const nextReviewDates = state.reviewDates.includes(key) ? state.reviewDates : [...state.reviewDates, key];
-    const nextMaxUnlockedLevel = computeMaxUnlockedLevel(nextProgress, now, state.maxUnlockedLevel);
+    const nextMaxUnlockedLevel = computeReachedLevel(nextProgress, state.maxUnlockedLevel);
+    const countsAsDailyReview = existing !== undefined && card.state === State.Review;
+    const reviewsToday = (state.reviewCountDate === key ? state.reviewsToday : 0) + (countsAsDailyReview ? 1 : 0);
 
-    set({ progress: nextProgress, reviewDates: nextReviewDates, maxUnlockedLevel: nextMaxUnlockedLevel });
+    // Again (including a reader lapse) leaves the peek count in place so every occurrence stays
+    // unhidden while the card is still Learning. A passing grade wipes it so the word can hide
+    // again once it's supposed to be known.
+    const readerPeeks =
+      grade === 'again' ? state.readerPeeks : Object.fromEntries(Object.entries(state.readerPeeks).filter(([id]) => id !== wordId));
+
+    set({
+      progress: nextProgress,
+      reviewDates: nextReviewDates,
+      maxUnlockedLevel: nextMaxUnlockedLevel,
+      reviewCountDate: key,
+      reviewsToday,
+      readerPeeks,
+    });
     void saveProgressAsync(nextProgress);
-    void saveMetaAsync({ maxUnlockedLevel: nextMaxUnlockedLevel, reviewDates: nextReviewDates });
+    persistMeta({
+      maxUnlockedLevel: nextMaxUnlockedLevel,
+      reviewDates: nextReviewDates,
+      reviewCountDate: key,
+      reviewsToday,
+    });
     return nextCard;
+  },
+
+  noteReaderPeek: (wordId) => {
+    const next = (get().readerPeeks[wordId] ?? 0) + 1;
+    set({ readerPeeks: { ...get().readerPeeks, [wordId]: next } });
+    return next;
+  },
+
+  clearReaderPeek: (wordId) => {
+    if (!(wordId in get().readerPeeks)) return;
+    const { [wordId]: _peek, ...readerPeeks } = get().readerPeeks;
+    set({ readerPeeks });
   },
 
   updateSettings: (partial) => {
@@ -108,10 +197,33 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     void saveSettingsAsync(nextSettings);
   },
 
+  completeOnboarding: (wordsPerSession) => {
+    const state = get();
+    const nextSettings = { ...state.settings, wordsPerSession: clampWordsPerSession(wordsPerSession) };
+    set({ settings: nextSettings, onboardingCompleted: true });
+    void saveSettingsAsync(nextSettings);
+    persistMeta({ ...state, onboardingCompleted: true });
+  },
+
+  setOnboardingCompleted: (value) => {
+    set({ onboardingCompleted: value });
+    persistMeta({ ...get(), onboardingCompleted: value });
+  },
+
   resetProgress: () => {
-    set({ progress: {}, maxUnlockedLevel: 1, reviewDates: [], settings: DEFAULT_SETTINGS });
+    const onboardingCompleted = get().onboardingCompleted;
+    set({
+      progress: {},
+      maxUnlockedLevel: 1,
+      reviewDates: [],
+      reviewCountDate: '',
+      reviewsToday: 0,
+      readerPeeks: {},
+      settings: DEFAULT_SETTINGS,
+      onboardingCompleted,
+    });
     void saveProgressAsync({});
-    void saveMetaAsync(DEFAULT_META);
+    void saveMetaAsync({ ...DEFAULT_META, onboardingCompleted });
     void saveSettingsAsync(DEFAULT_SETTINGS);
   },
 
@@ -144,7 +256,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     }
     set({ progress: nextProgress, maxUnlockedLevel: LEVEL_COUNT });
     void saveProgressAsync(nextProgress);
-    void saveMetaAsync({ maxUnlockedLevel: LEVEL_COUNT, reviewDates: get().reviewDates });
+    persistMeta({ ...get(), maxUnlockedLevel: LEVEL_COUNT });
   },
 
   /** Called when a curated study word (one matching the 547-word id pattern) is marked "known"
@@ -181,10 +293,11 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     };
 
     const nextProgress: ProgressMap = { ...state.progress, [wordId]: nextWordProgress };
-    const nextMaxUnlockedLevel = computeMaxUnlockedLevel(nextProgress, now, state.maxUnlockedLevel);
-    set({ progress: nextProgress, maxUnlockedLevel: nextMaxUnlockedLevel });
+    const nextMaxUnlockedLevel = computeReachedLevel(nextProgress, state.maxUnlockedLevel);
+    const { [wordId]: _peek, ...readerPeeks } = state.readerPeeks;
+    set({ progress: nextProgress, maxUnlockedLevel: nextMaxUnlockedLevel, readerPeeks });
     void saveProgressAsync(nextProgress);
-    void saveMetaAsync({ maxUnlockedLevel: nextMaxUnlockedLevel, reviewDates: state.reviewDates });
+    persistMeta({ ...state, maxUnlockedLevel: nextMaxUnlockedLevel });
   },
 
   /** Undoes `autoMasterWord` - only when that fabricated entry is still in place untouched. If

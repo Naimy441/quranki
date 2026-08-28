@@ -1,17 +1,18 @@
 import { useState } from 'react';
 import {
-  ScrollView,
-  StyleSheet,
-  View,
-  type LayoutChangeEvent,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
+    ScrollView,
+    StyleSheet,
+    View,
+    type LayoutChangeEvent,
+    type NativeScrollEvent,
+    type NativeSyntheticEvent,
 } from 'react-native';
 
 import { AyahBlock } from '@/components/quran/ayah-block';
 import { BismillahHeader } from '@/components/quran/bismillah-header';
+import { SurahNameText } from '@/components/quran/surah-name-text';
 import { ThemedText } from '@/components/themed-text';
-import { ArabicTextStyle, BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getSurahAyahs, getSurahMeta } from '@/lib/quran-reader';
 import type { ReaderAyah, ReaderWord } from '@/lib/quran-reader-types';
@@ -35,7 +36,7 @@ interface SurahPageProps {
   showTranslation: boolean;
   arabicSize: number;
   glossSize: number;
-  masteredVocabIds: Set<string>;
+  hiddenVocabIds: Set<string>;
   knownWordIds: Set<string>;
   onLongPressWord?: (word: ReaderWord) => void;
   /** How many ayahs to render up front. The focused surah gets a full batch; the adjacent
@@ -53,7 +54,7 @@ export function SurahPage({
   showTranslation,
   arabicSize,
   glossSize,
-  masteredVocabIds,
+  hiddenVocabIds,
   knownWordIds,
   onLongPressWord,
   initialBatch,
@@ -92,9 +93,9 @@ export function SurahPage({
       scrollEventThrottle={100}>
       <View onLayout={handleContentLayout}>
         <View style={styles.header} onLayout={handleHeaderLayout}>
-          <ThemedText style={[styles.arabicTitle, ArabicTextStyle]}>{meta.ar}</ThemedText>
+          <SurahNameText surahNumber={surahNumber} style={styles.arabicTitle} />
           <ThemedText type="title" style={styles.title}>
-            {meta.tr}
+            {meta.en}
           </ThemedText>
 
           <View style={styles.metaRow}>
@@ -108,7 +109,7 @@ export function SurahPage({
               showTranslation={showTranslation}
               arabicSize={arabicSize}
               glossSize={glossSize}
-              masteredVocabIds={masteredVocabIds}
+              hiddenVocabIds={hiddenVocabIds}
               knownWordIds={knownWordIds}
               onLongPressWord={onLongPressWord}
             />
@@ -123,7 +124,7 @@ export function SurahPage({
             showTranslation={showTranslation}
             arabicSize={arabicSize}
             glossSize={glossSize}
-            masteredVocabIds={masteredVocabIds}
+            hiddenVocabIds={hiddenVocabIds}
             knownWordIds={knownWordIds}
             onLongPressWord={onLongPressWord}
           />
@@ -164,12 +165,10 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   arabicTitle: {
-    fontSize: 34,
-    lineHeight: 64,
+    fontSize: 42,
+    lineHeight: 72,
     paddingTop: Spacing.two,
-    // Android resolves unset/'auto' textAlign from the app's *layout* direction (LTR here), not
-    // from the text's own script the way iOS does - without this, Arabic renders left-aligned.
-    textAlign: 'right',
+    textAlign: 'center',
   },
   title: {
     fontSize: 22,

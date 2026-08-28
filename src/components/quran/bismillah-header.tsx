@@ -9,7 +9,7 @@ interface BismillahHeaderProps {
   showTranslation: boolean;
   arabicSize: number;
   glossSize: number;
-  masteredVocabIds: Set<string>;
+  hiddenVocabIds: Set<string>;
   knownWordIds: Set<string>;
   onLongPressWord?: (word: ReaderWord) => void;
 }
@@ -19,7 +19,7 @@ export function BismillahHeader({
   showTranslation,
   arabicSize,
   glossSize,
-  masteredVocabIds,
+  hiddenVocabIds,
   knownWordIds,
   onLongPressWord,
 }: BismillahHeaderProps) {
@@ -32,7 +32,7 @@ export function BismillahHeader({
           showTranslation={showTranslation}
           arabicSize={arabicSize}
           glossSize={glossSize}
-          masteredVocabIds={masteredVocabIds}
+          hiddenVocabIds={hiddenVocabIds}
           knownWordIds={knownWordIds}
           onLongPressWord={onLongPressWord}
         />

@@ -26,8 +26,8 @@ export default function QuranScreen() {
     : SURAH_INDEX;
 
   return (
-    <ThemedView style={styles.flex}>
-      <SafeAreaView style={styles.flex} edges={['top']}>
+    <ThemedView style={styles.flex} collapsable={false}>
+      <SafeAreaView style={styles.flex} edges={['top']} collapsable={false}>
         <FlatList
           data={surahs}
           keyExtractor={(item) => String(item.n)}
@@ -36,12 +36,8 @@ export default function QuranScreen() {
           keyboardShouldPersistTaps="handled"
           ListHeaderComponent={
             <View style={styles.header}>
-              <ThemedText type="title" style={styles.title}>
-                Qur&apos;an
-              </ThemedText>
-              <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-                All 114 surahs, word by word with tajweed.
-              </ThemedText>
+
+
               <Searchbar
                 placeholder="Search surahs"
                 onChangeText={setQuery}

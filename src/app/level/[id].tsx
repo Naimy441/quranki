@@ -1,19 +1,18 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from 'react-native-paper';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { ArabicTextStyle, Radius, Spacing } from '@/constants/theme';
+import { ArabicTextStyle, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { buildSessionQueue, getLevel, getLevelStatus, type WordState } from '@/lib/levels';
+import { getCoverageThroughLevel, getLevel, getLevelStatus, type WordState } from '@/lib/levels';
 import { useProgressStore } from '@/store/progress-store';
+import { formatCount } from '@/lib/stats';
 
 function wordStatusLabel(state: WordState): { label: string; color: 'primary' | 'textSecondary' | 'danger' } {
   if (state.isMastered) return { label: 'Mastered', color: 'primary' };
-  if (state.isNew) return { label: 'New', color: 'textSecondary' };
+  if (state.isNew) return { label: 'Not yet introduced', color: 'textSecondary' };
   if (state.isDue) return { label: 'Due', color: 'danger' };
   return { label: 'Learning', color: 'textSecondary' };
 }
@@ -25,15 +24,12 @@ export default function LevelDetailScreen() {
 
   const theme = useTheme();
   const progress = useProgressStore((state) => state.progress);
-  const wordsPerSession = useProgressStore((state) => state.settings.wordsPerSession);
-  const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
 
   const now = new Date();
   const status = level ? getLevelStatus(level, progress, now) : null;
-  const queue = level ? buildSessionQueue(level, progress, now, wordsPerSession) : [];
-  const isUnlocked = levelNumber <= maxUnlockedLevel;
+  const coverage = level ? getCoverageThroughLevel(level.number) : null;
 
-  if (!level || !status) {
+  if (!level || !status || !coverage) {
     return <ThemedView style={styles.flex} />;
   }
 
@@ -50,21 +46,20 @@ export default function LevelDetailScreen() {
               <ThemedText type="title" style={styles.title}>
                 {level.title}
               </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                Once mastered through here: {coverage.percent}% of the Qur&apos;an ({formatCount(coverage.quranWords)}{' '}
+                words).
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                These words are introduced automatically, in this order, during study. Reviews of
+                words you already know are mixed into the same daily session.
+              </ThemedText>
 
               <View style={styles.summaryRow}>
                 <SummaryPill label="Mastered" value={status.masteredCount} color={theme.primary} />
                 <SummaryPill label="Due" value={status.dueCount} color={theme.danger} />
-                <SummaryPill label="New" value={status.newCount} color={theme.textSecondary} />
+                <SummaryPill label="Unseen" value={status.newCount} color={theme.textSecondary} />
               </View>
-
-              {!isUnlocked && (
-                <View style={[styles.lockedBanner, { backgroundColor: theme.backgroundElement }]}>
-                  <Ionicons name="lock-closed" size={16} color={theme.textMuted} />
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Master every word in the previous level to unlock this one.
-                  </ThemedText>
-                </View>
-              )}
 
               <ThemedText type="smallBold" style={styles.wordsLabel}>
                 Words ({status.totalCount})
@@ -86,27 +81,6 @@ export default function LevelDetailScreen() {
             );
           }}
         />
-
-        <View style={[styles.footer, { backgroundColor: theme.background, borderTopColor: theme.border }]}>
-          {isUnlocked && queue.length > 0 ? (
-            <Button
-              mode="contained"
-              style={styles.startButton}
-              contentStyle={styles.startButtonContent}
-              onPress={() => router.push(`/session/${level.number}`)}>
-              Practice this level ({queue.length} words)
-            </Button>
-          ) : isUnlocked ? (
-            <View style={styles.caughtUp}>
-              <Ionicons name="checkmark-circle" size={20} color={theme.primary} />
-              <ThemedText themeColor="textSecondary">All caught up here for now.</ThemedText>
-            </View>
-          ) : (
-            <Button mode="contained" disabled style={styles.startButton}>
-              Locked
-            </Button>
-          )}
-        </View>
       </SafeAreaView>
     </ThemedView>
   );
@@ -152,13 +126,6 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
-  lockedBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    padding: Spacing.three,
-    borderRadius: Radius.medium,
-  },
   wordsLabel: {
     marginTop: Spacing.two,
   },
@@ -173,8 +140,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 46,
     minWidth: 90,
-    // Android resolves unset/'auto' textAlign from the app's *layout* direction (LTR here), not
-    // from the text's own script the way iOS does - without this, Arabic renders left-aligned.
     textAlign: 'right',
   },
   wordEnglish: {
@@ -182,22 +147,5 @@ const styles = StyleSheet.create({
   },
   wordStatus: {
     fontWeight: '600',
-  },
-  footer: {
-    padding: Spacing.four,
-    borderTopWidth: 1,
-  },
-  startButton: {
-    borderRadius: Radius.medium,
-  },
-  startButtonContent: {
-    height: 48,
-  },
-  caughtUp: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.two,
-    height: 48,
   },
 });

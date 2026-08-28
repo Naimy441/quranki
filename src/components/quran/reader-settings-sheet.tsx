@@ -5,6 +5,7 @@ import { Switch } from 'react-native-paper';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { hapticSelection, hapticToggle } from '@/lib/haptics';
 
 interface ReaderSettingsSheetProps {
   visible: boolean;
@@ -39,7 +40,12 @@ export function ReaderSettingsSheet({
         <Pressable style={[styles.sheet, { backgroundColor: theme.card }]} onPress={(e) => e.stopPropagation()}>
           <View style={styles.headerRow}>
             <ThemedText type="smallBold">Display settings</ThemedText>
-            <Pressable onPress={onDismiss} hitSlop={10}>
+            <Pressable
+              onPress={() => {
+                hapticSelection();
+                onDismiss();
+              }}
+              hitSlop={10}>
               <Ionicons name="close" size={20} color={theme.textMuted} />
             </Pressable>
           </View>
@@ -64,7 +70,14 @@ export function ReaderSettingsSheet({
 
           <View style={[styles.toggleRow, { borderTopColor: theme.border }]}>
             <ThemedText type="small">Show word-by-word translation</ThemedText>
-            <Switch value={showTranslation} onValueChange={onShowTranslationChange} color={theme.primary} />
+            <Switch
+              value={showTranslation}
+              onValueChange={(value) => {
+                hapticToggle(value);
+                onShowTranslationChange(value);
+              }}
+              color={theme.primary}
+            />
           </View>
         </Pressable>
       </Pressable>
@@ -97,12 +110,22 @@ function SizeStepper({
         <StepperButton
           icon="remove"
           disabled={value <= min}
-          onPress={() => onChange(Math.max(min, value - step))}
+          onPress={() => {
+            hapticSelection();
+            onChange(Math.max(min, value - step));
+          }}
         />
         <ThemedText type="smallBold" style={styles.stepperValue}>
           {value}
         </ThemedText>
-        <StepperButton icon="add" disabled={value >= max} onPress={() => onChange(Math.min(max, value + step))} />
+        <StepperButton
+          icon="add"
+          disabled={value >= max}
+          onPress={() => {
+            hapticSelection();
+            onChange(Math.min(max, value + step));
+          }}
+        />
       </View>
     </View>
   );

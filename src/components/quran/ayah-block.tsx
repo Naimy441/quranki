@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import * as Haptics from 'expo-haptics';
 import { memo, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -9,6 +8,7 @@ import { AyahTranslation } from '@/components/quran/ayah-translation';
 import { WordCell } from '@/components/quran/word-cell';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { hapticSelection, hapticSuccess } from '@/lib/haptics';
 import { buildAyahShareText } from '@/lib/quran-reader';
 import type { ReaderAyah, ReaderWord } from '@/lib/quran-reader-types';
 
@@ -18,7 +18,7 @@ interface AyahBlockProps {
   showTranslation: boolean;
   arabicSize: number;
   glossSize: number;
-  masteredVocabIds: Set<string>;
+  hiddenVocabIds: Set<string>;
   knownWordIds: Set<string>;
   onLongPressWord?: (word: ReaderWord) => void;
 }
@@ -40,7 +40,7 @@ export const AyahBlock = memo(function AyahBlock({
   showTranslation,
   arabicSize,
   glossSize,
-  masteredVocabIds,
+  hiddenVocabIds,
   knownWordIds,
   onLongPressWord,
 }: AyahBlockProps) {
@@ -55,7 +55,7 @@ export const AyahBlock = memo(function AyahBlock({
 
   const handleCopy = async () => {
     await Clipboard.setStringAsync(buildAyahShareText(surahName, ayah));
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    hapticSuccess();
     setCopied(true);
     if (copiedTimeout.current) clearTimeout(copiedTimeout.current);
     copiedTimeout.current = setTimeout(() => setCopied(false), 1500);
@@ -78,7 +78,10 @@ export const AyahBlock = memo(function AyahBlock({
         </Pressable>
 
         <Pressable
-          onPress={() => setShowFullTranslation((v) => !v)}
+          onPress={() => {
+            hapticSelection();
+            setShowFullTranslation((v) => !v);
+          }}
           hitSlop={10}
           style={({ pressed }) => [
             styles.actionButton,
@@ -101,7 +104,7 @@ export const AyahBlock = memo(function AyahBlock({
             showTranslation={showTranslation}
             arabicSize={arabicSize}
             glossSize={glossSize}
-            masteredVocabIds={masteredVocabIds}
+            hiddenVocabIds={hiddenVocabIds}
             knownWordIds={knownWordIds}
             onLongPressWord={onLongPressWord}
           />

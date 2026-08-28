@@ -7,11 +7,28 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { getAllLevelStatuses, getMasteredVocabIds, totalMasteredWords, WORD_COUNT } from '@/lib/levels';
+import { getAllLevelStatuses, getMasteredVocabIds, LEVEL_COUNT, THEMATIC_LEVEL_COUNT, totalMasteredWords, WORD_COUNT, type LevelStatus } from '@/lib/levels';
 import { countMemorizedQuranWords, TOTAL_QURAN_WORDS } from '@/lib/quran-coverage';
 import { computeStreak, formatCount } from '@/lib/stats';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
+
+function renderLevelCell(status: LevelStatus, theme: ReturnType<typeof useTheme>) {
+  const cellColor = status.isMastered
+    ? theme.primary
+    : status.masteredCount > 0
+      ? theme.backgroundSelected
+      : theme.card;
+  return (
+    <View
+      key={status.level.id}
+      style={[styles.gridCell, { backgroundColor: cellColor, borderColor: theme.border }]}>
+      <ThemedText type="small" themeColor={status.isMastered ? 'onPrimary' : 'text'}>
+        {status.level.number}
+      </ThemedText>
+    </View>
+  );
+}
 
 export default function ProgressScreen() {
   const theme = useTheme();
@@ -25,11 +42,11 @@ export default function ProgressScreen() {
   const mastered = totalMasteredWords(progress, now);
   const streak = computeStreak(reviewDates, now);
 
-  // "Overall memorization" is real Qur'an text coverage, not just "N of 547 vocab items": one
+  // "Overall memorization" is real Qur'an text coverage, not just "N of WORD_COUNT vocab items": one
   // mastered word like "the/that" can single-handedly cover thousands of on-screen occurrences,
   // so this is a very different (and much more telling) number than the vocab-list stat above.
   // Unioned with manually-marked-known word ids (see useKnownWordsStore) so a word the user
-  // already recognized outside the 547-word curriculum - which has no FSRS review of its own to
+  // already recognized outside the FSRS curriculum - which has no flashcard review of its own to
   // "master" - still counts toward real text coverage here, the same way it already does for
   // hiding its translation in the reader.
   const recognizedVocabIds = useMemo(() => {
@@ -41,19 +58,17 @@ export default function ProgressScreen() {
   const overallProgress = TOTAL_QURAN_WORDS === 0 ? 0 : memorizedQuranWords / TOTAL_QURAN_WORDS;
 
   return (
-    <ThemedView style={styles.flex}>
-      <SafeAreaView style={styles.flex} edges={['top']}>
+    <ThemedView style={styles.flex} collapsable={false}>
+      <SafeAreaView style={styles.flex} edges={['top']} collapsable={false}>
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={[styles.content, { paddingBottom: BottomTabInset + Spacing.four }]}>
-          <ThemedText type="title" style={styles.title}>
-            Progress
-          </ThemedText>
+
 
           <View style={styles.statsRow}>
-            <StatCard icon="checkmark-done" label="Words mastered" value={`${mastered}/${WORD_COUNT}`} accent />
+            <StatCard icon="checkmark-done" label="Words mastered" value={`${mastered}/${WORD_COUNT}`}  />
             <StatCard icon="flame" label="Day streak" value={String(streak)} />
-            <StatCard icon="albums" label="Level reached" value={`${maxUnlockedLevel}/47`} />
+            <StatCard icon="albums" label="Level reached" value={`${maxUnlockedLevel}/${LEVEL_COUNT}`} />
           </View>
 
           <View style={[styles.overallCard, { backgroundColor: theme.backgroundElement }]}>
@@ -80,27 +95,15 @@ export default function ProgressScreen() {
             Levels
           </ThemedText>
           <View style={styles.grid}>
-            {statuses.map((status) => {
-              const isUnlocked = status.level.number <= maxUnlockedLevel;
-              const cellColor = !isUnlocked
-                ? theme.backgroundElement
-                : status.isMastered
-                  ? theme.primary
-                  : status.masteredCount > 0
-                    ? theme.backgroundSelected
-                    : theme.card;
-              return (
-                <View
-                  key={status.level.id}
-                  style={[styles.gridCell, { backgroundColor: cellColor, borderColor: theme.border }]}>
-                  <ThemedText
-                    type="small"
-                    themeColor={status.isMastered ? 'onPrimary' : isUnlocked ? 'text' : 'textMuted'}>
-                    {status.level.number}
-                  </ThemedText>
-                </View>
-              );
-            })}
+            {statuses.slice(0, THEMATIC_LEVEL_COUNT).map((status) => renderLevelCell(status, theme))}
+            <View style={styles.gridDivider}>
+              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+              <ThemedText type="smallBold">By frequency</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                How often each word appears in the Qur&apos;an
+              </ThemedText>
+            </View>
+            {statuses.slice(THEMATIC_LEVEL_COUNT).map((status) => renderLevelCell(status, theme))}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -154,6 +157,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
+  },
+  gridDivider: {
+    width: '100%',
+    gap: Spacing.one,
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.one,
+  },
+  dividerLine: {
+    height: 1,
+    marginBottom: Spacing.one,
   },
   gridCell: {
     width: 40,

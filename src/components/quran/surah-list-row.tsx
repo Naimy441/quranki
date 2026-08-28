@@ -2,9 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { SurahNameText } from '@/components/quran/surah-name-text';
 import { ThemedText } from '@/components/themed-text';
-import { ArabicTextStyle, Radius, Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { hapticSelection } from '@/lib/haptics';
 import type { SurahIndexEntry } from '@/lib/quran-reader-types';
 
 // The reader screen can take a moment to mount (parsing + rendering a whole surah's ayahs on
@@ -21,12 +23,18 @@ export function SurahListRow({ surah }: { surah: SurahIndexEntry }) {
     const now = Date.now();
     if (now - lastNavigationAt < NAVIGATION_DEBOUNCE_MS) return;
     lastNavigationAt = now;
+    hapticSelection();
     router.push(`/quran/${surah.n}`);
   };
+
+  const revelation = surah.rp === 'meccan' ? 'Meccan' : 'Medinan';
+  const ayahsLabel = `${surah.ac} ${surah.ac === 1 ? 'ayah' : 'ayahs'}`;
 
   return (
     <Pressable
       onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={`${surah.n}, ${surah.tr}, ${surah.ar}, ${ayahsLabel}, ${revelation}`}
       style={({ pressed }) => [
         styles.row,
         { backgroundColor: theme.card, borderColor: theme.border },
@@ -40,20 +48,18 @@ export function SurahListRow({ surah }: { surah: SurahIndexEntry }) {
 
       <View style={styles.info}>
         <ThemedText type="smallBold" numberOfLines={1}>
-          {surah.tr}
+          {surah.en}
         </ThemedText>
         <View style={styles.metaRow}>
           <ThemedText type="small" themeColor="textSecondary">
-            {surah.ac} {surah.ac === 1 ? 'ayah' : 'ayahs'}
+            {ayahsLabel}
           </ThemedText>
-          <View style={[styles.dot, { backgroundColor: theme.textMuted }]} />
-          <ThemedText type="small" themeColor="textSecondary" style={styles.capitalize}>
-            {surah.rp === 'meccan' ? 'Meccan' : 'Medinan'}
-          </ThemedText>
+
+
         </View>
       </View>
 
-      <ThemedText style={[styles.arabicName, ArabicTextStyle, { color: theme.text }]}>{surah.ar}</ThemedText>
+      <SurahNameText surahNumber={surah.n} style={styles.arabicName} />
 
       <Ionicons name="chevron-forward" size={16} color={theme.textMuted} style={styles.chevron} />
     </Pressable>
@@ -97,8 +103,9 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   arabicName: {
-    fontSize: 22,
-    lineHeight: 40,
+    fontSize: 28,
+    lineHeight: 44,
+    flexShrink: 0,
     // Android resolves unset/'auto' textAlign from the app's *layout* direction (LTR here), not
     // from the text's own script the way iOS does - without this, Arabic renders left-aligned.
     textAlign: 'right',

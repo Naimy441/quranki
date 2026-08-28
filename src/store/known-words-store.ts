@@ -40,6 +40,7 @@ export const useKnownWordsStore = create<KnownWordsState>((set, get) => ({
     const nextKnownWords: KnownWordsMap = { ...get().knownWords, [id]: entry };
     set({ knownWords: nextKnownWords });
     void saveKnownWordsAsync(nextKnownWords);
+    useProgressStore.getState().clearReaderPeek(id);
     if (isCuratedWordId(id)) useProgressStore.getState().autoMasterWord(id);
   },
 

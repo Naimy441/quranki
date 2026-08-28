@@ -84,6 +84,15 @@ export const ArabicFont = 'UthmanicHafs1Ver18';
  */
 export const ArabicTextStyle = { fontFamily: ArabicFont, fontWeight: 'normal' as const };
 
+/**
+ * Calligraphic surah-name headers (QCF FullSurah). One glyph per chapter, including "سورة".
+ * The bundled file is the outline face — the original SVG color table is stripped because iOS
+ * Core Text paints those glyphs in hardcoded black (invisible in dark mode) and React Native
+ * Text often draws them as empty. Outlines follow `color` like the Uthmanic Hafs font.
+ */
+export const SurahNameFont = 'QCF_FullSurah';
+export const SurahNameTextStyle = { fontFamily: SurahNameFont, fontWeight: 'normal' as const };
+
 export const Spacing = {
   half: 2,
   one: 4,
