@@ -5,7 +5,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, AppState, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, AppState, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -57,6 +57,10 @@ export default function SurahReaderScreen() {
   // side by side; swiping just slides between them and then shifts which three are mounted,
   // rather than navigating to a whole new screen.
   const [active, setActive] = useState(() => Number(surah));
+  // Header title tracks the chapter the swipe has committed to, immediately — `active` only
+  // updates after the page animation so the strip doesn't remount mid-slide. A custom
+  // `headerTitle` also skips the native stack's title-slide interpolation.
+  const [headerSurah, setHeaderSurah] = useState(() => Number(surah));
   // Re-sync from the route itself if it ever disagrees with our own `active` (not the other way
   // around - see the comment above). Adjusting state during render, rather than in an effect,
   // avoids an extra cascading render pass: React bails out and re-renders immediately with the
@@ -89,6 +93,7 @@ export default function SurahReaderScreen() {
   const recitationAwaiting = useRecitationStore((s) => s.awaitingAudio);
 
   const meta = getSurahMeta(active);
+  const headerMeta = getSurahMeta(headerSurah) ?? meta;
   const requestedAyah = Number(Array.isArray(ayahParam) ? ayahParam[0] : ayahParam);
   const focusAyah =
     Number.isFinite(requestedAyah) && requestedAyah >= 1 && meta
@@ -142,6 +147,10 @@ export default function SurahReaderScreen() {
     translateX.value = active * screenWidth;
   }, [screenWidth, active, translateX]);
 
+  useLayoutEffect(() => {
+    setHeaderSurah(active);
+  }, [active]);
+
   const commitShift = (direction: 1 | -1) => {
     const next = active + direction;
     setActive(next);
@@ -173,11 +182,13 @@ export default function SurahReaderScreen() {
         (event.translationX <= -screenWidth * COMMIT_DISTANCE_FRACTION || event.velocityX <= -COMMIT_VELOCITY_THRESHOLD);
 
       if (goingNext) {
+        runOnJS(setHeaderSurah)(active + 1);
         runOnJS(hapticSelection)();
         translateX.value = withTiming(base + screenWidth, { duration: SWIPE_ANIMATION_MS }, (finished) => {
           if (finished) runOnJS(commitShift)(1);
         });
       } else if (goingPrev) {
+        runOnJS(setHeaderSurah)(active - 1);
         runOnJS(hapticSelection)();
         translateX.value = withTiming(base - screenWidth, { duration: SWIPE_ANIMATION_MS }, (finished) => {
           if (finished) runOnJS(commitShift)(-1);
@@ -197,8 +208,17 @@ export default function SurahReaderScreen() {
     <ThemedView style={styles.flex}>
       <Stack.Screen
         options={{
-          title: meta.tr,
+          title: headerMeta.tr,
           headerBackTitle: "Qur'an",
+          headerTitle: () => (
+            <Text numberOfLines={1} style={[styles.headerTitle, { color: theme.text }]}>
+              {headerMeta.tr}
+            </Text>
+          ),
+          // Horizontal pans change chapters. The stack's edge-swipe would otherwise
+          // pop back to the list and leave the reader.
+          gestureEnabled: false,
+          fullScreenGestureEnabled: false,
           headerRight: () => (
             <View style={styles.headerActions}>
               <Pressable
@@ -321,4 +341,8 @@ const styles = StyleSheet.create({
   slot: { position: 'absolute', top: 0, bottom: 0 },
   headerActions: { flexDirection: 'row', alignItems: 'center' },
   headerButton: { padding: Spacing.one },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
 });

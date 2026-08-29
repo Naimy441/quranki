@@ -201,6 +201,7 @@ function main() {
       ar: meta.name_arabic,
       en: meta.name_simple,
       tr: meta.name,
+      nt: meta.name_translation,
       ac: meta.verses_count,
       rp: meta.revelation_place === 'makkah' ? 'meccan' : 'medinan',
       b: meta.bismillah_pre,

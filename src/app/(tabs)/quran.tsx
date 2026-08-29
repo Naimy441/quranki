@@ -25,6 +25,7 @@ export default function QuranScreen() {
         (s) =>
           s.tr.toLowerCase().includes(normalized) ||
           s.en.toLowerCase().includes(normalized) ||
+          s.nt.toLowerCase().includes(normalized) ||
           s.ar.includes(normalized) ||
           String(s.n) === normalized,
       )

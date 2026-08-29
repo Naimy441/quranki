@@ -6,7 +6,8 @@
     "tr": "Al-Fātiĥah",
     "ac": 7,
     "rp": "meccan",
-    "b": false
+    "b": false,
+    "nt": "The Opener"
   },
   {
     "n": 2,
@@ -15,7 +16,8 @@
     "tr": "Al-Baqarah",
     "ac": 286,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Cow"
   },
   {
     "n": 3,
@@ -24,7 +26,8 @@
     "tr": "Āli `Imrān",
     "ac": 200,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "Family of Imran"
   },
   {
     "n": 4,
@@ -33,7 +36,8 @@
     "tr": "An-Nisā",
     "ac": 176,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Women"
   },
   {
     "n": 5,
@@ -42,7 +46,8 @@
     "tr": "Al-Mā'idah",
     "ac": 120,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Table Spread"
   },
   {
     "n": 6,
@@ -51,7 +56,8 @@
     "tr": "Al-'An`ām",
     "ac": 165,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Cattle"
   },
   {
     "n": 7,
@@ -60,7 +66,8 @@
     "tr": "Al-'A`rāf",
     "ac": 206,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Heights"
   },
   {
     "n": 8,
@@ -69,7 +76,8 @@
     "tr": "Al-'Anfāl",
     "ac": 75,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Spoils of War"
   },
   {
     "n": 9,
@@ -78,7 +86,8 @@
     "tr": "At-Tawbah",
     "ac": 129,
     "rp": "medinan",
-    "b": false
+    "b": false,
+    "nt": "The Repentance"
   },
   {
     "n": 10,
@@ -87,7 +96,8 @@
     "tr": "Yūnus",
     "ac": 109,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Jonah"
   },
   {
     "n": 11,
@@ -96,7 +106,8 @@
     "tr": "Hūd",
     "ac": 123,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Hud"
   },
   {
     "n": 12,
@@ -105,7 +116,8 @@
     "tr": "Yūsuf",
     "ac": 111,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Joseph"
   },
   {
     "n": 13,
@@ -114,7 +126,8 @@
     "tr": "Ar-Ra`d",
     "ac": 43,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "Thunder"
   },
   {
     "n": 14,
@@ -123,7 +136,8 @@
     "tr": "Ibrāhīm",
     "ac": 52,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Abraham"
   },
   {
     "n": 15,
@@ -132,7 +146,8 @@
     "tr": "Al-Ĥijr",
     "ac": 99,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Stoneland"
   },
   {
     "n": 16,
@@ -141,7 +156,8 @@
     "tr": "An-Naĥl",
     "ac": 128,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Bee"
   },
   {
     "n": 17,
@@ -150,7 +166,8 @@
     "tr": "Al-'Isrā",
     "ac": 111,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Night Journey"
   },
   {
     "n": 18,
@@ -159,7 +176,8 @@
     "tr": "Al-Kahf",
     "ac": 110,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Cave"
   },
   {
     "n": 19,
@@ -168,7 +186,8 @@
     "tr": "Maryam",
     "ac": 98,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Mary"
   },
   {
     "n": 20,
@@ -177,7 +196,8 @@
     "tr": "Ţāhā",
     "ac": 135,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Ta-Ha"
   },
   {
     "n": 21,
@@ -186,7 +206,8 @@
     "tr": "Al-'Anbyā",
     "ac": 112,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Prophets"
   },
   {
     "n": 22,
@@ -195,7 +216,8 @@
     "tr": "Al-Ĥajj",
     "ac": 78,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Pilgrimage"
   },
   {
     "n": 23,
@@ -204,7 +226,8 @@
     "tr": "Al-Mu'minūn",
     "ac": 118,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Believers"
   },
   {
     "n": 24,
@@ -213,7 +236,8 @@
     "tr": "An-Nūr",
     "ac": 64,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Light"
   },
   {
     "n": 25,
@@ -222,7 +246,8 @@
     "tr": "Al-Furqān",
     "ac": 77,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Criterion"
   },
   {
     "n": 26,
@@ -231,7 +256,8 @@
     "tr": "Ash-Shu`arā",
     "ac": 227,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Poets"
   },
   {
     "n": 27,
@@ -240,7 +266,8 @@
     "tr": "An-Naml",
     "ac": 93,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Ants"
   },
   {
     "n": 28,
@@ -249,7 +276,8 @@
     "tr": "Al-Qaşaş",
     "ac": 88,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Story"
   },
   {
     "n": 29,
@@ -258,7 +286,8 @@
     "tr": "Al-`Ankabūt",
     "ac": 69,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Spider"
   },
   {
     "n": 30,
@@ -267,7 +296,8 @@
     "tr": "Ar-Rūm",
     "ac": 60,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Romans"
   },
   {
     "n": 31,
@@ -276,7 +306,8 @@
     "tr": "Luqmān",
     "ac": 34,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Luqman"
   },
   {
     "n": 32,
@@ -285,7 +316,8 @@
     "tr": "As-Sajdah",
     "ac": 30,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Prostration"
   },
   {
     "n": 33,
@@ -294,7 +326,8 @@
     "tr": "Al-'Aĥzāb",
     "ac": 73,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Confederates"
   },
   {
     "n": 34,
@@ -303,7 +336,8 @@
     "tr": "Saba",
     "ac": 54,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Sheba"
   },
   {
     "n": 35,
@@ -312,7 +346,8 @@
     "tr": "Fāţir",
     "ac": 45,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Originator"
   },
   {
     "n": 36,
@@ -321,7 +356,8 @@
     "tr": "Yā-Sīn",
     "ac": 83,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Ya Sin"
   },
   {
     "n": 37,
@@ -330,7 +366,8 @@
     "tr": "Aş-Şāffāt",
     "ac": 182,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Those Who Set the Ranks"
   },
   {
     "n": 38,
@@ -339,7 +376,8 @@
     "tr": "Şād",
     "ac": 88,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Letter Saad"
   },
   {
     "n": 39,
@@ -348,7 +386,8 @@
     "tr": "Az-Zumar",
     "ac": 75,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Troops"
   },
   {
     "n": 40,
@@ -357,7 +396,8 @@
     "tr": "Ghāfir",
     "ac": 85,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Forgiver"
   },
   {
     "n": 41,
@@ -366,7 +406,8 @@
     "tr": "Fuşşilat",
     "ac": 54,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Explained in Detail"
   },
   {
     "n": 42,
@@ -375,7 +416,8 @@
     "tr": "Ash-Shūraá",
     "ac": 53,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Consultation"
   },
   {
     "n": 43,
@@ -384,7 +426,8 @@
     "tr": "Az-Zukhruf",
     "ac": 89,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Ornaments of Gold"
   },
   {
     "n": 44,
@@ -393,7 +436,8 @@
     "tr": "Ad-Dukhān",
     "ac": 59,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Smoke"
   },
   {
     "n": 45,
@@ -402,7 +446,8 @@
     "tr": "Al-Jāthiyah",
     "ac": 37,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Crouching"
   },
   {
     "n": 46,
@@ -411,7 +456,8 @@
     "tr": "Al-'Aĥqāf",
     "ac": 35,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Wind Curved Sandhill"
   },
   {
     "n": 47,
@@ -420,7 +466,8 @@
     "tr": "Muĥammad",
     "ac": 38,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "Muhammad"
   },
   {
     "n": 48,
@@ -429,7 +476,8 @@
     "tr": "Al-Fatĥ",
     "ac": 29,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Victory"
   },
   {
     "n": 49,
@@ -438,7 +486,8 @@
     "tr": "Al-Ĥujurāt",
     "ac": 18,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Private Chambers"
   },
   {
     "n": 50,
@@ -447,7 +496,8 @@
     "tr": "Qāf",
     "ac": 45,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Qaf"
   },
   {
     "n": 51,
@@ -456,7 +506,8 @@
     "tr": "Adh-Dhāriyāt",
     "ac": 60,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Scatterers"
   },
   {
     "n": 52,
@@ -465,7 +516,8 @@
     "tr": "Aţ-Ţūr",
     "ac": 49,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Mountain"
   },
   {
     "n": 53,
@@ -474,7 +526,8 @@
     "tr": "An-Najm",
     "ac": 62,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Star"
   },
   {
     "n": 54,
@@ -483,7 +536,8 @@
     "tr": "Al-Qamar",
     "ac": 55,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Moon"
   },
   {
     "n": 55,
@@ -492,7 +546,8 @@
     "tr": "Ar-Raĥmān",
     "ac": 78,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Beneficent"
   },
   {
     "n": 56,
@@ -501,7 +556,8 @@
     "tr": "Al-Wāqi`ah",
     "ac": 96,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Inevitable"
   },
   {
     "n": 57,
@@ -510,7 +566,8 @@
     "tr": "Al-Ĥadīd",
     "ac": 29,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Iron"
   },
   {
     "n": 58,
@@ -519,7 +576,8 @@
     "tr": "Al-Mujādila",
     "ac": 22,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Pleading Women"
   },
   {
     "n": 59,
@@ -528,7 +586,8 @@
     "tr": "Al-Ĥashr",
     "ac": 24,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Exile"
   },
   {
     "n": 60,
@@ -537,7 +596,8 @@
     "tr": "Al-Mumtaĥanah",
     "ac": 13,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "She That Is to Be Examined"
   },
   {
     "n": 61,
@@ -546,7 +606,8 @@
     "tr": "Aş-Şaf",
     "ac": 14,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Ranks"
   },
   {
     "n": 62,
@@ -555,7 +616,8 @@
     "tr": "Al-Jumu`ah",
     "ac": 11,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "Congregation Prayer"
   },
   {
     "n": 63,
@@ -564,7 +626,8 @@
     "tr": "Al-Munāfiqūn",
     "ac": 11,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Hypocrites"
   },
   {
     "n": 64,
@@ -573,7 +636,8 @@
     "tr": "At-Taghābun",
     "ac": 18,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "Mutual Dispossession"
   },
   {
     "n": 65,
@@ -582,7 +646,8 @@
     "tr": "Aţ-Ţalāq",
     "ac": 12,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Divorce"
   },
   {
     "n": 66,
@@ -591,7 +656,8 @@
     "tr": "At-Taĥrīm",
     "ac": 12,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Prohibition"
   },
   {
     "n": 67,
@@ -600,7 +666,8 @@
     "tr": "Al-Mulk",
     "ac": 30,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Sovereignty"
   },
   {
     "n": 68,
@@ -609,7 +676,8 @@
     "tr": "Al-Qalam",
     "ac": 52,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Pen"
   },
   {
     "n": 69,
@@ -618,7 +686,8 @@
     "tr": "Al-Ĥāqqah",
     "ac": 52,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Reality"
   },
   {
     "n": 70,
@@ -627,7 +696,8 @@
     "tr": "Al-Ma`ārij",
     "ac": 44,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Ascending Stairways"
   },
   {
     "n": 71,
@@ -636,7 +706,8 @@
     "tr": "Nūĥ",
     "ac": 28,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Noah"
   },
   {
     "n": 72,
@@ -645,7 +716,8 @@
     "tr": "Al-Jinn",
     "ac": 28,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Jinn"
   },
   {
     "n": 73,
@@ -654,7 +726,8 @@
     "tr": "Al-Muzzammil",
     "ac": 20,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Enshrouded One"
   },
   {
     "n": 74,
@@ -663,7 +736,8 @@
     "tr": "Al-Muddaththir",
     "ac": 56,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Cloaked One"
   },
   {
     "n": 75,
@@ -672,7 +746,8 @@
     "tr": "Al-Qiyāmah",
     "ac": 40,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Resurrection"
   },
   {
     "n": 76,
@@ -681,7 +756,8 @@
     "tr": "Al-'Insān",
     "ac": 31,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Man"
   },
   {
     "n": 77,
@@ -690,7 +766,8 @@
     "tr": "Al-Mursalāt",
     "ac": 50,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Emissaries"
   },
   {
     "n": 78,
@@ -699,7 +776,8 @@
     "tr": "An-Naba",
     "ac": 40,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Tidings"
   },
   {
     "n": 79,
@@ -708,7 +786,8 @@
     "tr": "An-Nāzi`āt",
     "ac": 46,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Those Who Drag Forth"
   },
   {
     "n": 80,
@@ -717,7 +796,8 @@
     "tr": "`Abasa",
     "ac": 42,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "He Frowned"
   },
   {
     "n": 81,
@@ -726,7 +806,8 @@
     "tr": "At-Takwīr",
     "ac": 29,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Overthrowing"
   },
   {
     "n": 82,
@@ -735,7 +816,8 @@
     "tr": "Al-'Infiţār",
     "ac": 19,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Cleaving"
   },
   {
     "n": 83,
@@ -744,7 +826,8 @@
     "tr": "Al-Muţaffifīn",
     "ac": 36,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Defrauding"
   },
   {
     "n": 84,
@@ -753,7 +836,8 @@
     "tr": "Al-'Inshiqāq",
     "ac": 25,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Sundering"
   },
   {
     "n": 85,
@@ -762,7 +846,8 @@
     "tr": "Al-Burūj",
     "ac": 22,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Mansions of the Stars"
   },
   {
     "n": 86,
@@ -771,7 +856,8 @@
     "tr": "Aţ-Ţāriq",
     "ac": 17,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Nightcommer"
   },
   {
     "n": 87,
@@ -780,7 +866,8 @@
     "tr": "Al-'A`lá",
     "ac": 19,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Most High"
   },
   {
     "n": 88,
@@ -789,7 +876,8 @@
     "tr": "Al-Ghāshiyah",
     "ac": 26,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Overwhelming"
   },
   {
     "n": 89,
@@ -798,7 +886,8 @@
     "tr": "Al-Fajr",
     "ac": 30,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Dawn"
   },
   {
     "n": 90,
@@ -807,7 +896,8 @@
     "tr": "Al-Balad",
     "ac": 20,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The City"
   },
   {
     "n": 91,
@@ -816,7 +906,8 @@
     "tr": "Ash-Shams",
     "ac": 15,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Sun"
   },
   {
     "n": 92,
@@ -825,7 +916,8 @@
     "tr": "Al-Layl",
     "ac": 21,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Night"
   },
   {
     "n": 93,
@@ -834,7 +926,8 @@
     "tr": "Ađ-Đuĥaá",
     "ac": 11,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Morning Brightness"
   },
   {
     "n": 94,
@@ -843,7 +936,8 @@
     "tr": "Ash-Sharĥ",
     "ac": 8,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Expansion"
   },
   {
     "n": 95,
@@ -852,7 +946,8 @@
     "tr": "At-Tīn",
     "ac": 8,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Fig"
   },
   {
     "n": 96,
@@ -861,7 +956,8 @@
     "tr": "Al-`Alaq",
     "ac": 19,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Blood Clot"
   },
   {
     "n": 97,
@@ -870,7 +966,8 @@
     "tr": "Al-Qadr",
     "ac": 5,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Power"
   },
   {
     "n": 98,
@@ -879,7 +976,8 @@
     "tr": "Al-Bayyinah",
     "ac": 8,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Evidence"
   },
   {
     "n": 99,
@@ -888,7 +986,8 @@
     "tr": "Az-Zalzalah",
     "ac": 8,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Earthquake"
   },
   {
     "n": 100,
@@ -897,7 +996,8 @@
     "tr": "Al-`Ādiyāt",
     "ac": 11,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Courser"
   },
   {
     "n": 101,
@@ -906,7 +1006,8 @@
     "tr": "Al-Qāri`ah",
     "ac": 11,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Calamity"
   },
   {
     "n": 102,
@@ -915,7 +1016,8 @@
     "tr": "At-Takāthur",
     "ac": 8,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Vying for Increase"
   },
   {
     "n": 103,
@@ -924,7 +1026,8 @@
     "tr": "Al-`Aşr",
     "ac": 3,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Declining Day"
   },
   {
     "n": 104,
@@ -933,7 +1036,8 @@
     "tr": "Al-Humazah",
     "ac": 9,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Slanderer"
   },
   {
     "n": 105,
@@ -942,7 +1046,8 @@
     "tr": "Al-Fīl",
     "ac": 5,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Elephant"
   },
   {
     "n": 106,
@@ -951,7 +1056,8 @@
     "tr": "Quraysh",
     "ac": 4,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "Quraish"
   },
   {
     "n": 107,
@@ -960,7 +1066,8 @@
     "tr": "Al-Mā`ūn",
     "ac": 7,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Small Kindness"
   },
   {
     "n": 108,
@@ -969,7 +1076,8 @@
     "tr": "Al-Kawthar",
     "ac": 3,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Abundance"
   },
   {
     "n": 109,
@@ -978,7 +1086,8 @@
     "tr": "Al-Kāfirūn",
     "ac": 6,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Disbelievers"
   },
   {
     "n": 110,
@@ -987,7 +1096,8 @@
     "tr": "An-Naşr",
     "ac": 3,
     "rp": "medinan",
-    "b": true
+    "b": true,
+    "nt": "The Divine Support"
   },
   {
     "n": 111,
@@ -996,7 +1106,8 @@
     "tr": "Al-Masad",
     "ac": 5,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Palm Fiber"
   },
   {
     "n": 112,
@@ -1005,7 +1116,8 @@
     "tr": "Al-'Ikhlāş",
     "ac": 4,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Sincerity"
   },
   {
     "n": 113,
@@ -1014,7 +1126,8 @@
     "tr": "Al-Falaq",
     "ac": 5,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Daybreak"
   },
   {
     "n": 114,
@@ -1023,6 +1136,7 @@
     "tr": "An-Nās",
     "ac": 6,
     "rp": "meccan",
-    "b": true
+    "b": true,
+    "nt": "The Mankind"
   }
 ]

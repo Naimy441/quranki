@@ -22,15 +22,23 @@ export function SurahListRow({ surah }: { surah: SurahIndexEntry }) {
     <Pressable
       onPress={handlePress}
       accessibilityRole="button"
-      accessibilityLabel={`${surah.n}, ${surah.tr}, ${surah.ar}, ${ayahsLabel}, ${revelation}`}
+      accessibilityLabel={`${surah.n}, ${surah.tr}, ${surah.nt}, ${surah.ar}, ${ayahsLabel}, ${revelation}`}
       style={({ pressed }) => [
         styles.row,
         { backgroundColor: theme.card, borderColor: theme.border },
         pressed && styles.pressed,
       ]}>
-      <View style={[styles.numberBadge, { backgroundColor: theme.backgroundSelected }]}>
-        <ThemedText type="smallBold" themeColor="primary">
-          {surah.n}
+      <View style={styles.lead}>
+        <View style={[styles.numberBadge, { backgroundColor: theme.backgroundSelected }]}>
+          <ThemedText type="smallBold" themeColor="primary">
+            {surah.n}
+          </ThemedText>
+        </View>
+        <ThemedText type="small" themeColor="textMuted" style={styles.ayahCount}>
+          {surah.ac}
+        </ThemedText>
+        <ThemedText type="small" themeColor="textMuted" style={styles.ayahUnit}>
+          {surah.ac === 1 ? 'ayah' : 'ayahs'}
         </ThemedText>
       </View>
 
@@ -38,20 +46,17 @@ export function SurahListRow({ surah }: { surah: SurahIndexEntry }) {
         <ThemedText type="smallBold" numberOfLines={1}>
           {surah.en}
         </ThemedText>
-        <View style={styles.metaRow}>
-          <ThemedText type="small" themeColor="textSecondary">
-            {ayahsLabel}
-          </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          {surah.nt}
+        </ThemedText>
+      </View>
 
-
+      <View style={styles.trailing}>
+        <View style={styles.arabicNameWrap}>
+          <SurahNameText surahNumber={surah.n} style={styles.arabicName} />
         </View>
+        <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
       </View>
-
-      <View style={styles.arabicNameWrap}>
-        <SurahNameText surahNumber={surah.n} style={styles.arabicName} />
-      </View>
-
-      <Ionicons name="chevron-forward" size={16} color={theme.textMuted} style={styles.chevron} />
     </Pressable>
   );
 }
@@ -64,9 +69,15 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     borderRadius: Radius.large,
     borderWidth: 1,
+    overflow: 'visible',
   },
   pressed: {
     opacity: 0.75,
+  },
+  lead: {
+    width: 40,
+    alignItems: 'center',
+    gap: 1,
   },
   numberBadge: {
     width: 36,
@@ -75,36 +86,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  ayahCount: {
+    marginTop: 2,
+    fontSize: 12,
+    lineHeight: 14,
+    fontVariant: ['tabular-nums'],
+  },
+  ayahUnit: {
+    fontSize: 10,
+    lineHeight: 12,
+  },
   info: {
     flex: 1,
+    minWidth: 0,
     gap: 2,
   },
-  metaRow: {
+  trailing: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 0,
     gap: Spacing.one,
-  },
-  dot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-  },
-  capitalize: {
-    textTransform: 'capitalize',
   },
   arabicNameWrap: {
     justifyContent: 'center',
-    // The QCF name glyphs sit high in their line box; a little top pad drops the ink
-    // onto the same midline as the English title without clipping flourishes.
-    paddingTop: 6,
+    overflow: 'visible',
+    // Room for the downward shift so flourishes stay inside the row, not clipped.
+    paddingBottom: 12,
   },
   arabicName: {
-    fontSize: 28,
-    lineHeight: 44,
-    flexShrink: 0,
+    fontSize: 30,
+    lineHeight: 60,
+    includeFontPadding: false,
     textAlign: 'right',
-  },
-  chevron: {
-    marginLeft: -Spacing.one,
+    transform: [{ translateY: 12 }],
   },
 });

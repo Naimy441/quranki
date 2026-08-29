@@ -95,7 +95,10 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="level/[id]" options={{ title: '', headerBackTitle: 'Levels' }} />
               <Stack.Screen name="grammar/[id]" options={{ title: 'Grammar', headerBackTitle: 'Levels' }} />
-              <Stack.Screen name="quran/[surah]" options={{ title: '', headerBackTitle: "Qur'an" }} />
+              <Stack.Screen
+                name="quran/[surah]"
+                options={{ title: '', headerBackTitle: "Qur'an", gestureEnabled: false, fullScreenGestureEnabled: false }}
+              />
               <Stack.Screen name="saved" options={{ title: 'Saved', headerBackTitle: "Qur'an" }} />
               <Stack.Screen name="known-words" options={{ title: 'Known words', headerBackTitle: 'Settings' }} />
               <Stack.Screen

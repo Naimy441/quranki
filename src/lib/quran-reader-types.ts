@@ -57,6 +57,8 @@ export interface SurahIndexEntry {
   en: string;
   /** Full diacritical transliteration, e.g. "Al-Fātiĥah". */
   tr: string;
+  /** English meaning of the name, e.g. "The Opener". */
+  nt: string;
   /** Ayah count. */
   ac: number;
   rp: 'meccan' | 'medinan';

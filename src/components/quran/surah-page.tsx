@@ -12,8 +12,7 @@ import { AyahBlock } from '@/components/quran/ayah-block';
 import { BismillahHeader } from '@/components/quran/bismillah-header';
 import { SurahNameText } from '@/components/quran/surah-name-text';
 import { ThemedText } from '@/components/themed-text';
-import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { getSurahAyahs, getSurahMeta } from '@/lib/quran-reader';
 import type { ReaderAyah, ReaderWord } from '@/lib/quran-reader-types';
 import { useRecitationStore } from '@/store/recitation-store';
@@ -207,15 +206,21 @@ export function SurahPage({
       scrollEventThrottle={100}>
       <View onLayout={handleContentLayout}>
         <View style={styles.header} onLayout={handleHeaderLayout}>
-          <SurahNameText surahNumber={surahNumber} style={styles.arabicTitle} />
-          <ThemedText type="title" style={styles.title}>
-            {meta.en}
-          </ThemedText>
-
-          <View style={styles.metaRow}>
-            <MetaPill label={`${meta.ac} ${meta.ac === 1 ? 'ayah' : 'ayahs'}`} />
-            <MetaPill label={meta.rp === 'meccan' ? 'Meccan' : 'Medinan'} />
-            <MetaPill label={`Surah ${meta.n}`} />
+          <View style={styles.titleRow}>
+            <View style={styles.englishInfo}>
+              <ThemedText type="smallBold" style={styles.transliteration}>
+                {meta.en}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.meaning}>
+                {meta.nt}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textMuted" style={styles.metaLine}>
+                {`${meta.ac} ${meta.ac === 1 ? 'ayah' : 'ayahs'}  ·  ${meta.rp === 'meccan' ? 'Meccan' : 'Medinan'}`}
+              </ThemedText>
+            </View>
+            <View style={styles.arabicTitleWrap}>
+              <SurahNameText surahNumber={surahNumber} style={styles.arabicTitle} />
+            </View>
           </View>
 
           {meta.b && (
@@ -273,17 +278,6 @@ export function SurahPage({
   );
 }
 
-function MetaPill({ label }: { label: string }) {
-  const theme = useTheme();
-  return (
-    <View style={[styles.pill, { backgroundColor: theme.backgroundElement }]}>
-      <ThemedText type="small" themeColor="textSecondary">
-        {label}
-      </ThemedText>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   list: {
     flex: 1,
@@ -296,29 +290,52 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.two,
-    paddingBottom: Spacing.two,
-    alignItems: 'center',
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.one,
     gap: Spacing.two,
+    overflow: 'visible',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: Spacing.three,
+    overflow: 'visible',
+  },
+  englishInfo: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
+    gap: Spacing.half,
+  },
+  arabicTitleWrap: {
+    justifyContent: 'center',
+    overflow: 'visible',
+    paddingTop: 6,
   },
   arabicTitle: {
     fontSize: 42,
-    lineHeight: 72,
-    paddingTop: Spacing.two,
-    textAlign: 'center',
+    lineHeight: 80,
+    includeFontPadding: false,
+    flexShrink: 0,
+    textAlign: 'right',
+    // Collapse extra space below so the 3-line stack still owns the row height,
+    // but leave the top of the line box intact so tall flourishes are not clipped.
+    marginTop: -8,
+    marginBottom: -18,
+    transform: [{ translateY: 12 }],
   },
-  title: {
-    fontSize: 22,
-    lineHeight: 28,
+  transliteration: {
+    fontSize: 18,
+    lineHeight: 24,
+    letterSpacing: 0.2,
   },
-  metaRow: {
-    flexDirection: 'row',
-    gap: Spacing.two,
+  meaning: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  metaLine: {
     marginTop: Spacing.one,
-  },
-  pill: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one,
-    borderRadius: Radius.pill,
+    letterSpacing: 0.3,
   },
 });
