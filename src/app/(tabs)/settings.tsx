@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ArabicText } from '@/components/arabic-text';
 import { ChoiceGrid } from '@/components/quranki/choice-grid';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { ArabicTextStyle, BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { displayArabic } from '@/lib/arabic-display';
 import { hapticSelection, hapticWarning } from '@/lib/haptics';
 import { isCuratedWordId } from '@/lib/known-words';
 import { getWord } from '@/lib/levels';
@@ -122,7 +124,7 @@ export default function SettingsScreen() {
 
 
           </View>
-          <SettingsSection title="New words per session">
+          <SettingsSection title="New words per day">
             <View style={styles.sliderValueBlock}>
               <ThemedText type="title" style={styles.sliderValue}>
                 {clampWordsPerSession(settings.wordsPerSession)}
@@ -182,7 +184,7 @@ export default function SettingsScreen() {
               <View style={[styles.knownList, { backgroundColor: theme.card, borderColor: theme.border }]}>
                 {visibleKnown.map(([id, entry], index) => {
                   const studyWord = isCuratedWordId(id) ? getWord(id) : undefined;
-                  const label = studyWord?.arabic ?? entry.sampleArabic;
+                  const label = studyWord ? displayArabic(studyWord) : entry.sampleArabic;
                   const sub = studyWord
                     ? studyWord.english
                     : `${formatCount(getWordOccurrenceCount(id))} occurrences`;
@@ -194,7 +196,7 @@ export default function SettingsScreen() {
                         index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border },
                       ]}>
                       <View style={styles.knownTextCol}>
-                        <ThemedText style={[ArabicTextStyle, styles.knownArabic]}>{label}</ThemedText>
+                        <ArabicText style={styles.knownArabic}>{label}</ArabicText>
                         <ThemedText type="small" themeColor="textSecondary">
                           {sub}
                         </ThemedText>
@@ -355,7 +357,7 @@ const styles = StyleSheet.create({
   },
   knownArabic: {
     fontSize: 22,
-    lineHeight: 32,
+    lineHeight: 36,
   },
   knownMore: {
     alignItems: 'center',

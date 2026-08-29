@@ -3,13 +3,15 @@
    Compiler, which doesn't know about Reanimated) can't tell that apart from mutating real
    React state. */
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useLayoutEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, AppState, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AyahMarkSheet } from '@/components/quran/ayah-mark-sheet';
+import { RecitationPlayer } from '@/components/quran/recitation-player';
 import { ReaderSettingsSheet } from '@/components/quran/reader-settings-sheet';
 import { SurahPage } from '@/components/quran/surah-page';
 import { WordDetailSheet } from '@/components/quran/word-detail-sheet';
@@ -23,6 +25,8 @@ import { getSurahMeta, SURAH_COUNT } from '@/lib/quran-reader';
 import type { ReaderWord } from '@/lib/quran-reader-types';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
+import { useQuranMarksStore } from '@/store/quran-marks-store';
+import { stopRecitation, toggleSurahPlayback, useRecitationStore } from '@/store/recitation-store';
 
 const ARABIC_SIZE_RANGE = { min: 18, max: 38, step: 4 };
 const GLOSS_SIZE_RANGE = { min: 11, max: 19, step: 2 };
@@ -42,7 +46,7 @@ const COMMIT_VELOCITY_THRESHOLD = 800;
 const SWIPE_ANIMATION_MS = 220;
 
 export default function SurahReaderScreen() {
-  const { surah } = useLocalSearchParams<{ surah: string }>();
+  const { surah, ayah: ayahParam } = useLocalSearchParams<{ surah: string; ayah?: string }>();
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   const theme = useTheme();
@@ -72,8 +76,42 @@ export default function SurahReaderScreen() {
   const [glossSize, setGlossSize] = useState(DEFAULT_GLOSS_SIZE);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [selectedWord, setSelectedWord] = useState<ReaderWord | null>(null);
+  const [markAyah, setMarkAyah] = useState<number | null>(null);
+  const handleOpenMarks = useCallback((ayah: number) => {
+    setMarkAyah(ayah);
+  }, []);
+  const noteOpenedSurah = useQuranMarksStore((s) => s.noteOpenedSurah);
+  const setLastRead = useQuranMarksStore((s) => s.setLastRead);
+  const hasSaved = useQuranMarksStore((s) => s.pinPlacements.length > 0 || s.bookmarks.length > 0);
+  const playerVisible = useRecitationStore((s) => s.visible);
+  const recitationSurah = useRecitationStore((s) => s.surahNumber);
+  const recitationPlaying = useRecitationStore((s) => s.playing);
+  const recitationAwaiting = useRecitationStore((s) => s.awaitingAudio);
 
   const meta = getSurahMeta(active);
+  const requestedAyah = Number(Array.isArray(ayahParam) ? ayahParam[0] : ayahParam);
+  const focusAyah =
+    Number.isFinite(requestedAyah) && requestedAyah >= 1 && meta
+      ? Math.min(meta.ac, Math.round(requestedAyah))
+      : 0;
+  const thisSurahPlaying = playerVisible && recitationSurah === active && recitationPlaying;
+  const thisSurahLoading = playerVisible && recitationSurah === active && recitationAwaiting && !recitationPlaying;
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        // Backgrounding the app blurs this screen on some platforms; keep recitation going.
+        const appState = AppState.currentState;
+        if (appState === 'background' || appState === 'inactive') return;
+        stopRecitation();
+      };
+    }, []),
+  );
+
+  useLayoutEffect(() => {
+    noteOpenedSurah(active);
+    if (focusAyah > 0) setLastRead(active, focusAyah);
+  }, [active, focusAyah, noteOpenedSurah, setLastRead]);
 
   // Each mounted surah sits at its OWN permanent absolute offset (`-surahNumber * screenWidth`),
   // not at a position derived from its index among "currently mounted" slots. That means the
@@ -107,7 +145,7 @@ export default function SurahReaderScreen() {
   const commitShift = (direction: 1 | -1) => {
     const next = active + direction;
     setActive(next);
-    router.setParams({ surah: String(next) });
+    router.setParams({ surah: String(next), ayah: '' });
   };
 
   const swipeGesture = Gesture.Pan()
@@ -162,42 +200,80 @@ export default function SurahReaderScreen() {
           title: meta.tr,
           headerBackTitle: "Qur'an",
           headerRight: () => (
-            <Pressable
-              onPress={() => {
-                hapticLight();
-                setSettingsVisible(true);
-              }}
-              hitSlop={10}
-              style={styles.headerButton}>
-              <Ionicons name="settings-outline" size={22} color={theme.text} />
-            </Pressable>
+            <View style={styles.headerActions}>
+              <Pressable
+                onPress={() => {
+                  hapticLight();
+                  toggleSurahPlayback(active);
+                }}
+                hitSlop={10}
+                accessibilityLabel={thisSurahPlaying ? 'Pause recitation' : 'Play surah recitation'}
+                style={styles.headerButton}>
+                {thisSurahLoading ? (
+                  <ActivityIndicator size="small" color={theme.text} />
+                ) : (
+                  <Ionicons name={thisSurahPlaying ? 'pause' : 'play'} size={22} color={theme.text} />
+                )}
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  hapticLight();
+                  router.push('/saved');
+                }}
+                hitSlop={10}
+                accessibilityLabel="Saved pins and bookmarks"
+                style={styles.headerButton}>
+                <Ionicons name={hasSaved ? 'bookmark' : 'bookmark-outline'} size={22} color={theme.text} />
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  hapticLight();
+                  setSettingsVisible(true);
+                }}
+                hitSlop={10}
+                accessibilityLabel="Reader settings"
+                style={styles.headerButton}>
+                <Ionicons name="settings-outline" size={22} color={theme.text} />
+              </Pressable>
+            </View>
           ),
         }}
       />
       <SafeAreaView style={styles.flex} edges={['bottom']}>
-        <GestureDetector gesture={swipeGesture}>
-          <Animated.View style={[styles.row, rowStyle]}>
-            {[active - 1, active, active + 1].map((surahNumber) => {
-              if (surahNumber < 1 || surahNumber > SURAH_COUNT) return null;
-              return (
-                <View
-                  key={surahNumber}
-                  style={[styles.slot, { left: -surahNumber * screenWidth, width: screenWidth }]}>
-                  <SurahPage
-                    surahNumber={surahNumber}
-                    showTranslation={showTranslation}
-                    arabicSize={arabicSize}
-                    glossSize={glossSize}
-                    hiddenVocabIds={hiddenVocabIds}
-                    knownWordIds={knownWordIds}
-                    onLongPressWord={setSelectedWord}
-                    initialBatch={surahNumber === active ? ACTIVE_INITIAL_BATCH : PEEK_INITIAL_BATCH}
-                  />
-                </View>
-              );
-            })}
-          </Animated.View>
-        </GestureDetector>
+        <View style={styles.flex}>
+          <GestureDetector gesture={swipeGesture}>
+            <Animated.View style={[styles.row, rowStyle]}>
+              {[active - 1, active, active + 1].map((surahNumber) => {
+                if (surahNumber < 1 || surahNumber > SURAH_COUNT) return null;
+                return (
+                  <View
+                    key={surahNumber}
+                    style={[styles.slot, { left: -surahNumber * screenWidth, width: screenWidth }]}>
+                    <SurahPage
+                      surahNumber={surahNumber}
+                      showTranslation={showTranslation}
+                      arabicSize={arabicSize}
+                      glossSize={glossSize}
+                      hiddenVocabIds={hiddenVocabIds}
+                      knownWordIds={knownWordIds}
+                      onLongPressWord={setSelectedWord}
+                      onOpenMarks={handleOpenMarks}
+                      focusAyah={surahNumber === active ? focusAyah : 0}
+                      isActive={surahNumber === active}
+                      onVisibleAyah={(ayah) => setLastRead(surahNumber, ayah)}
+                      initialBatch={
+                        surahNumber === active
+                          ? Math.max(ACTIVE_INITIAL_BATCH, focusAyah > 0 ? focusAyah + 2 : 0)
+                          : PEEK_INITIAL_BATCH
+                      }
+                    />
+                  </View>
+                );
+              })}
+            </Animated.View>
+          </GestureDetector>
+        </View>
+        {playerVisible && <RecitationPlayer />}
       </SafeAreaView>
 
       <ReaderSettingsSheet
@@ -212,6 +288,8 @@ export default function SurahReaderScreen() {
         showTranslation={showTranslation}
         onShowTranslationChange={setShowTranslation}
       />
+
+      <AyahMarkSheet surah={active} ayah={markAyah} onDismiss={() => setMarkAyah(null)} />
 
       <WordDetailSheet
         word={selectedWord}
@@ -241,5 +319,6 @@ const styles = StyleSheet.create({
   // involved, since each slot's horizontal position comes from its own `left` offset instead.
   row: { flex: 1 },
   slot: { position: 'absolute', top: 0, bottom: 0 },
+  headerActions: { flexDirection: 'row', alignItems: 'center' },
   headerButton: { padding: Spacing.one },
 });

@@ -11,7 +11,7 @@ export interface ReaderWord {
   en: TextSegment[];
   /** Unified vocabulary id for this Qur'an word, if one could be resolved (see
    *  scripts/build-quran-reader-data.js). Either:
-   *   - one of the 547 curated src/data/quranic-words.json study word ids ("01-001"), matched by
+   *   - one of the curated src/data/quranic-words.json study word ids ("01-001"), matched by
    *     lemma/root/surface text via the Qur'anic Arabic Corpus morphology data, or
    *   - for a word outside the curriculum, a generated "lem:<lemma>" id (see
    *     scripts/vocab-word-matcher.js's buildLemmaFallbackTags) shared by every occurrence of
@@ -20,6 +20,17 @@ export interface ReaderWord {
    *  ids in FSRS Review/Learning - see getHiddenVocabIds) or has manually marked it known (either
    *  kind of id - see useKnownWordsStore), whichever comes first. */
   v?: string;
+  /**
+   * Qur'anic Arabic Corpus dictionary lemma (light-normalized LEM tag), attached by location
+   * (`surah:ayah:word`) rather than by matching Tajweed text. Used for analysis and, later,
+   * lemma-based mastery. Absent on the handful of ayahs whose corpus word-count disagrees
+   * with the reader, and on stems the corpus left unlemmatized.
+   */
+  lm?: string;
+  /** Corpus ROOT tag (vowel-stripped). Analysis only — never used to assign vocabulary ownership. */
+  rt?: string;
+  /** Corpus stem POS column: `N` (noun), `V` (verb), or `P` (particle). */
+  ps?: string;
 }
 
 /** A run of the full ayah translation: either plain text, or a footnote marker with its body. */

@@ -1,30 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { SurahNameText } from '@/components/quran/surah-name-text';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { hapticSelection } from '@/lib/haptics';
+import { openQuranLocation } from '@/lib/quran-nav';
 import type { SurahIndexEntry } from '@/lib/quran-reader-types';
-
-// The reader screen can take a moment to mount (parsing + rendering a whole surah's ayahs on
-// the JS thread), so a second tap on any row before that finishes would fire a second `push` and
-// stack two reader screens. Module-level rather than per-row state, since the double-tap could
-// land on two different rows just as easily as the same one.
-let lastNavigationAt = 0;
-const NAVIGATION_DEBOUNCE_MS = 800;
 
 export function SurahListRow({ surah }: { surah: SurahIndexEntry }) {
   const theme = useTheme();
 
   const handlePress = () => {
-    const now = Date.now();
-    if (now - lastNavigationAt < NAVIGATION_DEBOUNCE_MS) return;
-    lastNavigationAt = now;
-    hapticSelection();
-    router.push(`/quran/${surah.n}`);
+    openQuranLocation(surah.n);
   };
 
   const revelation = surah.rp === 'meccan' ? 'Meccan' : 'Medinan';

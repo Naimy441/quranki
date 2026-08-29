@@ -7,11 +7,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { KnownWordsMap } from '@/lib/known-words';
 import type { ProgressMap } from '@/lib/levels';
+import { EMPTY_QURAN_MARKS, sanitizeQuranMarks, type QuranMarksData } from '@/lib/quran-marks';
 
 const PROGRESS_KEY = 'quranki:progress:v1';
 const SETTINGS_KEY = 'quranki:settings:v1';
 const META_KEY = 'quranki:meta:v1';
 const KNOWN_WORDS_KEY = 'quranki:known-words:v1';
+const QURAN_MARKS_KEY = 'quranki:quran-marks:v1';
 
 export interface Settings {
   wordsPerSession: number;
@@ -19,7 +21,7 @@ export interface Settings {
   themePreference: 'system' | 'light' | 'dark';
 }
 
-/** Inclusive bounds for the Settings "new words per session" slider. */
+/** Inclusive bounds for the Settings "new words per day" slider. */
 export const WORDS_PER_SESSION_MIN = 3;
 export const WORDS_PER_SESSION_MAX = 30;
 
@@ -36,6 +38,10 @@ export interface Meta {
   /** How many Review-state cards have been graded on `reviewCountDate`. Caps the daily review
    *  queue at DAILY_REVIEW_LIMIT without touching new-word introductions. */
   reviewsToday: number;
+  /** How many unseen words have been introduced on `reviewCountDate`. Caps new cards at the
+   *  Settings "new words per day" value so finishing a session does not immediately deal another
+   *  batch. */
+  newCardsToday: number;
   /** True once the first-launch explainer has been finished. Absent on older installs - hydrate
    *  infers it from existing progress so an update doesn't replay onboarding for current users. */
   onboardingCompleted?: boolean;
@@ -52,6 +58,7 @@ export const DEFAULT_META: Meta = {
   reviewDates: [],
   reviewCountDate: '',
   reviewsToday: 0,
+  newCardsToday: 0,
 };
 
 function safeParse<T>(raw: string | null, fallback: T): T {
@@ -110,6 +117,20 @@ export function saveKnownWordsAsync(knownWords: KnownWordsMap): Promise<void> {
   return AsyncStorage.setItem(KNOWN_WORDS_KEY, JSON.stringify(knownWords));
 }
 
+export async function loadQuranMarksAsync(): Promise<QuranMarksData> {
+  const raw = await AsyncStorage.getItem(QURAN_MARKS_KEY);
+  if (!raw) return EMPTY_QURAN_MARKS;
+  try {
+    return sanitizeQuranMarks(JSON.parse(raw));
+  } catch {
+    return EMPTY_QURAN_MARKS;
+  }
+}
+
+export function saveQuranMarksAsync(data: QuranMarksData): Promise<void> {
+  return AsyncStorage.setItem(QURAN_MARKS_KEY, JSON.stringify(data));
+}
+
 export async function resetAllAsync(): Promise<void> {
-  await AsyncStorage.multiRemove([PROGRESS_KEY, SETTINGS_KEY, META_KEY, KNOWN_WORDS_KEY]);
+  await AsyncStorage.multiRemove([PROGRESS_KEY, SETTINGS_KEY, META_KEY, KNOWN_WORDS_KEY, QURAN_MARKS_KEY]);
 }

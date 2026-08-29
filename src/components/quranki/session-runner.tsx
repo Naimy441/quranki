@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as Speech from 'expo-speech';
-import { useMemo, useState } from 'react';
-import { Alert, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, ProgressBar } from 'react-native-paper';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,10 +14,11 @@ import { ThemedView } from '@/components/themed-view';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getArabicVoiceAsync, toSpeechText } from '@/lib/arabic-speech';
-import { createNewCard, deserializeCard, previewGrades, State, type GradeName } from '@/lib/fsrs';
+import { createNewCard, deserializeCard, formatInterval, previewGrades, State, type GradeName } from '@/lib/fsrs';
 import { hapticHeavy, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
-import type { SessionWord } from '@/lib/levels';
+import { getUpcomingLearning, type SessionWord } from '@/lib/levels';
 import { useProgressStore } from '@/store/progress-store';
+import { stopRecitation } from '@/store/recitation-store';
 
 function hapticGrade(grade: GradeName) {
   if (grade === 'again') hapticHeavy();
@@ -58,6 +59,13 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
   // back onto the end for a second (or third...) pass this session.
   const [sessionQueue, setSessionQueue] = useState(() => queue);
 
+  useEffect(
+    () => () => {
+      stopRecitation();
+    },
+    [],
+  );
+
   const currentEntry = sessionQueue[index];
   const currentProgress = currentEntry ? progress[currentEntry.word.id] : undefined;
 
@@ -89,6 +97,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
       return;
     }
     hapticSelection();
+    stopRecitation();
     void Speech.stop();
     setIsSpeaking(true);
     Speech.speak(toSpeechText(currentEntry.word.arabic), {
@@ -105,20 +114,30 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
   };
 
   const handleClose = () => {
-    void Speech.stop();
     if (Platform.OS === 'web') {
+      void Speech.stop();
+      stopRecitation();
       router.back();
       return;
     }
     Alert.alert('End session?', 'Your progress so far has already been saved.', [
       { text: 'Keep reviewing', style: 'cancel' },
-      { text: 'End session', style: 'destructive', onPress: () => router.back() },
+      {
+        text: 'End session',
+        style: 'destructive',
+        onPress: () => {
+          void Speech.stop();
+          stopRecitation();
+          router.back();
+        },
+      },
     ]);
   };
 
   const handleGrade = (grade: GradeName) => {
     if (!currentEntry) return;
     hapticGrade(grade);
+    stopRecitation();
     const nextCard = gradeWord(currentEntry.word.id, grade);
     setRatingCounts((prev) => ({ ...prev, [grade]: prev[grade] + 1 }));
 
@@ -126,9 +145,11 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
     // requeue it at the end of this session, the same "you'll see it again soon" behavior Anki
     // gives a card that hasn't graduated yet, rather than only showing it next time a session is
     // built (which, for same-day intervals, could otherwise be tomorrow).
-    const needsRequeue = nextCard.state !== State.Review;
+    const needsRequeue = nextCard.state !== State.Review && currentEntry.word.kind !== 'grammar';
     const nextLength = sessionQueue.length + (needsRequeue ? 1 : 0);
-    if (needsRequeue) setSessionQueue((prev) => [...prev, currentEntry]);
+    if (needsRequeue) {
+      setSessionQueue((prev) => [...prev, { ...currentEntry, reason: 'due' }]);
+    }
 
     if (index + 1 < nextLength) {
       setIndex(index + 1);
@@ -154,8 +175,11 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
               {queue.length === 0 ? 'All caught up' : 'Session complete'}
             </ThemedText>
             <ThemedText themeColor="textSecondary" style={styles.summarySubtitle}>
-              {queue.length === 0 ? emptyMessage : `You reviewed ${queue.length} ${queue.length === 1 ? 'word' : 'words'}.`}
+              {queue.length === 0
+                ? emptyMessage
+                : `You reviewed ${queue.length} ${queue.length === 1 ? 'word' : 'words'}.`}
             </ThemedText>
+            {queue.length > 0 ? <UpcomingReviewNote /> : null}
 
             {queue.length > 0 && (
               <View style={styles.ratingSummaryRow}>
@@ -222,25 +246,39 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
           </ThemedText>
         </View>
 
-        <View style={styles.content}>
+        <ScrollView style={styles.content} contentContainerStyle={styles.contentInner} keyboardShouldPersistTaps="handled">
           {showLevelTag && (
             <View style={[styles.levelTag, { backgroundColor: theme.backgroundElement }]}>
               <ThemedText type="small" themeColor="textSecondary">
-                Level {currentEntry.levelNumber} - {currentEntry.reason === 'new' ? 'New word' : 'Review'}
+                Level {currentEntry.levelNumber} -{' '}
+                {currentEntry.word.kind === 'grammar'
+                  ? currentEntry.word.english
+                  : currentEntry.reason === 'new'
+                    ? 'New word'
+                    : currentCard.state === State.Learning || currentCard.state === State.Relearning
+                      ? 'Learning'
+                      : 'Review'}
               </ThemedText>
             </View>
           )}
           <FlashCard
-            arabic={currentEntry.word.arabic}
-            english={currentEntry.word.english}
-            revealed={revealed}
+            word={currentEntry.word}
+            revealed={revealed || currentEntry.word.kind === 'grammar'}
             onSpeak={handleSpeak}
             isSpeaking={isSpeaking}
           />
-        </View>
+        </ScrollView>
 
         <View style={styles.actions}>
-          {revealed ? (
+          {currentEntry.word.kind === 'grammar' ? (
+            <Button
+              mode="contained"
+              style={styles.showAnswerButton}
+              contentStyle={styles.showAnswerContent}
+              onPress={() => handleGrade('easy')}>
+              Got it
+            </Button>
+          ) : revealed ? (
             <GradeButtonRow previews={previews} onGrade={handleGrade} />
           ) : (
             <Button
@@ -283,9 +321,13 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentInner: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: Spacing.four,
     gap: Spacing.three,
+    paddingVertical: Spacing.two,
   },
   levelTag: {
     alignSelf: 'center',
@@ -358,3 +400,14 @@ const styles = StyleSheet.create({
     height: 52,
   },
 });
+
+function UpcomingReviewNote() {
+  const upcoming = getUpcomingLearning(useProgressStore.getState().progress, new Date());
+  if (!upcoming) return null;
+  const label = upcoming.count === 1 ? 'word comes' : 'words come';
+  return (
+    <ThemedText themeColor="textSecondary" style={{ textAlign: 'center' }}>
+      {upcoming.count} {label} back in about {formatInterval(upcoming.ms)}.
+    </ThemedText>
+  );
+}

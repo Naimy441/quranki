@@ -55,9 +55,10 @@ export function getArabicVoiceAsync(): Promise<Voice | undefined> {
  */
 export function toSpeechText(arabic: string): string {
   return arabic
-    .split(',')[0] // Synonym lists ("أَنْبِيَاءَ , نَبِيِّيْن, نَبِيُّون") - the first is enough to speak.
+    .split(/[,\u060c]/)[0] // Synonym lists ("أَنْبِيَاءَ , نَبِيِّيْن" or "لِ، لَ") - the first is enough to speak.
     .replace(/\.{2,}|…/g, ' ') // Ellipsis standing in for an omitted word in a grammar pattern.
     .replace(/\+/g, '') // Literal '+' joining pieces of a grammatical pattern.
+    .replace(/\u0640/g, '') // Tatweel on affix cards (ـهُ) is visual, not spoken.
     .replace(/\u0671/g, '\u0627') // Alef wasla (ٱ) -> plain alef: same sound, far more TTS-recognized.
     .replace(/[\u064B-\u065F\u0670]/g, '') // Tashkeel: tanween, fatha/damma/kasra, shadda, sukun, dagger alef.
     .replace(/[\u200B-\u200F]/g, '') // Stray zero-width/direction-mark artifacts from the source data.

@@ -514,7 +514,7 @@ function attachVariant(word, form) {
 }
 
 function citationFormsForDedup(word) {
-  if (word.isSuffix) return [];
+  if (word.isSuffix || word.kind === 'grammar') return [];
   if (word.arabic.includes('+')) return [];
   return [word.arabic, word.plural, word.feminine, ...(word.forms ?? [])]
     .filter(Boolean)

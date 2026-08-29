@@ -9,13 +9,17 @@
  *   - src/data/quran/bismillah.json    (the 4-word Bismillah, reused as a decorative header)
  *   - src/data/quran/loader.ts         (static per-surah require map, so Metro/Hermes only
  *                                        parses the surah JSON actually opened by the reader)
+ *   - src/data/quran/vocab-coverage.json (study-id occurrence counts from the existing matcher)
+ *   - src/data/quran/morphology-index.json (lemma/root counts from the corpus, by location)
+ *   - src/data/quran/vocab-lemmas.json (study card → corpus lemma map; not yet used for hiding)
  *
  * Re-run with `node scripts/build-quran-reader-data.js` if the source data files change.
  */
 const fs = require('fs');
 const path = require('path');
 
-const { buildVocabMatches, buildLemmaFallbackTags, loadMorphologyStems } = require('./vocab-word-matcher');
+const { buildVocabMatches, buildLemmaFallbackTags, loadMorphologyStems, collectAffixLocations, citationPhraseTokens, findPhraseRuns, findPartialExampleHits, collectStudyCores, normalizeLight } = require('./vocab-word-matcher');
+const { verifyAlignment, buildMorphologyIndex, buildVocabLemmaMap, attachMorphology } = require('./corpus-lemma-map');
 
 const ROOT = path.join(__dirname, '..');
 const DATA_DIR = path.join(ROOT, 'src', 'data');
@@ -153,7 +157,16 @@ function main() {
 
         const fix = RAW_TEXT_FIXES[location];
         const text = fix ? entry.text.replace(fix.from, fix.to) : entry.text;
-        const arabicSegments = parseArabicSegments(text);
+        let arabicSegments = parseArabicSegments(text);
+        // Ishmam (U+06EB, 12:11 تَأْمَنَّا) and imala (U+06EA, 11:41 مَجْرَاهَا) are
+        // positioned by the Uthmanic font as ligatures across the following letter.
+        // Splitting those words into tajweed color runs detaches the mark and the
+        // word falls apart on screen.
+        const rareMarks = /[\u06EA\u06EB]/;
+        const joinedArabic = arabicSegments.map((seg) => seg.t).join('');
+        if (rareMarks.test(joinedArabic) && arabicSegments.length > 1) {
+          arabicSegments = [{ t: joinedArabic }];
+        }
         if (isAyahEndMarker(arabicSegments)) {
           wordNumber += 1;
           continue;
@@ -194,6 +207,22 @@ function main() {
     });
   }
 
+  const alignment = verifyAlignment(ayahWordOrder);
+  console.log(
+    `Corpus location check: ${alignment.aligned}/${alignment.readerAyahs} ayahs map 1:1 ` +
+      `(${alignment.mismatched.length} known word-count mismatches skipped: ` +
+      `${alignment.mismatched.map((row) => row.ayahKey).join(', ')}).`,
+  );
+  if (!alignment.ok) {
+    if (alignment.unexpected.length) {
+      console.error('New corpus/reader location mismatches (refusing to attach morphology):', alignment.unexpected);
+    }
+    if (alignment.missingKnown.length) {
+      console.error('Expected mismatches missing:', alignment.missingKnown);
+    }
+    throw new Error('Quranic Arabic Corpus locations do not match reader surah:ayah:word indexes.');
+  }
+
   console.log('Matching study words (src/data/quranic-words.json) against every Qur\'an word...');
   const vocabMatches = buildVocabMatches(surfaceByLocation, ayahWordOrder);
 
@@ -218,11 +247,13 @@ function main() {
   for (const [surahNumber, ayahs] of ayahsBySurah) {
     for (const ayah of ayahs) {
       for (const word of ayah.w) {
-        const vocabId = unifiedTags.get(`${surahNumber}:${ayah.a}:${word.p}`);
+        const loc = `${surahNumber}:${ayah.a}:${word.p}`;
+        const vocabId = unifiedTags.get(loc);
         if (vocabId) {
           word.v = vocabId;
           taggedCount += 1;
         }
+        attachMorphology(word, loc, stemByLocation);
       }
     }
     const outPath = path.join(SURAHS_OUT_DIR, `${String(surahNumber).padStart(3, '0')}.json`);
@@ -255,6 +286,154 @@ function main() {
 
   const vocabCoverage = { totalWords: surfaceByLocation.size, occurrenceCounts };
   fs.writeFileSync(path.join(OUT_DIR, 'vocab-coverage.json'), JSON.stringify(vocabCoverage));
+
+  const morphologyIndex = buildMorphologyIndex(stemByLocation);
+  fs.writeFileSync(path.join(OUT_DIR, 'morphology-index.json'), JSON.stringify(morphologyIndex));
+  console.log(
+    `Wrote morphology index (${Object.keys(morphologyIndex.lemmas).length} lemmas, ` +
+      `${Object.keys(morphologyIndex.roots).length} roots).`,
+  );
+
+  const studyWords = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'quranic-words.json'), 'utf8'));
+  const studyById = new Map();
+  const exampleOfById = new Map();
+  const studyWordList = [];
+  for (const level of studyWords.levels) {
+    for (const word of level.words) {
+      studyById.set(word.id, word);
+      studyWordList.push(word);
+      if (word.exampleOf) exampleOfById.set(word.id, word.exampleOf);
+    }
+  }
+
+  const { mapping: vocabLemmas, stats: lemmaMapStats } = buildVocabLemmaMap(studyWordList, morphologyIndex);
+  fs.writeFileSync(path.join(OUT_DIR, 'vocab-lemmas.json'), JSON.stringify(vocabLemmas));
+  console.log(
+    `Wrote vocab → lemma map for ${lemmaMapStats.withLemmas} of ${lemmaMapStats.studyCards} study cards ` +
+      `(unmapped cards still use ReaderWord.v).`,
+  );
+  const { suffixById, prefixById } = collectAffixLocations(studyById);
+
+  const locationsByVocabId = new Map();
+  const addLoc = (id, loc) => {
+    if (!id || String(id).startsWith('lem:')) return;
+    if (!locationsByVocabId.has(id)) locationsByVocabId.set(id, []);
+    locationsByVocabId.get(id).push(loc);
+  };
+  for (const [loc, id] of unifiedTags) addLoc(id, loc);
+  for (const [id, locs] of suffixById) for (const loc of locs) addLoc(id, loc);
+  for (const [id, locs] of prefixById) for (const loc of locs) addLoc(id, loc);
+
+  function ayahPlainTranslation(ayah) {
+    return ayah.tr.map((part) => (part.t !== undefined ? part.t : '')).join('').replace(/\s+/g, ' ').trim();
+  }
+
+  function scoreExample(surahNumber, wordCount, bonus = 0) {
+    let score = wordCount;
+    if (wordCount < 3) score += 40;
+    if (wordCount > 14) score += (wordCount - 14) * 4;
+    if (surahNumber === 1) score -= 10;
+    if (surahNumber >= 78) score -= 4;
+    return score - bonus;
+  }
+
+  function surfaceFitBonus(study, loc, ayah) {
+    const [, , p] = loc.split(':').map(Number);
+    const word = ayah.w.find((item) => item.p === p);
+    if (!word) return 0;
+    const surface = word.ar.map((seg) => seg.t).join('');
+    const citation = citationPhraseTokens(study.arabic ?? '')[0] ?? study.arabic;
+    const stem = stemByLocation.get(loc);
+    const lightSurface = stem?.lightSurface ?? normalizeLight(surface);
+    const lightCitation = normalizeLight(citation);
+    if (lightSurface === lightCitation) return 12;
+    if (lightSurface.endsWith(lightCitation) && lightSurface.length - lightCitation.length <= 2) return 4;
+    return 0;
+  }
+
+  function packExample(s, a, p, n, ayah, hits) {
+    const idx = ayah.w.findIndex((word) => word.p === p);
+    if (idx < 0) return null;
+    const example = {
+      s,
+      a,
+      p: idx + 1,
+      w: ayah.w.map((word) => word.ar.map((seg) => seg.t).join('')),
+      tr: ayahPlainTranslation(ayah).slice(0, 180),
+    };
+    if (hits && hits.length > 1) example.hits = hits;
+    else if (n > 1) example.n = n;
+    return example;
+  }
+
+  function pickFromCandidates(candidates, study) {
+    let best = null;
+    let bestScore = Infinity;
+    for (const candidate of candidates) {
+      const { s, a, p, n, ayah, bonus, hits } = candidate;
+      if (!ayah || !ayah.w.some((word) => word.p === p)) continue;
+      const loc = `${s}:${a}:${p}`;
+      const score = scoreExample(s, ayah.w.length, bonus + surfaceFitBonus(study, loc, ayah));
+      if (score < bestScore) {
+        bestScore = score;
+        best = { s, a, p, n, ayah, hits };
+      }
+    }
+    return best ? packExample(best.s, best.a, best.p, best.n, best.ayah, best.hits) : null;
+  }
+
+  const studyCores = collectStudyCores(studyById);
+  const vocabExamples = {};
+  for (const [id, study] of studyById) {
+    if (study.kind === 'grammar') continue;
+    const locations = locationsByVocabId.get(id) ?? [];
+    const tokens = citationPhraseTokens(study.arabic ?? '');
+    const phraseRuns =
+      tokens.length > 1 ? findPhraseRuns(tokens, ayahWordOrder, surfaceByLocation, stemByLocation) : [];
+    const preferred = study.exampleVerse;
+
+    const fromRun = (run, bonus) => {
+      const [s, a, p] = run.loc.split(':').map(Number);
+      const ayahs = ayahsBySurah.get(s);
+      const ayah = ayahs ? ayahs.find((row) => row.a === a) : null;
+      return { s, a, p, n: run.n, ayah, bonus, hits: run.hits };
+    };
+    const fromLoc = (loc, bonus, n = 1) => {
+      const [s, a, p] = loc.split(':').map(Number);
+      const ayahs = ayahsBySurah.get(s);
+      const ayah = ayahs ? ayahs.find((row) => row.a === a) : null;
+      return { s, a, p, n, ayah, bonus };
+    };
+
+    let picked = null;
+    if (preferred) {
+      const inAyah = (item) => item.s === preferred.s && item.a === preferred.a;
+      picked = pickFromCandidates(phraseRuns.map((run) => fromRun(run, 80)).filter(inAyah), study);
+      if (!picked) {
+        const locPrefix = `${preferred.s}:${preferred.a}:`;
+        picked = pickFromCandidates(
+          locations.filter((loc) => loc.startsWith(locPrefix)).map((loc) => fromLoc(loc, 80)),
+          study,
+        );
+      }
+    }
+    if (!picked && phraseRuns.length > 0) {
+      picked = pickFromCandidates(phraseRuns.map((run) => fromRun(run, 50)), study);
+    }
+    if (!picked) {
+      picked = pickFromCandidates(locations.map((loc) => fromLoc(loc, 0)), study);
+    }
+    if (!picked) {
+      const partial = findPartialExampleHits(study, studyCores, ayahWordOrder, surfaceByLocation, stemByLocation);
+      picked = pickFromCandidates(partial.map((run) => fromRun(run, 15)), study);
+    }
+    if (picked) vocabExamples[id] = picked;
+  }
+  for (const [id, ofId] of exampleOfById) {
+    if (!vocabExamples[id] && vocabExamples[ofId]) vocabExamples[id] = vocabExamples[ofId];
+  }
+  fs.writeFileSync(path.join(OUT_DIR, 'vocab-examples.json'), JSON.stringify(vocabExamples));
+  console.log(`Wrote verse examples for ${Object.keys(vocabExamples).length} study words.`);
 
   fs.writeFileSync(path.join(OUT_DIR, 'surah-index.json'), JSON.stringify(surahIndex, null, 2));
   fs.writeFileSync(path.join(OUT_DIR, 'bismillah.json'), JSON.stringify(bismillahWords, null, 2));
@@ -291,7 +470,7 @@ export function loadSurahAyahs(surahNumber: number): ReaderAyah[] {
   fs.writeFileSync(path.join(OUT_DIR, 'loader.ts'), loaderSource);
 
   console.log(`Wrote ${surahIndex.length} surah files to ${SURAHS_OUT_DIR}`);
-  console.log('Wrote surah-index.json, bismillah.json, loader.ts, vocab-coverage.json');
+  console.log('Wrote surah-index.json, bismillah.json, loader.ts, vocab-coverage.json, vocab-examples.json, morphology-index.json, vocab-lemmas.json');
 }
 
 main();

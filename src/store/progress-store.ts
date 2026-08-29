@@ -10,7 +10,7 @@ import {
   type Card,
   type GradeName,
 } from '@/lib/fsrs';
-import { computeReachedLevel, getLevel, LEVEL_COUNT, LEVELS, type ProgressMap, type WordProgress } from '@/lib/levels';
+import { computeReachedLevel, getLevel, getWord, LAST_LEVEL_NUMBER, LEVELS, type ProgressMap, type WordProgress } from '@/lib/levels';
 import {
   clampWordsPerSession,
   DEFAULT_META,
@@ -33,6 +33,7 @@ interface ProgressState {
   reviewDates: string[];
   reviewCountDate: string;
   reviewsToday: number;
+  newCardsToday: number;
   onboardingCompleted: boolean;
   /** In-memory peek counts for the Qur'an reader (not persisted). A hidden word's first reveal
    *  is a free hint; the second reveal of that same vocab id lapses it. Cleared when the word
@@ -68,8 +69,12 @@ export function reviewsCompletedToday(reviewCountDate: string, reviewsToday: num
   return reviewCountDate === todayKey(now) ? reviewsToday : 0;
 }
 
+export function newCardsCompletedToday(reviewCountDate: string, newCardsToday: number, now: Date = new Date()): number {
+  return reviewCountDate === todayKey(now) ? newCardsToday : 0;
+}
+
 function persistMeta(
-  state: Pick<ProgressState, 'maxUnlockedLevel' | 'reviewDates' | 'reviewCountDate' | 'reviewsToday'> & {
+  state: Pick<ProgressState, 'maxUnlockedLevel' | 'reviewDates' | 'reviewCountDate' | 'reviewsToday' | 'newCardsToday'> & {
     onboardingCompleted?: boolean;
   },
 ): void {
@@ -78,6 +83,7 @@ function persistMeta(
     reviewDates: state.reviewDates,
     reviewCountDate: state.reviewCountDate,
     reviewsToday: state.reviewsToday,
+    newCardsToday: state.newCardsToday,
     onboardingCompleted: state.onboardingCompleted ?? getOnboardingCompleted(),
   });
 }
@@ -95,6 +101,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   reviewDates: DEFAULT_META.reviewDates,
   reviewCountDate: DEFAULT_META.reviewCountDate,
   reviewsToday: DEFAULT_META.reviewsToday,
+  newCardsToday: DEFAULT_META.newCardsToday,
   onboardingCompleted: false,
   readerPeeks: {},
 
@@ -109,7 +116,8 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const maxUnlockedLevel = computeReachedLevel(progress, meta.maxUnlockedLevel);
     const now = new Date();
     const reviewsToday = reviewsCompletedToday(meta.reviewCountDate, meta.reviewsToday ?? 0, now);
-    const reviewCountDate = reviewsToday > 0 ? meta.reviewCountDate : todayKey(now);
+    const newCardsToday = newCardsCompletedToday(meta.reviewCountDate, meta.newCardsToday ?? 0, now);
+    const reviewCountDate = reviewsToday > 0 || newCardsToday > 0 ? meta.reviewCountDate : todayKey(now);
     const onboardingCompleted =
       meta.onboardingCompleted ?? (Object.keys(progress).length > 0 || meta.reviewDates.length > 0);
     set({
@@ -121,6 +129,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       reviewDates: meta.reviewDates,
       reviewCountDate,
       reviewsToday,
+      newCardsToday,
       onboardingCompleted,
     });
     if (maxUnlockedLevel !== meta.maxUnlockedLevel || onboardingCompleted !== meta.onboardingCompleted) {
@@ -129,6 +138,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
         reviewDates: meta.reviewDates,
         reviewCountDate,
         reviewsToday,
+        newCardsToday,
         onboardingCompleted,
       });
     }
@@ -153,7 +163,9 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const nextReviewDates = state.reviewDates.includes(key) ? state.reviewDates : [...state.reviewDates, key];
     const nextMaxUnlockedLevel = computeReachedLevel(nextProgress, state.maxUnlockedLevel);
     const countsAsDailyReview = existing !== undefined && card.state === State.Review;
+    const isNewIntroduction = existing === undefined && getWord(wordId)?.kind !== 'grammar';
     const reviewsToday = (state.reviewCountDate === key ? state.reviewsToday : 0) + (countsAsDailyReview ? 1 : 0);
+    const newCardsToday = (state.reviewCountDate === key ? state.newCardsToday : 0) + (isNewIntroduction ? 1 : 0);
 
     // Again (including a reader lapse) leaves the peek count in place so every occurrence stays
     // unhidden while the card is still Learning. A passing grade wipes it so the word can hide
@@ -167,6 +179,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       maxUnlockedLevel: nextMaxUnlockedLevel,
       reviewCountDate: key,
       reviewsToday,
+      newCardsToday,
       readerPeeks,
     });
     void saveProgressAsync(nextProgress);
@@ -175,6 +188,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       reviewDates: nextReviewDates,
       reviewCountDate: key,
       reviewsToday,
+      newCardsToday,
     });
     return nextCard;
   },
@@ -218,6 +232,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       reviewDates: [],
       reviewCountDate: '',
       reviewsToday: 0,
+      newCardsToday: 0,
       readerPeeks: {},
       settings: DEFAULT_SETTINGS,
       onboardingCompleted,
@@ -254,9 +269,9 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
         };
       }
     }
-    set({ progress: nextProgress, maxUnlockedLevel: LEVEL_COUNT });
+    set({ progress: nextProgress, maxUnlockedLevel: LAST_LEVEL_NUMBER });
     void saveProgressAsync(nextProgress);
-    persistMeta({ ...get(), maxUnlockedLevel: LEVEL_COUNT });
+    persistMeta({ ...get(), maxUnlockedLevel: LAST_LEVEL_NUMBER });
   },
 
   /** Called when a curated study word (one matching the 547-word id pattern) is marked "known"

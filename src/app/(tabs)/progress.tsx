@@ -13,17 +13,34 @@ import { computeStreak, formatCount } from '@/lib/stats';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 
+function parseHex(color: string): { r: number; g: number; b: number } | null {
+  const hex = color.replace('#', '');
+  if (hex.length !== 6) return null;
+  return {
+    r: Number.parseInt(hex.slice(0, 2), 16),
+    g: Number.parseInt(hex.slice(2, 4), 16),
+    b: Number.parseInt(hex.slice(4, 6), 16),
+  };
+}
+
+function mixHex(from: string, to: string, t: number): string {
+  const a = parseHex(from);
+  const b = parseHex(to);
+  if (!a || !b) return t >= 1 ? to : from;
+  const m = (x: number, y: number) => Math.round(x + (y - x) * t);
+  return `#${[m(a.r, b.r), m(a.g, b.g), m(a.b, b.b)].map((n) => n.toString(16).padStart(2, '0')).join('')}`;
+}
+
 function renderLevelCell(status: LevelStatus, theme: ReturnType<typeof useTheme>) {
-  const cellColor = status.isMastered
-    ? theme.primary
-    : status.masteredCount > 0
-      ? theme.backgroundSelected
-      : theme.card;
+  const ratio = status.totalCount === 0 ? 0 : status.masteredCount / status.totalCount;
+  // Empty → pale, 3/10 less green than 7/10, full primary when every word is mastered.
+  const cellColor = ratio >= 1 ? theme.primary : mixHex(theme.backgroundElement, theme.primary, ratio);
+  const onDark = ratio >= 0.5;
   return (
     <View
       key={status.level.id}
       style={[styles.gridCell, { backgroundColor: cellColor, borderColor: theme.border }]}>
-      <ThemedText type="small" themeColor={status.isMastered ? 'onPrimary' : 'text'}>
+      <ThemedText type="small" themeColor={onDark ? 'onPrimary' : 'text'}>
         {status.level.number}
       </ThemedText>
     </View>
@@ -98,10 +115,7 @@ export default function ProgressScreen() {
             {statuses.slice(0, THEMATIC_LEVEL_COUNT).map((status) => renderLevelCell(status, theme))}
             <View style={styles.gridDivider}>
               <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
-              <ThemedText type="smallBold">By frequency</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                How often each word appears in the Qur&apos;an
-              </ThemedText>
+             
             </View>
             {statuses.slice(THEMATIC_LEVEL_COUNT).map((status) => renderLevelCell(status, theme))}
           </View>

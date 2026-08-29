@@ -2,11 +2,14 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ArabicText } from '@/components/arabic-text';
+import { GrammarIntroRow } from '@/components/quranki/grammar-intro-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { ArabicTextStyle, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { getCoverageThroughLevel, getLevel, getLevelStatus, type WordState } from '@/lib/levels';
+import { displayArabic } from '@/lib/arabic-display';
+import { getCoverageThroughLevel, getGrammarIntro, getLevel, getLevelStatus, type WordState } from '@/lib/levels';
 import { useProgressStore } from '@/store/progress-store';
 import { formatCount } from '@/lib/stats';
 
@@ -28,6 +31,7 @@ export default function LevelDetailScreen() {
   const now = new Date();
   const status = level ? getLevelStatus(level, progress, now) : null;
   const coverage = level ? getCoverageThroughLevel(level.number) : null;
+  const grammar = level ? getGrammarIntro(level) : undefined;
 
   if (!level || !status || !coverage) {
     return <ThemedView style={styles.flex} />;
@@ -61,6 +65,8 @@ export default function LevelDetailScreen() {
                 <SummaryPill label="Unseen" value={status.newCount} color={theme.textSecondary} />
               </View>
 
+              {grammar ? <GrammarIntroRow word={grammar} /> : null}
+
               <ThemedText type="smallBold" style={styles.wordsLabel}>
                 Words ({status.totalCount})
               </ThemedText>
@@ -70,7 +76,7 @@ export default function LevelDetailScreen() {
             const { label, color } = wordStatusLabel(item);
             return (
               <View style={[styles.wordRow, { borderColor: theme.border }]}>
-                <ThemedText style={[styles.wordArabic, ArabicTextStyle]}>{item.word.arabic}</ThemedText>
+                <ArabicText style={styles.wordArabic}>{displayArabic(item.word)}</ArabicText>
                 <ThemedText type="small" themeColor="textSecondary" style={styles.wordEnglish} numberOfLines={1}>
                   {item.word.english}
                 </ThemedText>

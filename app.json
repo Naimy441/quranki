@@ -43,7 +43,15 @@
           }
         }
       ],
-      "./plugins/with-android-text-metrics"
+      "./plugins/with-android-text-metrics",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

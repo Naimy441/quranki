@@ -100,7 +100,7 @@ The Qur'an reader and word-hiding feature depend on generated data files. If you
 node scripts/build-quran-reader-data.js
 ```
 
-This rebuilds `src/data/quran/surahs/*.json`, `src/data/quran/surah-index.json`, and `src/data/quran/vocab-coverage.json`.
+This rebuilds `src/data/quran/surahs/*.json`, `src/data/quran/surah-index.json`, `src/data/quran/vocab-coverage.json`, `src/data/quran/morphology-index.json`, and `src/data/quran/vocab-lemmas.json`.
 
 ## Scripts
 
@@ -132,6 +132,9 @@ eas login
 eas build:configure          # first time only, links the project to your Expo account
 eas build --profile preview  # internal test build
 eas build --profile production
-eas submit -p ios
-eas submit -p android
+eas build --platform ios
+eas build --platform android
+eas build --platform all
+eas build --platform all --auto-submit
+eas submit --platform all
 ```

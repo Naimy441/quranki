@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { SessionRunner } from '@/components/quranki/session-runner';
 import { buildGlobalSessionQueue } from '@/lib/levels';
-import { reviewsCompletedToday, useProgressStore } from '@/store/progress-store';
+import { newCardsCompletedToday, reviewsCompletedToday, useProgressStore } from '@/store/progress-store';
 
 /** One Anki-style daily session over the whole deck: due reviews plus the next new words
  *  in curriculum order. */
@@ -10,6 +10,7 @@ export default function DailyReviewScreen() {
   const progress = useProgressStore((state) => state.progress);
   const wordsPerSession = useProgressStore((state) => state.settings.wordsPerSession);
   const reviewsToday = useProgressStore((state) => state.reviewsToday);
+  const newCardsToday = useProgressStore((state) => state.newCardsToday);
   const reviewCountDate = useProgressStore((state) => state.reviewCountDate);
 
   const [queue] = useState(() =>
@@ -18,13 +19,14 @@ export default function DailyReviewScreen() {
       new Date(),
       wordsPerSession,
       reviewsCompletedToday(reviewCountDate, reviewsToday),
+      newCardsCompletedToday(reviewCountDate, newCardsToday),
     ),
   );
 
   return (
     <SessionRunner
       queue={queue}
-      emptyMessage="You're all caught up. Check back later."
+      emptyMessage="You're all caught up. If you just learned new words, they come back in about 10 minutes."
       showLevelTag
     />
   );

@@ -6,6 +6,20 @@ export interface Word {
   id: string;
   arabic: string;
   english: string;
+  /** Possessive/object ending taught as a clitic, not a standalone mushaf word. */
+  isSuffix?: boolean;
+  /** One-letter particle that the mushaf fuses onto the next word (وَ, لِ, بِ, ...). */
+  isPrefix?: boolean;
+  /** A one-time explanation card, not a vocabulary item. */
+  kind?: 'grammar';
+  note?: string;
+  variant?: string;
+  forms?: string[];
+  exampleOf?: string;
+  /** Do not split this citation into per-word reader tags (avoids claiming الله, etc.). */
+  phrase?: boolean;
+  /** Prefer this ayah when picking a flashcard verse example. */
+  exampleVerse?: { s: number; a: number };
 }
 
 export interface Level {
@@ -32,15 +46,24 @@ export type ProgressMap = Record<string, WordProgress>;
 
 const data = quranicWordsData as { deck: string; levelCount: number; wordCount: number; levels: Level[] };
 
+function isStudyWord(word: Word): boolean {
+  return word.kind !== 'grammar';
+}
+
 export const DECK_NAME = data.deck;
-export const LEVEL_COUNT = data.levelCount;
-export const WORD_COUNT = data.wordCount;
 export const LEVELS: Level[] = data.levels;
-/** Levels 1–47 are the original thematic curriculum; 48+ are frequency leftovers. */
-export const THEMATIC_LEVEL_COUNT = 47;
+export const LEVEL_COUNT = LEVELS.length;
+export const LAST_LEVEL_NUMBER = LEVELS[LEVELS.length - 1]?.number ?? 0;
+/** Study words only - one-shot grammar intros are not vocabulary. */
+export const WORD_COUNT = LEVELS.reduce(
+  (sum, level) => sum + level.words.filter(isStudyWord).length,
+  0,
+);
+/** Levels 1–47 are the original thematic curriculum; 48+ continue the same themes. */
+export const THEMATIC_LEVEL_COUNT = LEVELS.filter((level) => level.number <= 47).length;
 /** Study-word count in the thematic curriculum (levels 1–47). */
 export const THEMATIC_WORD_COUNT = LEVELS.slice(0, THEMATIC_LEVEL_COUNT).reduce(
-  (sum, level) => sum + level.words.length,
+  (sum, level) => sum + level.words.filter(isStudyWord).length,
   0,
 );
 
@@ -61,7 +84,10 @@ const coverageThroughLevel: LevelCoverage[] = [];
 {
   let running = 0;
   for (const level of LEVELS) {
-    for (const word of level.words) running += getWordOccurrenceCount(word.id);
+    for (const word of level.words) {
+      if (!isStudyWord(word)) continue;
+      running += getWordOccurrenceCount(word.id);
+    }
     const percent = TOTAL_QURAN_WORDS === 0 ? 0 : Math.round((running / TOTAL_QURAN_WORDS) * 100);
     coverageThroughLevel[level.number] = { quranWords: running, percent };
   }
@@ -72,8 +98,12 @@ export function getCoverageThroughLevel(levelNumber: number): LevelCoverage {
   return coverageThroughLevel[levelNumber] ?? { quranWords: 0, percent: 0 };
 }
 
+export function getGrammarIntro(level: Level): Word | undefined {
+  return level.words.find((word) => word.kind === 'grammar');
+}
+
 export function getLevel(levelNumber: number): Level | undefined {
-  return LEVELS[levelNumber - 1];
+  return LEVELS.find((level) => level.number === levelNumber);
 }
 
 export function getWord(wordId: string): Word | undefined {
@@ -142,7 +172,7 @@ export interface LevelStatus {
 }
 
 export function getLevelStatus(level: Level, progressMap: ProgressMap, now: Date): LevelStatus {
-  const wordStates = level.words.map((word) => getWordState(word, progressMap, now));
+  const wordStates = level.words.filter(isStudyWord).map((word) => getWordState(word, progressMap, now));
   const newCount = wordStates.filter((w) => w.isNew).length;
   const dueCount = wordStates.filter((w) => w.isDue).length;
   const masteredCount = wordStates.filter((w) => w.isMastered).length;
@@ -181,7 +211,7 @@ export function getIntroductionFrontier(progressMap: ProgressMap): number {
   for (const level of LEVELS) {
     if (level.words.some((word) => !progressMap[word.id])) return level.number;
   }
-  return LEVEL_COUNT;
+  return LAST_LEVEL_NUMBER;
 }
 
 export interface SessionWord {
@@ -209,20 +239,51 @@ function isLearningDue(state: WordState): boolean {
  *  vs "New cards/day" split. */
 export const DAILY_REVIEW_LIMIT = 200;
 
+export interface UpcomingReview {
+  count: number;
+  dueAt: Date;
+  ms: number;
+}
+
+/** Learning/Relearning cards that are not due yet - used to tell the learner
+ *  "5 cards come back in 10 minutes" instead of looking like the day is over. */
+export function getUpcomingLearning(progressMap: ProgressMap, now: Date): UpcomingReview | null {
+  let soonest = Number.POSITIVE_INFINITY;
+  let count = 0;
+  for (const level of LEVELS) {
+    for (const word of level.words) {
+      const state = getWordState(word, progressMap, now);
+      if (!state.progress) continue;
+      const card = deserializeCard(state.progress.card);
+      if (card.state !== State.Learning && card.state !== State.Relearning) continue;
+      const due = card.due.getTime();
+      if (due <= now.getTime()) continue;
+      count += 1;
+      soonest = Math.min(soonest, due);
+    }
+  }
+  if (count === 0) return null;
+  return { count, dueAt: new Date(soonest), ms: soonest - now.getTime() };
+}
+
 /**
  * Builds today's queue across the whole sequential deck, the way Anki does for one sequential
  * deck: due learning/relearning first, then up to DAILY_REVIEW_LIMIT Review-state cards
  * (oldest-due first, minus any already reviewed today), then up to `wordsPerSession` unseen
- * words in curriculum order (level 1, then 2, …). Levels never lock new cards - they are only
- * the insertion order. Reviews never consume the new-word quota.
+ * study words in curriculum order (level 1, then 2, …), minus any new cards already introduced
+ * today. Grammar intros in that same stretch are included for free so they don't consume the
+ * new-word quota. Levels never lock new cards - they are only the insertion order. Reviews
+ * never consume the new-word quota.
  */
 export function buildGlobalSessionQueue(
   progressMap: ProgressMap,
   now: Date,
   wordsPerSession: number,
   reviewsAlreadyToday: number = 0,
+  newCardsAlreadyToday: number = 0,
 ): SessionWord[] {
   const remainingReviewSlots = Math.max(0, DAILY_REVIEW_LIMIT - reviewsAlreadyToday);
+  const remainingNewSlots = Math.max(0, wordsPerSession - newCardsAlreadyToday);
   const learning: (SessionWord & { dueTime: number })[] = [];
   const reviews: (SessionWord & { dueTime: number })[] = [];
   const fresh: SessionWord[] = [];
@@ -243,10 +304,24 @@ export function buildGlobalSessionQueue(
   learning.sort((a, b) => a.dueTime - b.dueTime);
   reviews.sort((a, b) => a.dueTime - b.dueTime);
 
+  const newCards: SessionWord[] = [];
+  let vocabSlots = remainingNewSlots;
+  for (const item of fresh) {
+    if (item.word.kind === 'grammar') {
+      if (vocabSlots <= 0) break;
+      newCards.push(item);
+    } else if (vocabSlots > 0) {
+      newCards.push(item);
+      vocabSlots -= 1;
+    } else {
+      break;
+    }
+  }
+
   return [
     ...learning.map(({ dueTime, ...rest }) => rest),
     ...reviews.slice(0, remainingReviewSlots).map(({ dueTime, ...rest }) => rest),
-    ...fresh.slice(0, wordsPerSession),
+    ...newCards,
   ];
 }
 
@@ -254,6 +329,7 @@ export function totalMasteredWords(progressMap: ProgressMap, now: Date): number 
   let count = 0;
   for (const level of LEVELS) {
     for (const word of level.words) {
+      if (!isStudyWord(word)) continue;
       const state = getWordState(word, progressMap, now);
       if (state.isMastered) count += 1;
     }

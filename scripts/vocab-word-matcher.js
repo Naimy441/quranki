@@ -40,21 +40,25 @@
  *      token isn't *also* the heavy form of some other, distinct study word - an ambiguous
  *      fallback is dropped rather than guessed at.
  *
- * Root-family expansion (tag every word sharing a matched word's root, e.g. unifying "هَدَى" and
- * "اهتدى") only ever runs off of confidently-seeded matches, and only when every seed agrees on
- * a single root, so it can't itself introduce a cross-word mix-up.
+ * After seeding, a lemma-completion pass tags every remaining Qur'an word that shares a study
+ * word's dominant corpus lemma. Hiding a word in the reader is keyed on that study id, so this
+ * is what makes "I already know this" cover every inflection of the same dictionary word
+ * ("المبينِ", "مبيناً", "مبينون") without also swallowing unrelated derivatives that happen to
+ * share a root ("بين" "between" vs "مبين" "clear") *or* a vowel-stripped skeleton ("إِنْ" "if"
+ * vs "إِنَّ" "indeed", "أَنَا" "I" vs "أَنَّا" "that we"). Completion only runs when that
+ * majority lemma is still the same dictionary word as the card's citation form, and when exactly
+ * one study word's seeds resolve to it - demonstratives the corpus lumps under "ذا", or the
+ * several senses of "ما", stay split by their own surface matches instead.
  *
- * A handful of study words are citation *phrases* rather than single words (e.g. "لَا إِلهَ" "no
- * god", "بَيْنَ يَدَيْ" "in front of") - these are never matched as a contiguous run of adjacent
- * Qur'an words. Instead, each space-separated word in the citation is registered as its own
- * ordinary single-word candidate under the same id (see loadStudyForms), so a learner who
- * recognizes just one piece of the phrase (most usefully "لَا" "no/not", which also happens to be
- * one of the most common words in the whole Qur'an) has it hidden everywhere *that* word appears,
- * not only in the rarer spots it happens to sit next to the phrase's other word. Because a
- * split-off word like that is auto-derived rather than a real, deliberately-taught deck entry, it
- * always defers outright to a genuine single-word study entry for the exact same text should one
- * exist elsewhere in the deck (e.g. "06-012" "لَوْ لَا" "if not for" also splits off a "لَوْ" token,
- * but "12-011" already teaches bare "لَوْ" "if" on its own and keeps every occurrence of it).
+ * A handful of study words are citation *phrases* rather than single words (e.g. "بَيْنَ يَدَيْ"
+ * "in front of") - these are never matched as a contiguous run of adjacent Qur'an words. Instead,
+ * each space-separated word in the citation is registered as its own ordinary single-word
+ * candidate under the same id (see loadStudyForms), so a learner who recognizes just one piece of
+ * the phrase has it hidden everywhere *that* word appears. Because a split-off word like that is
+ * auto-derived rather than a real, deliberately-taught deck entry, it always defers outright to a
+ * genuine single-word study entry for the exact same text should one exist elsewhere in the deck
+ * (e.g. "06-012" "لَوْ لَا" "if not for" also splits off a "لَوْ" token, but "12-011" already
+ * teaches bare "لَوْ" "if" on its own and keeps every occurrence of it).
  */
 const fs = require('fs');
 const path = require('path');
@@ -69,6 +73,10 @@ const ALEF_FAMILY = '\u0627\u0622\u0623\u0625\u0671';
  *  tags each occurrence with a feature the deck's own English glosses map onto - without this,
  *  the earlier card swallows every spelling-identical hit (or a shadda-only surface like 2:29's
  *  "مَّا" "what" is left untagged because loose matching refuses to pick a winner). */
+function isFemininePerson(stem) {
+  return hasFeat(stem, '3FS') || hasFeat(stem, '3FP') || hasFeat(stem, '2FS') || hasFeat(stem, '2FP');
+}
+
 const FEATURE_SENSE = {
   '02-006': (stem) => hasFeat(stem, 'NEG'), // مَا "not"
   '06-001': (stem) =>
@@ -79,6 +87,39 @@ const FEATURE_SENSE = {
   // lemma matching cannot split them either.
   '04-003': (stem) => hasFeat(stem, 'PRON') && hasFeat(stem, '2MS'),
   '04-004': (stem) => hasFeat(stem, 'PRON') && hasFeat(stem, '2FS'),
+  // نَعَمْ "yes" shares the corpus lemma نَعَم with cattle (أَنْعَام) and the root نعم with
+  // blessing/نِعْمَ. Only the answer particle is this card.
+  '02-013': (stem) => hasFeat(stem, 'ANS'),
+  // لَيْسَ / لَيْسَتْ share lemma لَيْسَ; without a person split the masculine card swallows
+  // every feminine occurrence and the feminine card never seeds.
+  '02-007': (stem) => !isFemininePerson(stem),
+  '02-008': (stem) => isFemininePerson(stem),
+  // الَّذِي / الَّتِي / الَّذِينَ share lemma الَّذِي.
+  '01-007': (stem) => hasFeat(stem, 'REL') && hasFeat(stem, 'MS'),
+  '01-008': (stem) => hasFeat(stem, 'REL') && (hasFeat(stem, 'FS') || hasFeat(stem, 'FP') || hasFeat(stem, 'FD')),
+  '01-009': (stem) => hasFeat(stem, 'REL') && (hasFeat(stem, 'MP') || hasFeat(stem, 'MD')),
+  // إِنْ "if" (COND) vs إِنْ ... إِلَّا "nothing but" (NEG). Same letters, same corpus lemma إِن.
+  // إلا under 08-010 is a different token and must still match.
+  '08-010': (stem) => hasFeat(stem, 'NEG') || stem.lightLemma === normalizeLight('إِلَّا'),
+  '12-007': (stem) => hasFeat(stem, 'COND'),
+  // Case forms "ذَا / ذِي" of the possessor. The corpus lemma "ذا" is the demonstrative umbrella
+  // (هذا / ذلك / أولئك); possessive inflections are lemma "ذُو".
+  '07-001': (stem) => stem.lightLemma === normalizeLight('ذُو'),
+  // All six demonstratives share corpus lemma ذا. Split by the prefix-stripped surface.
+  '01-001': (stem) => demonstrativeKind(stem) === 'hadha',
+  '01-002': (stem) => demonstrativeKind(stem) === 'hadhihi',
+  '01-003': (stem) => demonstrativeKind(stem) === 'haula',
+  '01-004': (stem) => demonstrativeKind(stem) === 'dhalika',
+  '01-005': (stem) => demonstrativeKind(stem) === 'tilka',
+  '01-006': (stem) => demonstrativeKind(stem) === 'ulaika',
+  // Cattle (أنعام) share corpus lemma نَعَم with the answer particle نَعَمْ.
+  '18-004': (stem) => !hasFeat(stem, 'ANS'),
+  // "Last" vs "the Hereafter": same corpus lemma آخِر; Hereafter is the feminine.
+  '14-002': (stem) => !hasFeat(stem, 'FS'),
+  '20-004': (stem) => hasFeat(stem, 'FS'),
+  // بَدَأ "originate" vs بَدَا "appear": alef-hamza folds to alef, so the surfaces collide.
+  '61-012': (stem) => stem.rawRoot === 'بدأ',
+  '63-012': (stem) => stem.rawRoot === 'بدو',
 };
 
 /** Independent personal pronouns in the corpus are tagged PRON + person, with no LEM - so the
@@ -112,16 +153,171 @@ function hasFeat(stem, tag) {
   return (stem?.feats ?? []).includes(tag);
 }
 
+/** True when two lemma strings are the same dictionary word after light
+ *  normalization. Corpus light-lemmas often keep a fatha that sat on hamza-alef
+ *  (أَصْحاب → اَصْحاب); a second normalizeLight strips that wasl vowel (اصْحاب). */
+function sameLemma(a, b) {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const na = normalizeLight(a);
+  const nb = normalizeLight(b);
+  return a === nb || na === b || na === nb;
+}
+
+function lemmaIs(stem, ...forms) {
+  const candidates = [stem?.lightLemma, stem?.rawLemma, stem?.heavyLemma].filter(Boolean);
+  if (candidates.length === 0) return false;
+  return forms.some((form) => candidates.some((value) => sameLemma(value, form)));
+}
+
+/** Prefix-stripped letters of a corpus stem (هذا, كذلك, فأولئك, ...). */
+function stemLetters(stem) {
+  return stem?.heavySurface ?? '';
+}
+
+/**
+ * The corpus dumps every demonstrative under lemma ذا, and the stem text is prefix-stripped:
+ * هذا → ذا, هذه → ذه, هؤلاء → ولاء, ذلك → ذالك. Classify from that stem, not the full mushaf word.
+ */
+function demonstrativeKind(stem) {
+  if (!hasFeat(stem, 'DEM')) return null;
+  const h = stemLetters(stem);
+  if (h.includes('وليك') || h.includes('ولايك')) return 'ulaika';
+  if (h.includes('ولاء') || h.includes('اولاء')) return 'haula';
+  if (h.includes('تلك')) return 'tilka';
+  if (h.includes('ذه')) return 'hadhihi';
+  if (h.includes('ذالك')) return 'dhalika';
+  if (h.includes('ذان') || h === 'ذا' || h.startsWith('ذا')) return 'hadha';
+  if (h.includes('تين')) return 'hadhihi';
+  return null;
+}
+
 function senseFilter(form, loc, stemByLocation) {
   const test = FEATURE_SENSE[form.id];
   if (!test) return true;
   const stem = stemByLocation.get(loc);
-  return stem != null && test(stem);
+  if (stem == null) return true;
+  return test(stem);
+}
+
+function applySenseFilter(form, seed, stemByLocation) {
+  if (!FEATURE_SENSE[form.id] || seed.size === 0) return seed;
+  return new Set([...seed].filter((loc) => senseFilter(form, loc, stemByLocation)));
 }
 
 function ownersHaveSenses(owners) {
   const ids = [...new Set(owners.map((owner) => owner.id))];
   return ids.length > 1 && ids.every((id) => FEATURE_SENSE[id]);
+}
+
+/** Whether a corpus stem is the same dictionary word as this citation form.
+ *  Tokens with no lemma (independent pronouns) may still match by surface.
+ *  Hamza-fold is only allowed when the citation itself writes hamza/madda, so
+ *  "قُرْآن" can meet corpus "قُرْءان" without "هُمْ" meeting "هَمَّ".
+ *  `unambiguousHeavy` is heavy skeletons that belong to exactly one corpus lemma
+ *  (كَانَ vs corpus كان): those may match without identical vocalization.
+ *  Skeletons shared by several lemmas (ان = إن / إنّ / أنّ) must match the citation
+ *  light form exactly, or they swallow a different word. */
+/** Letters + shadda, ignoring short vowels. "إِنْ" vs "إِنّ" stay distinct; extra fathas do not. */
+function shaddaSkeleton(light) {
+  return light.replace(/[\u064b-\u0650\u0652]/g, '');
+}
+
+/** Corpus lemmas often omit a fatha the deck writes (إِلَّا vs إِلّا, كَانَ vs كان).
+ *  Compatible only when letters+shadda match and every lemma vowel still appears, in order,
+ *  on the citation — never when shadda is the whole difference (مَن / مَنّ). */
+function vocalizationCompatible(citationLight, lemmaLight) {
+  if (citationLight === lemmaLight) return true;
+  if (shaddaSkeleton(citationLight) !== shaddaSkeleton(lemmaLight)) return false;
+  const citationVowels = [...citationLight].filter((c) => /[\u064b-\u0650\u0652]/.test(c)).join('');
+  const lemmaVowels = [...lemmaLight].filter((c) => /[\u064b-\u0650\u0652]/.test(c)).join('');
+  let i = 0;
+  for (const vowel of lemmaVowels) {
+    const at = citationVowels.indexOf(vowel, i);
+    if (at < 0) return false;
+    i = at + 1;
+  }
+  return true;
+}
+
+/** Same dictionary word except an extra alef the mushaf inserts for a dagger alif
+ *  (إِله vs إِلٰه, لكِن vs لاكِن). Leading or trailing extra alefs are not allowed:
+ *  لا must not match إلا, إن must not match إنا. */
+function lemmaLettersMatch(citationLight, lemmaLight) {
+  const cit = [...hamzaFold(citationLight)];
+  const lem = [...hamzaFold(lemmaLight)];
+  if (cit.length === 0 || lem.length === 0) return false;
+  if (cit[0] !== lem[0] || cit[cit.length - 1] !== lem[lem.length - 1]) return false;
+  let i = 0;
+  for (const ch of lem) {
+    if (i < cit.length && ch === cit[i]) i += 1;
+    else if (ch === '\u0627' && i > 0 && i < cit.length) continue;
+    else return false;
+  }
+  return i === cit.length;
+}
+
+function lemmaCompatible(form, stem, unambiguousHeavy) {
+  if (!stem?.lightLemma) return true;
+  if (form.surfaceOnly) {
+    return (
+      sameLemma(stem.lightLemma, form.headwordLight) ||
+      lemmaLettersMatch(form.headwordLight, stem.lightLemma)
+    );
+  }
+  if (sameLemma(stem.lightLemma, form.lightTokens[0])) return true;
+  if (stem.rawLemma && sameLemma(stem.rawLemma, form.lightTokens[0])) return true;
+  if (lemmaLettersMatch(form.lightTokens[0], stem.lightLemma)) return true;
+  if (vocalizationCompatible(form.lightTokens[0], stem.lightLemma)) return true;
+  if (
+    form.hasHamzaSpelling &&
+    stem.rawLemma &&
+    /[\u0621\u0622]/.test(stem.rawLemma) &&
+    stem.heavyLemma &&
+    hamzaFold(stem.heavyLemma) === hamzaFold(form.heavyTokens[0])
+  ) {
+    return (stem.pos === 'V') === form.looksLikeVerb;
+  }
+  if (
+    unambiguousHeavy?.has(`${form.heavyTokens[0]}\t${form.looksLikeVerb ? 'V' : 'N'}`) &&
+    stem.heavyLemma === form.heavyTokens[0] &&
+    (stem.pos === 'V') === form.looksLikeVerb
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isExactSurface(form, loc, stem, lightSurfaceByLocation) {
+  if (stem?.lightSurface === form.lightTokens[0]) return true;
+  if (lightSurfaceByLocation?.get(loc) === form.lightTokens[0]) return true;
+  return false;
+}
+
+function filterByCitationLemma(form, locations, stemByLocation, unambiguousHeavy, lightSurfaceByLocation) {
+  return [...locations].filter((loc) => {
+    const stem = stemByLocation.get(loc);
+    // Spelling-only variants (مَنّ written for مَنْ) must not keep a different lemma just
+    // because the surface happens to equal the variant.
+    if (form.surfaceOnly) return lemmaCompatible(form, stem, unambiguousHeavy);
+    if (isExactSurface(form, loc, stem, lightSurfaceByLocation)) {
+      if (!stem?.lightLemma || lemmaCompatible(form, stem, unambiguousHeavy)) return true;
+      // Same letters, different dictionary word: ابن "son" vs ابنِ "build!", أهلكَ
+      // "destroy" vs أهلكَ "your family". Trust exact surface only when POS agrees
+      // (corpus sometimes tags إلا as إن, and those must still stay إلا).
+      if ((stem.pos === 'V') !== form.looksLikeVerb) return false;
+      return true;
+    }
+    return lemmaCompatible(form, stem, unambiguousHeavy);
+  });
+}
+
+function citationAcceptsLemma(formsForId, lemma, unambiguousHeavy) {
+  const fakeN = { lightLemma: lemma, heavyLemma: normalizeArabic(lemma), rawLemma: lemma, pos: 'N' };
+  const fakeV = { ...fakeN, pos: 'V' };
+  return formsForId.some(
+    (form) => lemmaCompatible(form, fakeN, unambiguousHeavy) || lemmaCompatible(form, fakeV, unambiguousHeavy),
+  );
 }
 
 /** Removes an elidable hamzat-waṣl's contextual vowel (see the module doc comment). Only a
@@ -131,6 +327,13 @@ function ownersHaveSenses(owners) {
  *  distinct particles such as "إِلَّا" / "أَلَّا" and "إِنَّ" / "أَنَّ". */
 function stripInitialWaslVowel(text) {
   return text.replace(/^([\u0627\u0671])[\u064b-\u0652]+/, '$1');
+}
+
+/** Reorder a vowel that was written *before* shadda (U+064E U+0651) into the usual
+ *  shadda-then-vowel sequence, so a trailing case vowel can actually be stripped.
+ *  The deck writes "إِنَّ" that way; the corpus lemma is "إِنّ" (shadda, no fatha). */
+function canonicalizeShadda(text) {
+  return text.replace(/([\u064b-\u0650\u0652])(\u0651)/g, '$2$1');
 }
 
 /** Removes a trailing case vowel/tanween/sukun (i'rāb). Accusative tanween is written as
@@ -152,21 +355,23 @@ function stripFinalCaseVowel(text) {
 function normalizeLight(text) {
   const cleaned = stripFinalCaseVowel(
     stripInitialWaslVowel(
-      text
-        .normalize('NFC')
-        .replace(/[\u0640\u200c\u200d]/g, '') // tatweel, ZWNJ, ZWJ
-        .replace(/[\u0653-\u0655]/g, '') // combining maddah/hamza-above/hamza-below
-        // \u06e1 ("small high dotless head of khah") is this mushaf script's own sukun mark -
-        // used ~41k times, far more than plain \u0652 - almost always on a word-medial letter
-        // (e.g. the ي in "بَيْنَ" "between"), not a mere pause/annotation glyph. Mapping it to
-        // \u0652 rather than discarding it (as the other marks in this range genuinely are)
-        // keeps that letter's vowellessness legible to stripFinalCaseVowel below and to anything
-        // comparing this word's stem-internal vowels against a study word's own citation form,
-        // which almost always spells the same sukun with plain \u0652 - discarding it outright
-        // instead would silently drop the very letter it sits on out of the normalized text
-        // entirely (see e.g. "بَيْنَ" losing its ن) wherever a comparison expects it to survive.
-        .replace(/\u06e1/g, '\u0652')
-        .replace(/[\u06d6-\u06ed]/g, ''), // remaining small Qur'anic pause/annotation marks
+      canonicalizeShadda(
+        text
+          .normalize('NFC')
+          .replace(/[\u0640\u200c\u200d]/g, '') // tatweel, ZWNJ, ZWJ
+          .replace(/[\u0653-\u0655]/g, '') // combining maddah/hamza-above/hamza-below
+          // \u06e1 ("small high dotless head of khah") is this mushaf script's own sukun mark -
+          // used ~41k times, far more than plain \u0652 - almost always on a word-medial letter
+          // (e.g. the ي in "بَيْنَ" "between"), not a mere pause/annotation glyph. Mapping it to
+          // \u0652 rather than discarding it (as the other marks in this range genuinely are)
+          // keeps that letter's vowellessness legible to stripFinalCaseVowel below and to anything
+          // comparing this word's stem-internal vowels against a study word's own citation form,
+          // which almost always spells the same sukun with plain \u0652 - discarding it outright
+          // instead would silently drop the very letter it sits on out of the normalized text
+          // entirely (see e.g. "بَيْنَ" losing its ن) wherever a comparison expects it to survive.
+          .replace(/\u06e1/g, '\u0652')
+          .replace(/[\u06d6-\u06ed]/g, ''), // remaining small Qur'anic pause/annotation marks
+      ),
     ),
   );
   return cleaned
@@ -185,6 +390,13 @@ function normalizeLight(text) {
  *  which study words are only distinguishable *with* their vowels (see loadStudyForms). */
 function normalizeArabic(text) {
   return normalizeLight(text).replace(/[\u064b-\u0652]/g, '');
+}
+
+/** Drops a standalone hamza (ء) after heavy normalization. The deck writes "قُرْآن" (alef-madda)
+ *  while the corpus lemma is "قُرْءان" (hamza + alef); those are the same word, and without this
+ *  fold the noun never seeds, so a later root-relative verb used to swallow every occurrence. */
+function hamzaFold(heavyText) {
+  return heavyText.replace(/\u0621/g, '');
 }
 
 /** Light normalization plus stripping *only* shadda (gemination) and sukun (vowellessness) -
@@ -229,16 +441,30 @@ function loadStudyForms() {
       // Possessive endings (Level 3) are not standalone mushaf words. Registering them as
       // ordinary surface forms lets "هُمْ" "their" swallow every independent "هُمْ" "they",
       // and "كَ" "your" compete with the preposition "كَ" "like". The reader tags whole words,
-      // so suffixes are taught in flashcards only.
-      if (word.isSuffix) continue;
-      // A word's own listed "plural" (e.g. "22-002" "إِلَٰه" "god" -> "آلِهَة" "gods") is
-      // registered as just another citation form under the very same id, the same as an
-      // additional comma-separated singular form would be: it's the same vocabulary concept, not
-      // a different word, so a learner who's marked the singular known should have the plural
-      // hidden right along with it, exactly like the existing root-family expansion already does
-      // for other morphological relatives.
-      const citationForms = [word.arabic, word.plural, word.variant].filter(Boolean).join(',');
-      for (const commaForm of citationForms.split(/[,\u060c]/)) {
+      // so suffixes are taught in flashcards only. Grammar intros are explanations, not forms.
+      if (word.isSuffix || word.kind === 'grammar') continue;
+      // Prefix cards still match on their own letter (لِ, بِ), but a teaching `variant` like
+      // 11-007's "أَمْر" (the grammatical term "imperative") must not seed the noun "أمر".
+      const headword = String(word.arabic ?? '')
+        .split(/[,\u060c]/)[0]
+        .split('...')[0]
+        .trim()
+        .split(/\s+/)
+        .find(Boolean) ?? '';
+      const headwordLight = normalizeLight(headword);
+      const headwordSkel = shaddaSkeleton(headwordLight);
+      const sources = word.isPrefix
+        ? [['arabic', word.arabic]]
+        : [
+            ['arabic', word.arabic],
+            ['plural', word.plural],
+            ['variant', word.variant],
+          ].filter(([, text]) => text);
+      // Multi-word citations that set `phrase: true` must not split into synthetic tokens.
+      // Contiguous phrase runs are found later for verse examples; they are not used to tag
+      // the reader.
+      for (const [source, sourceText] of sources) {
+        for (const commaForm of sourceText.split(/[,\u060c]/)) {
         for (const piece of commaForm.split('...')) {
           const words = piece.split(/\s+/).filter(Boolean);
           if (words.length === 0) continue;
@@ -251,17 +477,23 @@ function loadStudyForms() {
           // appears, not only in the handful of places it happens to sit next to the citation's
           // other word. So each word is registered as its own ordinary single-token form below,
           // sharing this same study id, instead of requiring the whole run to match adjacently.
-          for (const singleWord of words) {
-            const lightToken = normalizeLight(singleWord);
-            if (!lightToken) continue;
-            forms.push({
-              id: word.id,
-              lightTokens: [lightToken],
-              heavyTokens: [normalizeArabic(singleWord)],
-              looseTokens: [normalizeLightLoose(singleWord)],
-              looksLikeVerb: endsWithBareFatha(singleWord),
-              synthetic: words.length > 1,
-            });
+          // `phrase: true` opts out of that split (see above).
+          if (!word.phrase) {
+            for (const singleWord of words) {
+              const lightToken = normalizeLight(singleWord);
+              if (!lightToken) continue;
+              forms.push({
+                id: word.id,
+                lightTokens: [lightToken],
+                heavyTokens: [normalizeArabic(singleWord)],
+                looseTokens: [normalizeLightLoose(singleWord)],
+                looksLikeVerb: endsWithBareFatha(singleWord),
+                synthetic: words.length > 1,
+                hasHamzaSpelling: /[\u0621\u0622]/.test(singleWord),
+                headwordLight,
+                surfaceOnly: source !== 'arabic' && shaddaSkeleton(lightToken) !== headwordSkel,
+              });
+            }
           }
 
           // Some deck citations write what's really one fused mushaf word with an internal space
@@ -281,10 +513,14 @@ function loadStudyForms() {
                 heavyTokens: [normalizeArabic(fused)],
                 looseTokens: [normalizeLightLoose(fused)],
                 looksLikeVerb: endsWithBareFatha(fused),
+                hasHamzaSpelling: /[\u0621\u0622]/.test(fused),
+                headwordLight,
+                surfaceOnly: source !== 'arabic' && shaddaSkeleton(fusedLight) !== headwordSkel,
               });
             }
           }
         }
+      }
       }
     }
   }
@@ -362,18 +598,50 @@ function loadMorphologyStems(ayahWordOrder) {
     const stem = segments.find((s) => !s.feats.includes('PREF') && !s.feats.includes('SUFF'));
     const lemFeat = stem?.feats.find((f) => f.startsWith('LEM:'));
     const rootFeat = stem?.feats.find((f) => f.startsWith('ROOT:'));
+    const rawLemma = lemFeat ? lemFeat.slice(4) : null;
+    const rawRoot = rootFeat ? rootFeat.slice(5) : null;
     const prepSeg = segments.find((s) => s.feats.includes('PREF') && s.feats.includes('P'));
     const prepLem = prepSeg?.feats.find((f) => f.startsWith('LEM:'));
+    const prefixHeavies = [];
+    let prefixEmphLam = false;
+    let prefixVocYa = false;
+    let prefixImprLam = false;
+    for (const seg of segments) {
+      if (!seg.feats.includes('PREF')) continue;
+      const lemFeat = seg.feats.find((f) => f.startsWith('LEM:'));
+      const lemma = lemFeat ? normalizeArabic(lemFeat.slice(4)) : '';
+      if (lemma) prefixHeavies.push(lemma);
+      if (lemma === 'ل' && seg.feats.includes('EMPH')) prefixEmphLam = true;
+      if (lemma === 'ل' && seg.feats.includes('IMPV')) prefixImprLam = true;
+      if ((lemma === 'ي' || lemma === 'يا') && seg.feats.includes('VOC')) prefixVocYa = true;
+    }
+    const hasEmphNun = segments.some((seg) => seg.feats.includes('SUFF') && seg.feats.includes('EMPH'));
+    const hasQad = segments.some((seg) => {
+      if (seg.feats.includes('PREF') || seg.feats.includes('SUFF')) return false;
+      const lemFeat = seg.feats.find((f) => f.startsWith('LEM:'));
+      return lemFeat ? normalizeArabic(lemFeat.slice(4)) === normalizeArabic('قَد') : false;
+    });
     stemByLocation.set(wordKey, {
-      lightLemma: lemFeat ? normalizeLight(lemFeat.slice(4)) : null,
-      heavyLemma: lemFeat ? normalizeArabic(lemFeat.slice(4)) : null,
-      root: rootFeat ? normalizeArabic(rootFeat.slice(5)) : null,
+      lightLemma: rawLemma ? normalizeLight(rawLemma) : null,
+      heavyLemma: rawLemma ? normalizeArabic(rawLemma) : null,
+      rawLemma,
+      root: rawRoot ? normalizeArabic(rawRoot) : null,
+      rawRoot,
       pos: stem?.pos === 'V' ? 'V' : 'N',
+      // Corpus POS column as written (N/V/P). Distinct from `pos`, which collapses to V vs N
+      // for the matcher. Reader enrichment uses this; matching does not.
+      corpusPos: stem?.pos ?? null,
       feats: stem?.feats ?? [],
       // Preposition+pronoun words (بِهِ "with it") have the clitic as the morphological "stem"
       // after a PREF tagged P. Those are not independent هو/هِيَ; they belong to the preposition.
       hasPrepPrefix: prepSeg != null,
       prepLemma: prepLem ? normalizeArabic(prepLem.slice(4)) : null,
+      prefixHeavies,
+      prefixEmphLam,
+      prefixVocYa,
+      prefixImprLam,
+      hasEmphNun,
+      hasQad,
       lightSurface: normalizeLight(surfaceRaw),
       heavySurface: normalizeArabic(surfaceRaw),
       looseSurface: normalizeLightLoose(surfaceRaw),
@@ -399,7 +667,7 @@ function buildVocabMatches(rawSurfaceByLocation, ayahWordOrder) {
 
   const lightLemmaIndex = new Map();
   const heavyLemmaIndex = new Map();
-  const rootIndex = new Map();
+  const foldLemmaIndex = new Map();
   // Indexed separately from the reader data's whole-word surface text below because it's already
   // prefix-stripped (see loadMorphologyStems) - this is what lets an attached "وَ"/"بِ"/"لِ"/"كَ"
   // prefix not prevent a study word's citation form from matching that occurrence.
@@ -407,10 +675,23 @@ function buildVocabMatches(rawSurfaceByLocation, ayahWordOrder) {
   const heavyStemSurfaceIndex = new Map();
   for (const [loc, stem] of stemByLocation) {
     addToIndex(lightLemmaIndex, stem.lightLemma, loc);
+    const foldedLight = stem.lightLemma ? normalizeLight(stem.lightLemma) : null;
+    if (foldedLight && foldedLight !== stem.lightLemma) addToIndex(lightLemmaIndex, foldedLight, loc);
     addToIndex(heavyLemmaIndex, stem.heavyLemma, loc);
-    addToIndex(rootIndex, stem.root, loc);
+    addToIndex(foldLemmaIndex, stem.heavyLemma ? hamzaFold(stem.heavyLemma) : null, loc);
     addToIndex(lightStemSurfaceIndex, stem.lightSurface, loc);
     addToIndex(heavyStemSurfaceIndex, stem.heavySurface, loc);
+  }
+  const heavyPosLemmas = new Map();
+  for (const [, stem] of stemByLocation) {
+    if (!stem.heavyLemma || !stem.lightLemma) continue;
+    const key = `${stem.heavyLemma}\t${stem.pos}`;
+    if (!heavyPosLemmas.has(key)) heavyPosLemmas.set(key, new Set());
+    heavyPosLemmas.get(key).add(stem.lightLemma);
+  }
+  const unambiguousHeavy = new Set();
+  for (const [key, lemmas] of heavyPosLemmas) {
+    if (lemmas.size <= 1) unambiguousHeavy.add(key);
   }
   const lightSurfaceIndex = new Map();
   const heavySurfaceIndex = new Map();
@@ -514,6 +795,8 @@ function buildVocabMatches(rawSurfaceByLocation, ayahWordOrder) {
         if (form.synthetic) suppressFallback = true;
       }
     }
+    seed = applySenseFilter(form, seed, stemByLocation);
+    seed = new Set(filterByCitationLemma(form, seed, stemByLocation, unambiguousHeavy, lightSurfaceByLocation));
     if (seed.size > 0) mergeSeed(form.id, seed);
     // A *synthetic* form that lost this token to another owner is deliberately excluded from the
     // heavy fallback pass below too, rather than being treated the same as a form that simply
@@ -554,6 +837,8 @@ function buildVocabMatches(rawSurfaceByLocation, ayahWordOrder) {
     if ((heavyOwnerIds?.size ?? 0) > 1) {
       seed = new Set([...seed].filter((loc) => senseFilter(form, loc, stemByLocation)));
     }
+    seed = applySenseFilter(form, seed, stemByLocation);
+    seed = new Set(filterByCitationLemma(form, seed, stemByLocation, unambiguousHeavy, lightSurfaceByLocation));
     if (seed.size > 0) mergeSeed(form.id, seed);
   }
 
@@ -579,6 +864,35 @@ function buildVocabMatches(rawSurfaceByLocation, ayahWordOrder) {
     const locs = (heavyLemmaIndex.get(heavy) ?? []).filter((loc) => {
       const stem = stemByLocation.get(loc);
       if (!stem || (stem.pos === 'V') !== form.looksLikeVerb) return false;
+      if (!lemmaCompatible(form, stem, unambiguousHeavy)) return false;
+      return senseFilter(form, loc, stemByLocation);
+    });
+    if (locs.length > 0) mergeSeed(form.id, locs);
+  }
+
+  // Pass 2c: hamza-fold lemma top-up. The deck writes "قُرْآن" (alef-madda) while the corpus
+  // lemma is "قُرْءان" (hamza + alef); light/heavy lemma indexes miss that spelling gap, and
+  // without this the noun never seeds so a later root-relative verb used to swallow it.
+  const foldNaturalOwners = new Map();
+  for (const form of singleTokenForms) {
+    if (form.synthetic || !form.hasHamzaSpelling) continue;
+    const folded = hamzaFold(form.heavyTokens[0]);
+    if (!folded) continue;
+    if (!foldNaturalOwners.has(folded)) foldNaturalOwners.set(folded, []);
+    foldNaturalOwners.get(folded).push(form);
+  }
+  for (const form of singleTokenForms) {
+    if (form.synthetic || !form.hasHamzaSpelling) continue;
+    const folded = hamzaFold(form.heavyTokens[0]);
+    if (!folded) continue;
+    const owners = foldNaturalOwners.get(folded) ?? [];
+    const samePos = owners.filter((owner) => owner.looksLikeVerb === form.looksLikeVerb);
+    const samePosIds = new Set(samePos.map((owner) => owner.id));
+    if (samePosIds.size !== 1 && !ownersHaveSenses(samePos)) continue;
+    const locs = (foldLemmaIndex.get(folded) ?? []).filter((loc) => {
+      const stem = stemByLocation.get(loc);
+      if (!stem || (stem.pos === 'V') !== form.looksLikeVerb) return false;
+      if (!lemmaCompatible(form, stem, unambiguousHeavy)) return false;
       return senseFilter(form, loc, stemByLocation);
     });
     if (locs.length > 0) mergeSeed(form.id, locs);
@@ -642,55 +956,82 @@ function buildVocabMatches(rawSurfaceByLocation, ayahWordOrder) {
         continue;
       }
     }
+    seed = applySenseFilter(form, seed, stemByLocation);
+    seed = new Set(filterByCitationLemma(form, seed, stemByLocation, unambiguousHeavy, lightSurfaceByLocation));
     if (seed.size > 0) mergeSeed(form.id, seed);
   }
 
-  // A root is only a safe basis for family-wide expansion (e.g. unifying "هَدَى" and "اهتدى")
-  // when exactly one study word's own seeds resolve to it. Many roots cover *several* separately
-  // taught deck words - most commonly a verb sense and a noun/adjective sense (e.g. "نَصَرَ" "to
-  // help" and "نَصِير" "helper" both come from root نصر) - and expanding either of those into the
-  // whole family would silently swallow the other's occurrences. Ownership is resolved globally,
-  // up front, before any expansion happens, instead of processing forms one at a time and letting
-  // whichever runs first claim the shared territory. When a root is shared, it's still split
-  // safely along the verb/non-verb line whenever that line cleanly separates the co-owners (the
-  // dominant real-world pattern), using each occurrence's own POS tag; a root shared by two
-  // co-owners of the *same* POS class is genuinely ambiguous and is left unexpanded for both.
-  const rootById = new Map();
+  function seedAttachedLemmaCards() {
+    const extra = new Map();
+    for (const [loc, stem] of stemByLocation) {
+      const hit = Object.entries(ATTACHED_LEMMA_CARDS).find(([, test]) => test(stem));
+      if (!hit) continue;
+      if (!extra.has(hit[0])) extra.set(hit[0], new Set());
+      extra.get(hit[0]).add(loc);
+    }
+    for (const [id, locs] of extra) mergeSeed(id, locs);
+  }
+  seedAttachedLemmaCards();
+
+  // Lemma completion — not root expansion. Inflected surface forms of the *same dictionary
+  // lemma* ("المبينِ", "مبيناً", "مبينون") should hide together; derivatives that only share a
+  // root ("بين" "between" vs "مبين" "clear", "شاء" "to will" vs "شيء" "thing") must not.
+  // A card may claim leftover locations of a lemma only when it is the unique study word whose
+  // seeds majority-resolve to that lemma, or when every co-owner of the lemma has an explicit
+  // sense filter (ما not vs ما what). Demonstratives the corpus lumps under "ذا" stay split by
+  // their own surface seeds. Majority is of the whole seed (including untagged pronouns), so a
+  // handful of lookalike surfaces cannot promote a foreign lemma. The majority lemma must also
+  // still be the card's citation word ("إِنْ" cannot complete "إِنَّ").
+  const naturalFormsById = new Map();
+  for (const form of singleTokenForms) {
+    if (form.synthetic) continue;
+    if (!naturalFormsById.has(form.id)) naturalFormsById.set(form.id, []);
+    naturalFormsById.get(form.id).push(form);
+  }
+  function majorityLemma(seed) {
+    const counts = new Map();
+    let tagged = 0;
+    for (const loc of seed) {
+      const lemma = stemByLocation.get(loc)?.lightLemma;
+      if (!lemma) continue;
+      tagged += 1;
+      counts.set(lemma, (counts.get(lemma) ?? 0) + 1);
+    }
+    let best = null;
+    let bestN = 0;
+    for (const [lemma, n] of counts) {
+      if (n > bestN) {
+        best = lemma;
+        bestN = n;
+      }
+    }
+    if (!best || seed.size === 0 || bestN / seed.size < 0.5) return null;
+    return best;
+  }
+  const lemmaById = new Map();
   for (const [id, seed] of seedsById) {
-    const roots = new Set();
-    for (const loc of seed) {
-      const root = stemByLocation.get(loc)?.root;
-      if (root) roots.add(root);
-    }
-    if (roots.size === 1) rootById.set(id, [...roots][0]);
+    const lemma = majorityLemma(seed);
+    if (lemma) lemmaById.set(id, lemma);
   }
-  function classify(seed) {
-    let verbs = 0;
-    let nonVerbs = 0;
-    for (const loc of seed) {
-      if (stemByLocation.get(loc)?.pos === 'V') verbs++;
-      else nonVerbs++;
-    }
-    return verbs > nonVerbs ? 'V' : 'N';
-  }
-  const rootBuckets = new Map(); // root -> { V: Set<id>, N: Set<id> }
-  for (const [id, root] of rootById) {
-    if (!rootBuckets.has(root)) rootBuckets.set(root, { V: new Set(), N: new Set() });
-    rootBuckets.get(root)[classify(seedsById.get(id))].add(id);
+  const lemmaOwners = new Map();
+  for (const [id, lemma] of lemmaById) {
+    if (!lemmaOwners.has(lemma)) lemmaOwners.set(lemma, new Set());
+    lemmaOwners.get(lemma).add(id);
   }
 
   for (const [id, seed] of seedsById) {
     const allLocations = new Set(seed);
-    const root = rootById.get(id);
-    if (root) {
-      const buckets = rootBuckets.get(root);
-      const soleOwner = buckets.V.size + buckets.N.size === 1;
-      const myClass = classify(seed);
-      if (soleOwner) {
-        for (const loc of rootIndex.get(root) ?? []) allLocations.add(loc);
-      } else if (buckets[myClass].size === 1) {
-        for (const loc of rootIndex.get(root) ?? []) {
-          if (stemByLocation.get(loc)?.pos === myClass) allLocations.add(loc);
+    const lemma = lemmaById.get(id);
+    if (lemma) {
+      const coOwners = lemmaOwners.get(lemma);
+      const sense = FEATURE_SENSE[id];
+      const canComplete =
+        citationAcceptsLemma(naturalFormsById.get(id) ?? [], lemma, unambiguousHeavy) &&
+        (coOwners.size === 1 || (sense != null && [...coOwners].every((owner) => FEATURE_SENSE[owner])));
+      if (canComplete) {
+        for (const loc of lightLemmaIndex.get(lemma) ?? []) {
+          if (sense && !senseFilter({ id }, loc, stemByLocation)) continue;
+          allLocations.add(loc);
         }
       }
     }
@@ -701,8 +1042,31 @@ function buildVocabMatches(rawSurfaceByLocation, ayahWordOrder) {
 
   tagIndependentPronouns(stemByLocation, matchByLocation);
   tagPrepPronouns(stemByLocation, matchByLocation);
+  tagRelativePronouns(stemByLocation, matchByLocation);
+  tagAttachedLemmas(stemByLocation, matchByLocation);
+  tagCoverageBandLemmas(stemByLocation, matchByLocation);
+  tagGluedPrefixes(stemByLocation, matchByLocation);
 
   return matchByLocation;
+}
+
+const RELATIVE_PRONOUN_BY_FEAT = {
+  MS: '01-007',
+  FS: '01-008',
+  FP: '01-008',
+  FD: '01-008',
+  MP: '01-009',
+  MD: '01-009',
+};
+
+function tagRelativePronouns(stemByLocation, matchByLocation) {
+  const lemma = normalizeLight('الَّذِي');
+  for (const [loc, stem] of stemByLocation) {
+    if (matchByLocation.has(loc)) continue;
+    if (!hasFeat(stem, 'REL') || stem.lightLemma !== lemma) continue;
+    const feat = Object.keys(RELATIVE_PRONOUN_BY_FEAT).find((tag) => hasFeat(stem, tag));
+    if (feat) matchByLocation.set(loc, RELATIVE_PRONOUN_BY_FEAT[feat]);
+  }
 }
 
 function tagIndependentPronouns(stemByLocation, matchByLocation) {
@@ -721,6 +1085,132 @@ function tagPrepPronouns(stemByLocation, matchByLocation) {
     if (!stem.hasPrepPrefix || !hasFeat(stem, 'PRON')) continue;
     const id = PREP_PREFIX_BY_LEMMA[stem.prepLemma];
     if (id) matchByLocation.set(loc, id);
+  }
+}
+
+/** Deck citations that the ordinary surface/lemma pipeline misses: إله vs إِلٰه, الله vs
+ *  اللَّه, cattle vs "yes" under نَعَم, Hereafter as feminine آخِر, لكن vs corpus لاكِنّ. */
+const ATTACHED_LEMMA_CARDS = {
+  '01-001': (stem) => demonstrativeKind(stem) === 'hadha',
+  '01-002': (stem) => demonstrativeKind(stem) === 'hadhihi',
+  '01-003': (stem) => demonstrativeKind(stem) === 'haula',
+  '01-004': (stem) => demonstrativeKind(stem) === 'dhalika',
+  '01-005': (stem) => demonstrativeKind(stem) === 'tilka',
+  '01-006': (stem) => demonstrativeKind(stem) === 'ulaika',
+  '02-014': (stem) => lemmaIs(stem, 'إِلٰه'),
+  '02-002': (stem) => lemmaIs(stem, 'اللَّه'),
+  '12-004': (stem) => lemmaIs(stem, 'لاكِنّ', 'لاكِن'),
+  '18-004': (stem) => lemmaIs(stem, 'نَعَم') && !hasFeat(stem, 'ANS'),
+  '18-009': (stem) => lemmaIs(stem, 'لَيْل', 'لَيْلَة'),
+  '19-001': (stem) => lemmaIs(stem, 'اَصْحاب', 'صاحِب', 'صاحب'),
+  '20-004': (stem) => lemmaIs(stem, 'آخِر') && hasFeat(stem, 'FS'),
+  '25-002': (stem) => lemmaIs(stem, 'اباء', 'آباء'),
+  '25-004': (stem) => lemmaIs(stem, 'رِجال'),
+  '25-005': (stem) => lemmaIs(stem, 'نِساء'),
+  '26-009': (stem) => lemmaIs(stem, 'رِجْل'),
+  '31-002': (stem) => lemmaIs(stem, 'يَشْعُر', 'شَعَر'),
+  '33-002': (stem) => lemmaIs(stem, 'يَحْزُن', 'حَزِن'),
+  '37-001': (stem) => lemmaIs(stem, 'تَلَي'),
+  '38-008': (stem) => lemmaIs(stem, 'رَاَي', 'رَأَى'),
+  '47-004': (stem) => lemmaIs(stem, 'اسْتَغْفَر'),
+  '32-012': (stem) => lemmaIs(stem, 'رَجَع'),
+  '32-013': (stem) => lemmaIs(stem, 'اَحْبَب', 'أَحَبّ', 'أَحَبَّ'),
+  '32-014': (stem) => lemmaIs(stem, 'حَرَّم'),
+  '32-015': (stem) => lemmaIs(stem, 'اسْتَوَي'),
+  '32-016': (stem) => lemmaIs(stem, 'فَتَن'),
+  '32-017': (stem) => lemmaIs(stem, 'نَهَي'),
+  '32-018': (stem) => lemmaIs(stem, 'اَغْنَت'),
+  '32-019': (stem) => lemmaIs(stem, 'يَضُرّ'),
+  '32-020': (stem) => lemmaIs(stem, 'اَذِن'),
+  '32-021': (stem) => lemmaIs(stem, 'مَش'),
+  '12-003': (stem) => lemmaIs(stem, 'كَاَن'),
+  '50-006': (stem) => lemmaIs(stem, 'مَيْت'),
+  '100-002': (stem) => lemmaIs(stem, 'مُوْمِنَة'),
+  '103-006': (stem) => lemmaIs(stem, 'نَبَا', 'نَبَأ') && stem.pos !== 'V',
+  '104-002': (stem) => lemmaIs(stem, 'ظُلُمَة'),
+  '105-001': (stem) => lemmaIs(stem, 'مَنّ'),
+  '109-007': (stem) => lemmaIs(stem, 'حَبَّة'),
+  '114-003': (stem) => lemmaIs(stem, 'قِبْلَة'),
+};
+
+const COVERAGE_OVERRIDE_PATH = path.join(__dirname, 'data', 'vocab-lemma-overrides.json');
+
+/** Leftover-lemma cards (level 100+) store the corpus light-lemma in overrides. Attach any
+ *  still-untagged locations of those lemmas so a later duplicate citation cannot first-write
+ *  the token and then fail lemmaCompatible, leaving the leftover unclaimed. */
+function tagCoverageBandLemmas(stemByLocation, matchByLocation) {
+  if (!fs.existsSync(COVERAGE_OVERRIDE_PATH)) return;
+  const overrides = JSON.parse(fs.readFileSync(COVERAGE_OVERRIDE_PATH, 'utf8'));
+  const tests = [];
+  for (const [id, entry] of Object.entries(overrides)) {
+    const level = Number(id.split('-')[0]);
+    if (!Number.isFinite(level) || level < 100) continue;
+    if (FEATURE_SENSE[id]) continue;
+    const lemmas = entry.lemmas ?? [];
+    if (lemmas.length === 0) continue;
+    tests.push([id, (stem) => lemmaIs(stem, ...lemmas)]);
+  }
+  tests.sort((a, b) => a[0].localeCompare(b[0]));
+  for (const [loc, stem] of stemByLocation) {
+    if (matchByLocation.has(loc)) continue;
+    const hit = tests.find(([, test]) => test(stem));
+    if (hit) matchByLocation.set(loc, hit[0]);
+  }
+}
+
+function tagAttachedLemmas(stemByLocation, matchByLocation) {
+  const tests = Object.entries(ATTACHED_LEMMA_CARDS);
+  for (const [loc, stem] of stemByLocation) {
+    if (matchByLocation.has(loc)) continue;
+    const hit = tests.find(([, test]) => test(stem));
+    if (hit) matchByLocation.set(loc, hit[0]);
+  }
+}
+
+/** One-letter prefixes fused onto a word (وَكتاب, فَقال, سَيَعْلَم). Stem matching already
+ *  claimed the word when the stem is a study card; leftover prefixed words belong to the
+ *  prefix card. Skip when the stem lemma is already a study word (وأولئك must not become
+ *  "and" just because the demonstrative surface missed). Definite الْ is skipped — tagging
+ *  every leftover noun as "the" would hide the noun itself. */
+function tagGluedPrefixes(stemByLocation, matchByLocation) {
+  const skip = new Set(['ال', normalizeArabic('الْ')]);
+  const claimedLemmas = new Set();
+  for (const [loc, stem] of stemByLocation) {
+    const id = matchByLocation.get(loc);
+    if (!id || PREFIX_STUDY_IDS.has(id)) continue;
+    if (stem.lightLemma) claimedLemmas.add(stem.lightLemma);
+  }
+  for (const [loc, stem] of stemByLocation) {
+    if (matchByLocation.has(loc)) continue;
+    if (stem.lightLemma && claimedLemmas.has(stem.lightLemma)) continue;
+    if (stem.prefixEmphLam && stem.hasEmphNun) {
+      matchByLocation.set(loc, '11-004');
+      continue;
+    }
+    if (stem.prefixEmphLam && stem.hasQad) {
+      matchByLocation.set(loc, '11-005');
+      continue;
+    }
+    if (stem.prefixVocYa) {
+      matchByLocation.set(loc, '12-012');
+      continue;
+    }
+    if (stem.prefixEmphLam) {
+      matchByLocation.set(loc, '11-006');
+      continue;
+    }
+    if (stem.prefixImprLam) {
+      matchByLocation.set(loc, '11-007');
+      continue;
+    }
+    for (const heavy of stem.prefixHeavies ?? []) {
+      if (skip.has(heavy)) continue;
+      const id = PREFIX_LEMMA_TO_ID[heavy];
+      if (id && id !== '11-008') {
+        matchByLocation.set(loc, id);
+        break;
+      }
+    }
   }
 }
 
@@ -751,6 +1241,10 @@ function tagPrepPronouns(stemByLocation, matchByLocation) {
  * index-based id), so it's both deterministic across rebuilds and distinguishes true homographs
  * the way light matching already does elsewhere in this file (e.g. "مَنْ" vs "مِنْ" get different
  * lemma ids, not the same one).
+ *
+ * Prefix-card tags (وَكتاب as "and") do not count as claiming the *stem* lemma: otherwise a
+ * leftover noun that often follows وَ would look "majority claimed" and its unprefixed
+ * occurrences would lose the lem: fallback.
  */
 function buildLemmaFallbackTags(stemByLocation, matchByLocation) {
   const totalByLemma = new Map();
@@ -759,7 +1253,8 @@ function buildLemmaFallbackTags(stemByLocation, matchByLocation) {
     const lemma = stem.lightLemma;
     if (!lemma) continue;
     totalByLemma.set(lemma, (totalByLemma.get(lemma) ?? 0) + 1);
-    if (matchByLocation.has(loc)) {
+    const id = matchByLocation.get(loc);
+    if (id && !PREFIX_STUDY_IDS.has(id)) {
       claimedByLemma.set(lemma, (claimedByLemma.get(lemma) ?? 0) + 1);
     }
   }
@@ -780,12 +1275,329 @@ function buildLemmaFallbackTags(stemByLocation, matchByLocation) {
   return fallbackByLocation;
 }
 
+const SUFFIX_PERSON_TO_ID = {
+  '1S': '03-005',
+  '1P': '03-010',
+  '2MS': '03-003',
+  '2FS': '03-004',
+  '2MP': '03-008',
+  '2FP': '03-009',
+  '2D': '03-012',
+  '3MS': '03-001',
+  '3FS': '03-002',
+  '3MP': '03-006',
+  '3FP': '03-007',
+  '3D': '03-011',
+};
+
+const PREFIX_LEMMA_TO_ID = {
+  و: '10-012',
+  ف: '08-007',
+  ب: '10-001',
+  ل: '10-005',
+  ك: '10-004',
+  س: '11-002',
+  ال: '11-008',
+  ت: '10-008',
+};
+
+const PREFIX_STUDY_IDS = new Set([
+  '08-007',
+  '10-001',
+  '10-004',
+  '10-005',
+  '10-008',
+  '10-012',
+  '11-002',
+  '11-004',
+  '11-005',
+  '11-006',
+  '11-007',
+  '11-008',
+  '12-012',
+]);
+
+function lettersOnly(text) {
+  return normalizeArabic(text).replace(/[^\u0621-\u064A\u0671]/g, '');
+}
+
+function suffixTextMatchesStudy(suffText, study) {
+  const suff = lettersOnly(suffText);
+  if (!suff) return false;
+  const citations = [study.arabic, study.variant, ...(study.forms ?? [])]
+    .filter(Boolean)
+    .join(',')
+    .split(/[,\u060c]/);
+  return citations.some((citation) => {
+    const form = lettersOnly(citation);
+    return form && (suff === form || suff.endsWith(form) || form.endsWith(suff));
+  });
+}
+
+/**
+ * Locations whose morphology has an attached pronoun / one-letter prefix matching a study card.
+ * Used to pick a verse example for clitics that never appear as their own mushaf word.
+ * `studyById` is `"03-001" -> { arabic, variant }` from the deck.
+ */
+function collectAffixLocations(studyById) {
+  const lines = fs.readFileSync(MORPHOLOGY_PATH, 'utf8').split('\n');
+  const segmentsByWord = new Map();
+  for (const line of lines) {
+    if (!line || line.startsWith('#')) continue;
+    const [loc, text, , featuresRaw] = line.split('\t');
+    if (!loc || !text || !featuresRaw) continue;
+    const parts = loc.split(':');
+    if (parts.length !== 4) continue;
+    const wordKey = `${parts[0]}:${parts[1]}:${parts[2]}`;
+    if (!segmentsByWord.has(wordKey)) segmentsByWord.set(wordKey, []);
+    segmentsByWord.get(wordKey).push({ text, feats: featuresRaw.split('|') });
+  }
+
+  const suffixById = new Map();
+  const prefixById = new Map();
+  const add = (map, id, loc) => {
+    if (!id) return;
+    if (!map.has(id)) map.set(id, []);
+    map.get(id).push(loc);
+  };
+
+  for (const [wordKey, segments] of segmentsByWord) {
+    for (const seg of segments) {
+      if (seg.feats.includes('SUFF') && seg.feats.includes('PRON')) {
+        const person = Object.keys(SUFFIX_PERSON_TO_ID).find((tag) => seg.feats.includes(tag));
+        const id = person ? SUFFIX_PERSON_TO_ID[person] : null;
+        const study = id ? studyById.get(id) : null;
+        if (id && study && suffixTextMatchesStudy(seg.text, study)) add(suffixById, id, wordKey);
+      }
+      if (seg.feats.includes('PREF')) {
+        const lemFeat = seg.feats.find((f) => f.startsWith('LEM:'));
+        const lemma = lemFeat ? normalizeArabic(lemFeat.slice(4)) : '';
+        if (lemma === 'ل' && seg.feats.includes('EMPH')) {
+          add(prefixById, '11-006', wordKey);
+        } else if (lemma === 'ي' && seg.feats.includes('VOC')) {
+          add(prefixById, '12-012', wordKey);
+        } else {
+          add(prefixById, PREFIX_LEMMA_TO_ID[lemma], wordKey);
+        }
+      }
+    }
+    const hasEmphLam = segments.some((seg) => {
+      const lemFeat = seg.feats.find((f) => f.startsWith('LEM:'));
+      const lemma = lemFeat ? normalizeArabic(lemFeat.slice(4)) : '';
+      return seg.feats.includes('PREF') && seg.feats.includes('EMPH') && lemma === 'ل';
+    });
+    const hasEmphNun = segments.some((seg) => seg.feats.includes('SUFF') && seg.feats.includes('EMPH'));
+    if (hasEmphLam && hasEmphNun) add(prefixById, '11-004', wordKey);
+    const hasQad = segments.some((seg) => {
+      if (seg.feats.includes('PREF') || seg.feats.includes('SUFF')) return false;
+      const lemFeat = seg.feats.find((f) => f.startsWith('LEM:'));
+      return lemFeat ? normalizeArabic(lemFeat.slice(4)) === normalizeArabic('قَد') : false;
+    });
+    if (hasEmphLam && hasQad) add(prefixById, '11-005', wordKey);
+  }
+  return { suffixById, prefixById };
+}
+
+/** First comma-separated citation, split on spaces - the phrase a flashcard is teaching. */
+function citationPhraseTokens(arabic) {
+  const first = String(arabic ?? '')
+    .split(/[,\u060c]/)[0]
+    .trim();
+  return first.split(/\s+/).filter(Boolean);
+}
+
+/** Mushaf spellings often write a dagger alif the deck citation omitted (إِله vs إِلَٰه). */
+function lettersMatchFlexible(citation, surface) {
+  const cit = [...hamzaFold(normalizeArabic(citation))];
+  const sur = [...hamzaFold(normalizeArabic(surface))];
+  if (cit.length === 0 || sur.length === 0) return false;
+  let i = 0;
+  for (const ch of sur) {
+    if (i < cit.length && ch === cit[i]) i += 1;
+    else if (ch === '\u0627') continue;
+    else return false;
+  }
+  return i === cit.length;
+}
+
+function locationMatchesPhraseToken(token, loc, rawSurfaceByLocation, stemByLocation) {
+  const stem = stemByLocation.get(loc);
+  const surface = stem?.lightSurface || normalizeLight(rawSurfaceByLocation.get(loc) ?? '');
+  if (!surface) return false;
+  const light = normalizeLight(token);
+  if (surface === light) return true;
+  if (stem?.lightLemma === light) return true;
+  if (stem?.heavyLemma === normalizeArabic(token)) return true;
+  if (normalizeLightLoose(surface) === normalizeLightLoose(token)) return true;
+  const raw = rawSurfaceByLocation.get(loc) ?? surface;
+  return lettersMatchFlexible(token, stem?.lightSurface || raw);
+}
+
+/**
+ * Adjacent mushaf words matching a multi-word citation, in order. Used to pick verse examples
+ * for phrase cards so "لَا إِلهَ" shows a shahada ayah rather than a random "لَا" (e.g. ولا in
+ * 1:7). Reader tagging still splits phrases into individual words; this is example-only.
+ */
+function findPhraseRuns(tokens, ayahWordOrder, rawSurfaceByLocation, stemByLocation) {
+  if (!tokens || tokens.length < 2) return [];
+  const runs = [];
+  for (const locations of ayahWordOrder.values()) {
+    for (let i = 0; i <= locations.length - tokens.length; i += 1) {
+      let ok = true;
+      for (let j = 0; j < tokens.length; j += 1) {
+        if (!locationMatchesPhraseToken(tokens[j], locations[i + j], rawSurfaceByLocation, stemByLocation)) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) runs.push({ loc: locations[i], n: tokens.length });
+    }
+  }
+  return runs;
+}
+
+function letterCore(text) {
+  return hamzaFold(normalizeArabic(text)).replace(/[^\u0621-\u064A]/g, '');
+}
+
+const SKIP_EXTRA_LETTERS = new Set(['\u0627', '\u0621']);
+
+function coreContains(surfaceCore, needleCore) {
+  if (!needleCore || needleCore.length < 3 || !surfaceCore) return false;
+  for (let i = 0; i < surfaceCore.length; i += 1) {
+    let si = i;
+    let ni = 0;
+    while (si < surfaceCore.length && ni < needleCore.length) {
+      if (surfaceCore[si] === needleCore[ni]) {
+        si += 1;
+        ni += 1;
+      } else if (ni > 0 && SKIP_EXTRA_LETTERS.has(surfaceCore[si])) {
+        si += 1;
+      } else {
+        break;
+      }
+    }
+    if (ni === needleCore.length) return true;
+  }
+  return false;
+}
+
+function coreVariants(core) {
+  const out = [core];
+  if (core.startsWith('ال') && core.length > 5) out.push(core.slice(2));
+  // Form-X استفعل: drop the prosthetic alef (and a trailing hamza-alef) so يستهزئون can
+  // illustrate اِسْتَهْزَأَ. Do not strip a generic leading ا/و/ي - that turns أُمُور into
+  // مور and matches تَمُور, or أَنْتُنَّ into نتن and matches جَنَّتَانِ.
+  if (core.startsWith('است') && core.length >= 6) {
+    const rest = core.slice(1);
+    out.push(rest);
+    if (/ا$/.test(rest) && rest.length > 3) out.push(rest.slice(0, -1));
+  }
+  return [...new Set(out)].filter((item) => item.length >= 3);
+}
+
+function locationCores(loc, rawSurfaceByLocation, stemByLocation) {
+  const raw = rawSurfaceByLocation.get(loc) ?? '';
+  const stem = stemByLocation.get(loc);
+  return [...new Set([letterCore(raw), letterCore(stem?.lightSurface || '')].filter(Boolean))];
+}
+
+function studyNeedles(word) {
+  const raw = [word.arabic, word.plural, word.variant, ...(word.forms ?? [])].filter(Boolean);
+  const needles = [];
+  for (const form of raw) {
+    for (const piece of String(form).split(/[,\u060c]/)) {
+      const trimmed = piece.trim();
+      if (!trimmed || trimmed.includes('+')) continue;
+      if (trimmed.includes('...')) {
+        const tokens = trimmed.split('...').map((part) => part.trim()).filter(Boolean);
+        if (tokens.length >= 2) needles.push({ kind: 'gap', tokens });
+        continue;
+      }
+      const core = letterCore(trimmed);
+      if (core.length >= 3) needles.push({ kind: 'core', core });
+    }
+  }
+  return needles;
+}
+
+/**
+ * Fallback verse examples for study words that never tag a whole mushaf word: find a surface
+ * that *contains* the citation letters (القرآن for قرآن) or an ayah that has both halves of a
+ * "ما ... إلا" pattern. Highlighting the matching letters is the caller's job.
+ */
+function findPartialExampleHits(word, otherCores, ayahWordOrder, rawSurfaceByLocation, stemByLocation) {
+  const needles = studyNeedles(word);
+  if (needles.length === 0) return [];
+  const coreNeedles = needles.filter((needle) => needle.kind === 'core');
+  const maxCore = Math.max(0, ...coreNeedles.map((needle) => needle.core.length));
+  const used = needles.filter((needle) => needle.kind !== 'core' || needle.core.length === maxCore);
+  const hits = [];
+  for (const needle of used) {
+    if (needle.kind === 'core') {
+      if (otherCores.get(needle.core) === '*') continue;
+      const variants = coreVariants(needle.core).filter((core) => otherCores.get(core) !== '*');
+      for (const loc of rawSurfaceByLocation.keys()) {
+        const cores = locationCores(loc, rawSurfaceByLocation, stemByLocation);
+        if (!variants.some((variant) => cores.some((core) => coreContains(core, variant)))) continue;
+        hits.push({ loc, n: 1 });
+      }
+    } else {
+      for (const locations of ayahWordOrder.values()) {
+        const matched = [];
+        let cursor = 0;
+        for (const token of needle.tokens) {
+          let found = -1;
+          for (let i = cursor; i < locations.length; i += 1) {
+            if (!locationMatchesPhraseToken(token, locations[i], rawSurfaceByLocation, stemByLocation)) continue;
+            // Light matching unifies إ/أ, so إِلَّا would otherwise hit أَلَّا ("that not").
+            const raw = rawSurfaceByLocation.get(locations[i]) ?? '';
+            if (/إ/.test(token) && /أ/.test(raw) && !/إ/.test(raw)) continue;
+            found = i;
+            break;
+          }
+          if (found < 0) {
+            matched.length = 0;
+            break;
+          }
+          matched.push(locations[found]);
+          cursor = found + 1;
+        }
+        if (matched.length === needle.tokens.length) {
+          hits.push({ loc: matched[0], n: 1, hits: matched.map((loc) => Number(loc.split(':')[2])) });
+        }
+      }
+    }
+  }
+  return hits;
+}
+
+function collectStudyCores(studyById) {
+  const cores = new Map();
+  for (const [id, word] of studyById) {
+    if (word.kind === 'grammar' || word.isSuffix || word.isPrefix) continue;
+    for (const needle of studyNeedles(word)) {
+      if (needle.kind !== 'core') continue;
+      if (!cores.has(needle.core)) cores.set(needle.core, word.arabic);
+      else if (cores.get(needle.core) !== word.arabic) cores.set(needle.core, '*');
+    }
+  }
+  return cores;
+}
+
 module.exports = {
   normalizeArabic,
   normalizeLight,
   normalizeLightLoose,
+  sameLemma,
+  hamzaFold,
   loadStudyForms,
   loadMorphologyStems,
   buildVocabMatches,
   buildLemmaFallbackTags,
+  collectAffixLocations,
+  citationPhraseTokens,
+  findPhraseRuns,
+  findPartialExampleHits,
+  collectStudyCores,
 };

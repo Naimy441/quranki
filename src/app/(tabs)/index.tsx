@@ -3,22 +3,51 @@ import { SectionList, StyleSheet, View } from 'react-native';
 import { Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { GrammarIntroRow } from '@/components/quranki/grammar-intro-row';
 import { LevelCard } from '@/components/quranki/level-card';
 import { StatCard } from '@/components/quranki/stat-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { formatInterval } from '@/lib/fsrs';
 import { hapticMedium } from '@/lib/haptics';
-import { buildGlobalSessionQueue, getAllLevelStatuses, getIntroductionFrontier, LEVEL_COUNT, THEMATIC_LEVEL_COUNT, totalMasteredWords, WORD_COUNT } from '@/lib/levels';
+import {
+  buildGlobalSessionQueue,
+  getAllLevelStatuses,
+  getGrammarIntro,
+  getIntroductionFrontier,
+  getUpcomingLearning,
+  LEVEL_COUNT,
+  THEMATIC_LEVEL_COUNT,
+  totalMasteredWords,
+  WORD_COUNT,
+  type LevelStatus,
+  type Word,
+} from '@/lib/levels';
 import { computeStreak } from '@/lib/stats';
-import { reviewsCompletedToday, useProgressStore } from '@/store/progress-store';
+import { newCardsCompletedToday, reviewsCompletedToday, useProgressStore } from '@/store/progress-store';
+
+type LearnRow =
+  | { key: string; type: 'grammar'; word: Word }
+  | { key: string; type: 'level'; status: LevelStatus };
+
+function rowsForStatuses(statuses: LevelStatus[]): LearnRow[] {
+  const rows: LearnRow[] = [];
+  for (const status of statuses) {
+    const grammar = getGrammarIntro(status.level);
+    if (grammar) rows.push({ key: `grammar-${grammar.id}`, type: 'grammar', word: grammar });
+    rows.push({ key: status.level.id, type: 'level', status });
+  }
+  return rows;
+}
 
 export default function LearnScreen() {
   const theme = useTheme();
   const progress = useProgressStore((state) => state.progress);
   const wordsPerSession = useProgressStore((state) => state.settings.wordsPerSession);
   const reviewsToday = useProgressStore((state) => state.reviewsToday);
+  const newCardsToday = useProgressStore((state) => state.newCardsToday);
   const reviewCountDate = useProgressStore((state) => state.reviewCountDate);
   const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
   const reviewDates = useProgressStore((state) => state.reviewDates);
@@ -31,19 +60,22 @@ export default function LearnScreen() {
     now,
     wordsPerSession,
     reviewsCompletedToday(reviewCountDate, reviewsToday, now),
+    newCardsCompletedToday(reviewCountDate, newCardsToday, now),
   );
   const dueCount = todaySession.filter((entry) => entry.reason === 'due').length;
   const newCount = todaySession.filter((entry) => entry.reason === 'new').length;
+  const upcoming = getUpcomingLearning(progress, now);
+  const newRemaining = Math.max(0, wordsPerSession - newCardsCompletedToday(reviewCountDate, newCardsToday, now));
   const mastered = totalMasteredWords(progress, now);
   const streak = computeStreak(reviewDates, now);
   const frontier = getIntroductionFrontier(progress);
   const sections = [
-    { key: 'thematic', title: null as string | null, subtitle: null as string | null, data: statuses.slice(0, THEMATIC_LEVEL_COUNT) },
+    { key: 'thematic', title: null as string | null, subtitle: null as string | null, data: rowsForStatuses(statuses.slice(0, THEMATIC_LEVEL_COUNT)) },
     {
-      key: 'frequency',
-      title: 'By frequency',
-      subtitle: 'How often each word appears in the Qur’an',
-      data: statuses.slice(THEMATIC_LEVEL_COUNT),
+      key: 'continued',
+      title: 'Keep going',
+      subtitle: 'The rest of the Qur’an’s vocabulary, still grouped by theme',
+      data: rowsForStatuses(statuses.slice(THEMATIC_LEVEL_COUNT)),
     },
   ];
 
@@ -56,7 +88,7 @@ export default function LearnScreen() {
       <SafeAreaView style={styles.flex} edges={['top']} collapsable={false}>
         <SectionList
           sections={sections}
-          keyExtractor={(item) => item.level.id}
+          keyExtractor={(item) => item.key}
           contentContainerStyle={[styles.listContent, { paddingBottom: BottomTabInset + Spacing.four }]}
           style={styles.list}
           stickySectionHeadersEnabled={false}
@@ -76,6 +108,15 @@ export default function LearnScreen() {
                   {todaySession.length > 0 ? (
                     <ThemedText themeColor="onPrimary" type="small" style={styles.heroBreakdown}>
                       {dueCount} due for review - {newCount} new
+                    </ThemedText>
+                  ) : upcoming ? (
+                    <ThemedText themeColor="onPrimary" type="small" style={styles.heroBreakdown}>
+                      {upcoming.count} {upcoming.count === 1 ? 'word' : 'words'} come back in{' '}
+                      {formatInterval(upcoming.ms)}
+                    </ThemedText>
+                  ) : newRemaining === 0 ? (
+                    <ThemedText themeColor="onPrimary" type="small" style={styles.heroBreakdown}>
+                      Today&apos;s new words are done. More tomorrow.
                     </ThemedText>
                   ) : (
                     <ThemedText themeColor="onPrimary" type="small" style={styles.heroBreakdown}>
@@ -123,14 +164,17 @@ export default function LearnScreen() {
               </View>
             ) : null
           }
-          renderItem={({ item }) => (
-            <View style={styles.cardWrap}>
-              <LevelCard
-                status={item}
-                isCurrent={item.level.number === frontier}
-              />
-            </View>
-          )}
+          renderItem={({ item }) =>
+            item.type === 'grammar' ? (
+              <View style={styles.grammarWrap}>
+                <GrammarIntroRow word={item.word} />
+              </View>
+            ) : (
+              <View style={styles.cardWrap}>
+                <LevelCard status={item.status} isCurrent={item.status.level.number === frontier} />
+              </View>
+            )
+          }
         />
       </SafeAreaView>
     </ThemedView>
@@ -204,6 +248,9 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
   },
   cardWrap: {
+    marginBottom: Spacing.two,
+  },
+  grammarWrap: {
     marginBottom: Spacing.two,
   },
   dividerBlock: {

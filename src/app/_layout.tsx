@@ -12,6 +12,7 @@ import { ArabicFont, Colors, SurahNameFont } from '@/constants/theme';
 import { useAppColorScheme } from '@/hooks/use-theme';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
+import { useQuranMarksStore } from '@/store/quran-marks-store';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,6 +27,8 @@ export default function RootLayout() {
   const hydrated = useProgressStore((state) => state.hydrated);
   const hydrateKnownWords = useKnownWordsStore((state) => state.hydrate);
   const knownWordsHydrated = useKnownWordsStore((state) => state.hydrated);
+  const hydrateQuranMarks = useQuranMarksStore((state) => state.hydrate);
+  const quranMarksHydrated = useQuranMarksStore((state) => state.hydrated);
   const themePreference = useProgressStore((state) => state.settings.themePreference);
   const hasFinishedOnboarding = useProgressStore(selectHasFinishedOnboarding);
   const [fontsLoaded] = useFonts({
@@ -36,12 +39,13 @@ export default function RootLayout() {
   useEffect(() => {
     void hydrate();
     void hydrateKnownWords();
-  }, [hydrate, hydrateKnownWords]);
+    void hydrateQuranMarks();
+  }, [hydrate, hydrateKnownWords, hydrateQuranMarks]);
 
   // Native chrome (tab bar liquid glass, scroll-edge effects) follows the window color scheme,
   // not React theme tokens. Keep them in lockstep with the in-app appearance setting.
   useEffect(() => {
-    Appearance.setColorScheme(themePreference === 'system' ? null : themePreference);
+    Appearance.setColorScheme(themePreference === 'system' ? 'unspecified' : themePreference);
   }, [themePreference]);
 
   useEffect(() => {
@@ -49,12 +53,12 @@ export default function RootLayout() {
   }, [scheme]);
 
   useEffect(() => {
-    if (fontsLoaded && hydrated && knownWordsHydrated) {
+    if (fontsLoaded && hydrated && knownWordsHydrated && quranMarksHydrated) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, hydrated, knownWordsHydrated]);
+  }, [fontsLoaded, hydrated, knownWordsHydrated, quranMarksHydrated]);
 
-  if (!fontsLoaded || !hydrated || !knownWordsHydrated) {
+  if (!fontsLoaded || !hydrated || !knownWordsHydrated || !quranMarksHydrated) {
     return null;
   }
 
@@ -90,7 +94,9 @@ export default function RootLayout() {
             <Stack.Protected guard={hasFinishedOnboarding}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="level/[id]" options={{ title: '', headerBackTitle: 'Levels' }} />
+              <Stack.Screen name="grammar/[id]" options={{ title: 'Grammar', headerBackTitle: 'Levels' }} />
               <Stack.Screen name="quran/[surah]" options={{ title: '', headerBackTitle: "Qur'an" }} />
+              <Stack.Screen name="saved" options={{ title: 'Saved', headerBackTitle: "Qur'an" }} />
               <Stack.Screen
                 name="session/review"
                 options={{ headerShown: false, gestureEnabled: false, animation: 'fade' }}

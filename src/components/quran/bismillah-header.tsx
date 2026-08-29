@@ -1,11 +1,14 @@
 import { StyleSheet, View } from 'react-native';
 
 import { WordCell } from '@/components/quran/word-cell';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { BISMILLAH_WORDS } from '@/lib/quran-reader';
 import type { ReaderWord } from '@/lib/quran-reader-types';
+import { useRecitationStore } from '@/store/recitation-store';
 
 interface BismillahHeaderProps {
+  surahNumber: number;
   showTranslation: boolean;
   arabicSize: number;
   glossSize: number;
@@ -16,6 +19,7 @@ interface BismillahHeaderProps {
 
 /** Decorative Bismillah header shown before ayah 1 for every surah except Al-Fatihah and At-Tawbah. */
 export function BismillahHeader({
+  surahNumber,
   showTranslation,
   arabicSize,
   glossSize,
@@ -23,8 +27,17 @@ export function BismillahHeader({
   knownWordIds,
   onLongPressWord,
 }: BismillahHeaderProps) {
+  const theme = useTheme();
+  const reciting = useRecitationStore(
+    (s) => s.visible && s.surahNumber === surahNumber && s.playingBismillah,
+  );
+
   return (
-    <View style={styles.row}>
+    <View
+      style={[
+        styles.row,
+        reciting && { backgroundColor: theme.backgroundSelected, borderRadius: Radius.medium },
+      ]}>
       {BISMILLAH_WORDS.map((word) => (
         <WordCell
           key={word.p}

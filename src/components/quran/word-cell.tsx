@@ -3,6 +3,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ArabicTextStyle, Radius, Spacing } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
+import { shapeQpcArabic } from '@/lib/arabic-display';
 import { attachLeadingCombiningMarks } from '@/lib/arabic-segments';
 import { hapticLongPress, hapticSelection, hapticWarning } from '@/lib/haptics';
 import { isCuratedWordId } from '@/lib/known-words';
@@ -29,8 +30,8 @@ interface WordCellProps {
    *  useKnownWordsStore) - combined with `hiddenVocabIds` for the same hide/reveal behavior,
    *  so knowledge from outside the curriculum hides a word just as well as FSRS progress. */
   knownWordIds: Set<string>;
-  /** Long-press entry point opening the word detail sheet - omitted (no-op) for a word with no
-   *  resolvable `word.v`, since there's nothing to show or generalize a "known" mark to. */
+  /** Long-press entry point opening the word detail sheet - omitted (no-op) when the word has
+   *  neither a vocabulary id nor a corpus lemma to analyze. */
   onLongPressWord?: (word: ReaderWord) => void;
 }
 
@@ -67,10 +68,15 @@ export const WordCell = memo(function WordCell({
     if (isHideEligible && !wasHideEligible.current) setRevealed(false);
     wasHideEligible.current = isHideEligible;
   }, [isHideEligible]);
-  const arabicSegments = attachLeadingCombiningMarks(word.ar);
+  const joinedArabic = shapeQpcArabic(word.ar.map((seg) => seg.t).join(''));
+  // Ishmam / imala need one shaping run (Yusuf 12:11, Hud 11:41). Nested <Text> still
+  // splits GPOS, so these words are painted as a plain string on the outer Text.
+  const keepJoined = /[\u06EA\u06EC]/.test(joinedArabic);
+  const arabicSegments = keepJoined ? [{ t: joinedArabic }] : attachLeadingCombiningMarks(word.ar);
 
   const handleLongPress = () => {
-    if (word.v === undefined || !onLongPressWord) return;
+    if (!onLongPressWord) return;
+    if (word.v === undefined && word.lm === undefined) return;
     hapticLongPress();
     onLongPressWord(word);
   };
@@ -107,15 +113,22 @@ export const WordCell = memo(function WordCell({
         style={[
           styles.arabic,
           ArabicTextStyle,
-          { color: theme.text, fontSize: arabicSize, lineHeight: arabicSize * 1.9 },
+          {
+            color: theme.text,
+            fontSize: arabicSize,
+            lineHeight: arabicSize * 1.9,
+            includeFontPadding: false,
+          },
         ]}>
-        {arabicSegments.map((seg, i) => (
-          <Text key={i} style={{ color: tajweedColor(seg.c, scheme, theme.text) }}>
-            {glueJoins && i > 0 && '\u200D'}
-            {seg.t}
-            {glueJoins && i < arabicSegments.length - 1 && '\u200D'}
-          </Text>
-        ))}
+        {keepJoined
+          ? joinedArabic
+          : arabicSegments.map((seg, i) => (
+              <Text key={i} style={{ color: tajweedColor(seg.c, scheme, theme.text) }}>
+                {glueJoins && i > 0 && '\u200D'}
+                {seg.t}
+                {glueJoins && i < arabicSegments.length - 1 && '\u200D'}
+              </Text>
+            ))}
       </Text>
 
       {showTranslation && !isHidden && (

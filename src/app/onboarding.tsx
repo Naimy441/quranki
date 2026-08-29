@@ -21,7 +21,7 @@ import { getArabicVoiceAsync, toSpeechText } from '@/lib/arabic-speech';
 import { hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
 import {
   getCoverageThroughLevel,
-  LEVEL_COUNT,
+  LAST_LEVEL_NUMBER,
   LEVELS,
   THEMATIC_LEVEL_COUNT,
   THEMATIC_WORD_COUNT,
@@ -42,7 +42,7 @@ const PACE_OPTIONS = [
 
 function coverageCopy(): { title: string; body: string } {
   const core = getCoverageThroughLevel(THEMATIC_LEVEL_COUNT);
-  const full = getCoverageThroughLevel(LEVEL_COUNT);
+  const full = getCoverageThroughLevel(LAST_LEVEL_NUMBER);
   const extra = full.percent - core.percent;
   return {
     title: 'A little goes far',

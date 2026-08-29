@@ -9,16 +9,14 @@ import { ArabicTextStyle, Radius, Spacing } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
 import { createNewCard, previewGrades } from '@/lib/fsrs';
 import { hapticSelection } from '@/lib/haptics';
-import { getCoverageThroughLevel, LEVEL_COUNT, LEVELS, THEMATIC_LEVEL_COUNT, THEMATIC_WORD_COUNT, WORD_COUNT } from '@/lib/levels';
+import { getCoverageThroughLevel, LAST_LEVEL_NUMBER, LEVELS, THEMATIC_LEVEL_COUNT, THEMATIC_WORD_COUNT, WORD_COUNT } from '@/lib/levels';
 import { glossColor, tajweedColor } from '@/lib/quran-colors';
 import { BISMILLAH_WORDS } from '@/lib/quran-reader';
 import type { ReaderWord } from '@/lib/quran-reader-types';
 import { formatCount } from '@/lib/stats';
 
 const DEMO_WORD = LEVELS[0].words[0];
-const HIDDEN_DEMO_IDS = new Set(
-  BISMILLAH_WORDS.filter((word) => word.v && word.v !== '02-002').map((word) => word.v as string),
-);
+const HIDDEN_DEMO_IDS = new Set(BISMILLAH_WORDS.filter((word) => word.v).map((word) => word.v as string));
 
 export function OnboardingFlashPreview({
   onSpeak,
@@ -158,7 +156,7 @@ function PreviewWord({
 export function OnboardingCoveragePreview() {
   const theme = useTheme();
   const core = getCoverageThroughLevel(THEMATIC_LEVEL_COUNT);
-  const full = getCoverageThroughLevel(LEVEL_COUNT);
+  const full = getCoverageThroughLevel(LAST_LEVEL_NUMBER);
 
   return (
     <View style={styles.coverageCol}>
