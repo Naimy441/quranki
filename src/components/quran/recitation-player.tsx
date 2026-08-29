@@ -14,6 +14,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticLight, hapticSelection } from '@/lib/haptics';
+import { BISMILLAH_AUDIO_END_SECONDS, BISMILLAH_AUDIO_START_SECONDS } from '@/lib/recitation';
 import { getSurahMeta } from '@/lib/quran-reader';
 import {
   skipNextAyah,
@@ -106,18 +107,26 @@ export function RecitationPlayer() {
   const downloadProgress = downloadBytesTotal > 0 ? downloadBytesWritten / downloadBytesTotal : 0;
   const timing = timings[ayahNumber - 1];
   const ayahSpan = timing ? timing[1] - timing[0] : 0;
+  const bismillahSpan = BISMILLAH_AUDIO_END_SECONDS - BISMILLAH_AUDIO_START_SECONDS;
   const fileProgress = durationSeconds > 0 ? Math.min(1, positionSeconds / durationSeconds) : 0;
-  const ayahProgress =
-    playingBismillah || mode !== 'surah' || ayahSpan <= 0
+  const bismillahProgress = Math.min(
+    1,
+    Math.max(0, (positionSeconds - BISMILLAH_AUDIO_START_SECONDS) / bismillahSpan),
+  );
+  const ayahProgress = playingBismillah
+    ? bismillahProgress
+    : mode !== 'surah' || ayahSpan <= 0
       ? fileProgress
       : Math.min(1, Math.max(0, (positionSeconds * 1000 - timing[0]) / ayahSpan));
   const showDownloadBar = (downloading || (awaitingAudio && downloadBytesWritten === 0)) && !playing;
-  const remainingMs =
-    playingBismillah || mode !== 'surah' || ayahSpan <= 0
+  const remainingMs = playingBismillah
+    ? Math.max(0, (BISMILLAH_AUDIO_END_SECONDS - positionSeconds) * 1000)
+    : mode !== 'surah' || ayahSpan <= 0
       ? Math.max(0, (durationSeconds - positionSeconds) * 1000)
       : Math.max(0, timing[1] - positionSeconds * 1000);
+  const mediaReady = durationSeconds > 0;
   const barValue = error ? 0 : showDownloadBar ? downloadProgress : ayahProgress;
-  const barRun = !error && !showDownloadBar && playing;
+  const barRun = !error && !showDownloadBar && playing && mediaReady;
   const canPrev =
     playingBismillah || ayahNumber > 1 || Boolean(mode === 'surah' && meta?.b && ayahNumber <= 1);
   const canNext = playingBismillah || ayahNumber < ayahCount;
@@ -141,7 +150,11 @@ export function RecitationPlayer() {
       accessibilityRole="toolbar"
       accessibilityLabel="Recitation player">
       <SmoothProgressBar
-        key={showDownloadBar ? 'download' : `${progressEpoch}-${ayahNumber}-${playingBismillah}-${mode}`}
+        key={
+          showDownloadBar
+            ? 'download'
+            : `${progressEpoch}-${ayahNumber}-${playingBismillah}-${mode}-${mediaReady}-${ayahSpan > 0}`
+        }
         value={barValue}
         remainingMs={showDownloadBar ? 0 : remainingMs}
         run={barRun}

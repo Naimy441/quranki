@@ -7,9 +7,9 @@ import { Appearance } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 
-import { PaperDarkTheme, PaperLightTheme } from '@/constants/paper-theme';
+import { createPaperTheme } from '@/constants/paper-theme';
 import { ArabicFont, Colors, SurahNameFont } from '@/constants/theme';
-import { useAppColorScheme } from '@/hooks/use-theme';
+import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 import { useQuranMarksStore } from '@/store/quran-marks-store';
@@ -31,6 +31,7 @@ export default function RootLayout() {
   const quranMarksHydrated = useQuranMarksStore((state) => state.hydrated);
   const themePreference = useProgressStore((state) => state.settings.themePreference);
   const hasFinishedOnboarding = useProgressStore(selectHasFinishedOnboarding);
+  const colors = useTheme();
   const [fontsLoaded] = useFonts({
     [ArabicFont]: require('@/assets/fonts/UthmanicHafs1Ver18.ttf'),
     [SurahNameFont]: require('@/assets/fonts/surah_names.ttf'),
@@ -62,8 +63,7 @@ export default function RootLayout() {
     return null;
   }
 
-  const paperTheme = scheme === 'dark' ? PaperDarkTheme : PaperLightTheme;
-  const colors = Colors[scheme];
+  const paperTheme = createPaperTheme(scheme, colors);
   const baseNavTheme = scheme === 'dark' ? DarkTheme : DefaultTheme;
   // Stock DarkTheme uses a gray card (`rgb(18, 18, 18)`). iOS 26's tab bar samples that
   // surface, so tapping a tab makes the dock flash gray instead of the app background.
@@ -97,6 +97,7 @@ export default function RootLayout() {
               <Stack.Screen name="grammar/[id]" options={{ title: 'Grammar', headerBackTitle: 'Levels' }} />
               <Stack.Screen name="quran/[surah]" options={{ title: '', headerBackTitle: "Qur'an" }} />
               <Stack.Screen name="saved" options={{ title: 'Saved', headerBackTitle: "Qur'an" }} />
+              <Stack.Screen name="known-words" options={{ title: 'Known words', headerBackTitle: 'Settings' }} />
               <Stack.Screen
                 name="session/review"
                 options={{ headerShown: false, gestureEnabled: false, animation: 'fade' }}

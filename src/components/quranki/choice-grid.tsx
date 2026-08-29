@@ -23,7 +23,7 @@ interface ChoiceGridProps<T extends string> {
   prominent?: boolean;
 }
 
-/** Equal-width selectable tiles used by Settings - selected state uses the same selected-green
+/** Equal-width selectable tiles used by Settings - selected state uses the same accent
  *  treatment as the rest of the app rather than react-native-paper's SegmentedButtons, which
  *  crowd four labels into an unreadable strip on a phone. */
 export function ChoiceGrid<T extends string>({ options, value, onChange, columns, prominent }: ChoiceGridProps<T>) {

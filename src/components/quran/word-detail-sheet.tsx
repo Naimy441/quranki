@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRef } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button } from 'react-native-paper';
 
 import { ArabicText } from '@/components/arabic-text';
@@ -56,11 +56,29 @@ export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMar
     if (!shown.word || !canMarkKnown) return;
     if (shown.isKnown) {
       hapticWarning();
-      onForget(shown.word);
-    } else {
-      hapticSuccess();
-      onMarkKnown(shown.word);
+      const target = shown.word;
+      const forget = () => {
+        onForget(target);
+        onDismiss();
+      };
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined' && window.confirm('Forget this word?\nIts translation will show again in the Qur’an reader.')) {
+          forget();
+        }
+        return;
+      }
+      Alert.alert(
+        'Forget this word?',
+        'Its translation will show again in the Qur’an reader.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Forget', style: 'destructive', onPress: forget },
+        ],
+      );
+      return;
     }
+    hapticSuccess();
+    onMarkKnown(shown.word);
     onDismiss();
   };
 
@@ -191,6 +209,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.large,
     padding: Spacing.four,
     gap: Spacing.three,
+    // Arabic in the sheet must not flip chrome (header, buttons) to RTL.
+    direction: 'ltr',
   },
   headerRow: {
     flexDirection: 'row',
@@ -207,6 +227,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     lineHeight: 48,
     textAlign: 'center',
+    writingDirection: 'rtl',
   },
   posRow: {
     flexDirection: 'row',

@@ -3,7 +3,9 @@
  * https://docs.expo.dev/guides/color-schemes/
  */
 
-import { Colors } from '@/constants/theme';
+import { useMemo } from 'react';
+
+import { DEFAULT_ACCENT, resolveThemeColors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useProgressStore } from '@/store/progress-store';
 
@@ -18,5 +20,6 @@ export function useAppColorScheme(): 'light' | 'dark' {
 
 export function useTheme() {
   const scheme = useAppColorScheme();
-  return Colors[scheme];
+  const accentColor = useProgressStore((state) => state.settings.accentColor ?? DEFAULT_ACCENT);
+  return useMemo(() => resolveThemeColors(scheme, accentColor), [scheme, accentColor]);
 }

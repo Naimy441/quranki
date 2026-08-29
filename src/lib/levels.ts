@@ -192,17 +192,23 @@ export function getAllLevelStatuses(progressMap: ProgressMap, now: Date): LevelS
   return LEVELS.map((level) => getLevelStatus(level, progressMap, now));
 }
 
-/** How far into the sequential deck the learner has been introduced - the highest level that
- *  already has at least one studied word. Levels are only an ordering of the one big deck, not
- *  a lock; this is display ("level reached"), not a gate on new cards. Never decreases. */
-export function computeReachedLevel(progressMap: ProgressMap, previousMax: number = 1): number {
-  let reached = Math.max(previousMax, 1);
+function isLevelFullyMastered(level: Level, progressMap: ProgressMap): boolean {
+  const studyWords = level.words.filter(isStudyWord);
+  return studyWords.every((word) => {
+    const progress = progressMap[word.id];
+    return Boolean(progress && isWordMastered(deserializeCard(progress.card), progress.lastGrade));
+  });
+}
+
+/** The learner's current level: the first level that is not yet fully mastered, after a
+ *  consecutive prefix of completed levels. Isolated words (including ones marked known in the
+ *  Qur'an reader) do not skip ahead — only finishing every study word in level 1, then 2, and
+ *  so on, advances this. Display-only; levels are not a gate on new cards. */
+export function computeReachedLevel(progressMap: ProgressMap): number {
   for (const level of LEVELS) {
-    if (level.words.some((word) => progressMap[word.id])) {
-      reached = Math.max(reached, level.number);
-    }
+    if (!isLevelFullyMastered(level, progressMap)) return Math.max(level.number, 1);
   }
-  return reached;
+  return Math.max(LAST_LEVEL_NUMBER, 1);
 }
 
 /** The first level that still has an unseen word - where sequential new-card introduction is

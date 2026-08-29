@@ -5,6 +5,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { DEFAULT_ACCENT, isAccentId, type AccentId } from '@/constants/theme';
 import type { KnownWordsMap } from '@/lib/known-words';
 import type { ProgressMap } from '@/lib/levels';
 import { EMPTY_QURAN_MARKS, sanitizeQuranMarks, type QuranMarksData } from '@/lib/quran-marks';
@@ -19,6 +20,8 @@ export interface Settings {
   wordsPerSession: number;
   ttsRate: number;
   themePreference: 'system' | 'light' | 'dark';
+  /** Brand accent used for buttons, progress, and selected states. Defaults to green. */
+  accentColor: AccentId;
 }
 
 /** Inclusive bounds for the Settings "new words per day" slider. */
@@ -51,6 +54,7 @@ export const DEFAULT_SETTINGS: Settings = {
   wordsPerSession: 5,
   ttsRate: 0.85,
   themePreference: 'system',
+  accentColor: DEFAULT_ACCENT,
 };
 
 export const DEFAULT_META: Meta = {
@@ -87,7 +91,11 @@ export function saveProgressAsync(progress: ProgressMap): Promise<void> {
 export async function loadSettingsAsync(): Promise<Settings> {
   const raw = await AsyncStorage.getItem(SETTINGS_KEY);
   const settings = safeParse(raw, DEFAULT_SETTINGS);
-  return { ...settings, wordsPerSession: clampWordsPerSession(settings.wordsPerSession) };
+  return {
+    ...settings,
+    wordsPerSession: clampWordsPerSession(settings.wordsPerSession),
+    accentColor: isAccentId(settings.accentColor) ? settings.accentColor : DEFAULT_ACCENT,
+  };
 }
 
 export function saveSettingsAsync(settings: Settings): Promise<void> {

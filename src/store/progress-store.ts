@@ -113,7 +113,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       loadSettingsAsync(),
       loadMetaAsync(),
     ]);
-    const maxUnlockedLevel = computeReachedLevel(progress, meta.maxUnlockedLevel);
+    const maxUnlockedLevel = computeReachedLevel(progress);
     const now = new Date();
     const reviewsToday = reviewsCompletedToday(meta.reviewCountDate, meta.reviewsToday ?? 0, now);
     const newCardsToday = newCardsCompletedToday(meta.reviewCountDate, meta.newCardsToday ?? 0, now);
@@ -161,7 +161,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const nextProgress: ProgressMap = { ...state.progress, [wordId]: nextWordProgress };
     const key = todayKey(now);
     const nextReviewDates = state.reviewDates.includes(key) ? state.reviewDates : [...state.reviewDates, key];
-    const nextMaxUnlockedLevel = computeReachedLevel(nextProgress, state.maxUnlockedLevel);
+    const nextMaxUnlockedLevel = computeReachedLevel(nextProgress);
     const countsAsDailyReview = existing !== undefined && card.state === State.Review;
     const isNewIntroduction = existing === undefined && getWord(wordId)?.kind !== 'grammar';
     const reviewsToday = (state.reviewCountDate === key ? state.reviewsToday : 0) + (countsAsDailyReview ? 1 : 0);
@@ -279,7 +279,9 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
    *  due-in-30-days progress entry as `masterAllWords`, but for one word and tagged
    *  `autoMastered: true` so it can be safely undone later. Never overwrites *real* mastery
    *  (a card already in Review state from an actual Good/Easy grade) - marking a word you
-   *  already know shouldn't ever erase real review history for that word. */
+   *  already know shouldn't ever erase real review history for that word. The displayed level
+   *  only advances if this mark completes a consecutive prefix of fully mastered levels; a
+   *  single later word does not jump the learner ahead. */
   autoMasterWord: (wordId) => {
     const state = get();
     const existing = state.progress[wordId];
@@ -308,7 +310,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     };
 
     const nextProgress: ProgressMap = { ...state.progress, [wordId]: nextWordProgress };
-    const nextMaxUnlockedLevel = computeReachedLevel(nextProgress, state.maxUnlockedLevel);
+    const nextMaxUnlockedLevel = computeReachedLevel(nextProgress);
     const { [wordId]: _peek, ...readerPeeks } = state.readerPeeks;
     set({ progress: nextProgress, maxUnlockedLevel: nextMaxUnlockedLevel, readerPeeks });
     void saveProgressAsync(nextProgress);
@@ -318,16 +320,18 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   /** Undoes `autoMasterWord` - only when that fabricated entry is still in place untouched. If
    *  the word was later actually reviewed (which always writes a fresh entry without the
    *  `autoMastered` flag) or was never auto-mastered to begin with, this is a no-op: real review
-   *  history is never deleted by "forgetting" an unrelated known-word mark. Deliberately doesn't
-   *  re-lock any level this word's mastery may have helped unlock, matching how the rest of the
-   *  app never locks a level once unlocked. */
+   *  history is never deleted by "forgetting" an unrelated known-word mark. Recomputes the
+   *  displayed level from the remaining consecutive mastered prefix, so forgetting the last
+   *  word of a completed level can move the current level back. */
   revertAutoMasteredWord: (wordId) => {
     const state = get();
     if (state.progress[wordId]?.autoMastered !== true) return;
     const nextProgress = { ...state.progress };
     delete nextProgress[wordId];
-    set({ progress: nextProgress });
+    const nextMaxUnlockedLevel = computeReachedLevel(nextProgress);
+    set({ progress: nextProgress, maxUnlockedLevel: nextMaxUnlockedLevel });
     void saveProgressAsync(nextProgress);
+    persistMeta({ ...state, maxUnlockedLevel: nextMaxUnlockedLevel });
   },
 }));
 

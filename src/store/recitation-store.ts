@@ -2,7 +2,7 @@ import { createAudioPlayer, setAudioModeAsync, type AudioPlayer, type AudioStatu
 import { create } from 'zustand';
 
 import { getSurahMeta } from '@/lib/quran-reader';
-import { ayahAtTimeMs, type AyahTiming } from '@/lib/recitation';
+import { ayahAtTimeMs, BISMILLAH_AUDIO_END_SECONDS, BISMILLAH_AUDIO_START_SECONDS, type AyahTiming } from '@/lib/recitation';
 import {
   getAyahPlaybackUri,
   getCachedAyahUri,
@@ -122,6 +122,15 @@ let seeking = false;
 let loadedUri: string | null = null;
 let loadedKind: RecitationMode | null = null;
 let loadedSurah: number | null = null;
+/** After a replace/seek the next status tick can still report the previous file's clock.
+ *  Hold the intended position until native time catches up so the progress bar does not jump full. */
+let holdPositionSeconds: number | null = null;
+let holdPositionUntil = 0;
+
+function holdClock(positionSeconds: number, ms = 700): void {
+  holdPositionSeconds = positionSeconds;
+  holdPositionUntil = Date.now() + ms;
+}
 
 async function ensurePlayer(): Promise<AudioPlayer> {
   if (player) return player;
@@ -152,11 +161,13 @@ async function ensurePlayer(): Promise<AudioPlayer> {
 }
 
 function applyPendingSeek(instance: AudioPlayer): void {
-  const seek = pendingSeekSeconds;
+  const seek = pendingSeekSeconds ?? 0;
   pendingSeekSeconds = null;
   seeking = true;
-  void instance.seekTo(seek ?? 0).then(() => {
+  void instance.seekTo(seek).then(() => {
     seeking = false;
+    holdClock(seek);
+    useRecitationStore.setState({ positionSeconds: seek });
     bumpProgressEpoch();
     if (wantPlaying) instance.play();
   });
@@ -178,10 +189,16 @@ function onPlaybackStatus(status: AudioStatus): void {
     return;
   }
 
-  const justFinished = status.didJustFinish && status.duration > 0.25 && Date.now() >= ignoreFinishUntil;
+  const finished = useRecitationStore.getState();
+  const pastBismillah =
+    finished.mode === 'surah' &&
+    finished.playingBismillah &&
+    status.currentTime >= BISMILLAH_AUDIO_END_SECONDS;
+  const justFinished =
+    Date.now() >= ignoreFinishUntil &&
+    (pastBismillah || (status.didJustFinish && status.duration > 0.25));
   if (justFinished && !finishHandled) {
     finishHandled = true;
-    const finished = useRecitationStore.getState();
     if (finished.mode === 'surah' && finished.playingBismillah) {
       void startGaplessAfterBismillah(requestSeq);
       return;
@@ -196,17 +213,30 @@ function onPlaybackStatus(status: AudioStatus): void {
     return;
   }
 
+  const duration = Number.isFinite(status.duration) && status.duration > 0 ? status.duration : 0;
+  let position = Number.isFinite(status.currentTime) ? Math.max(0, status.currentTime) : 0;
+  if (holdPositionSeconds != null && Date.now() < holdPositionUntil) {
+    if (Math.abs(position - holdPositionSeconds) > 0.75) {
+      position = holdPositionSeconds;
+    } else {
+      holdPositionSeconds = null;
+    }
+  } else {
+    holdPositionSeconds = null;
+  }
+  if (duration > 0) position = Math.min(position, duration);
+
   const state = useRecitationStore.getState();
   const nextAyah =
     state.mode === 'surah' && !state.playingBismillah && state.timings.length
-      ? ayahAtTimeMs(state.timings, status.currentTime * 1000)
+      ? ayahAtTimeMs(state.timings, position * 1000)
       : state.ayahNumber;
 
   useRecitationStore.setState({
     playing: status.playing,
     awaitingAudio: !status.isLoaded || (status.isBuffering && !status.playing),
-    positionSeconds: status.currentTime,
-    durationSeconds: status.duration,
+    positionSeconds: position,
+    durationSeconds: duration,
     ayahNumber: nextAyah,
     error: null,
   });
@@ -219,6 +249,8 @@ function beginSession(partial: Partial<RecitationState>): number {
   finishHandled = false;
   pendingSeekSeconds = null;
   seeking = false;
+  holdPositionSeconds = null;
+  holdPositionUntil = 0;
   downloadAbort?.abort();
   downloadAbort = new AbortController();
   useRecitationStore.setState({
@@ -236,6 +268,7 @@ async function loadAyahSource(seq: number): Promise<void> {
 
   suppressStatus = true;
   pendingSeekSeconds = null;
+  holdClock(0);
   useRecitationStore.setState({
     awaitingAudio: true,
     error: null,
@@ -264,46 +297,93 @@ async function loadAyahSource(seq: number): Promise<void> {
   }
 }
 
+function reportDownloadProgress(seq: number, bytesWritten: number, totalBytes: number): void {
+  if (seq !== requestSeq) return;
+  useRecitationStore.setState((state) => ({
+    downloadBytesWritten: bytesWritten,
+    downloadBytesTotal: totalBytes > 0 ? totalBytes : state.downloadBytesTotal,
+  }));
+}
+
+/** Fetches timestamps and starts the surah MP3 immediately so a short opening Bismillah
+ *  does not delay the (much larger) gapless download until after it finishes. */
+function prepareGaplessSurah(seq: number, surahNumber: number, ayahCount: number): void {
+  void (async () => {
+    try {
+      const metaPromise = getGaplessSurahMeta(surahNumber, ayahCount, downloadAbort?.signal)
+        .then((meta) => {
+          if (seq !== requestSeq) return;
+          useRecitationStore.setState((state) => ({
+            timings: meta.ayahs,
+            downloadBytesTotal: state.downloadBytesTotal > 0 ? state.downloadBytesTotal : meta.size,
+          }));
+        })
+        .catch((error) => {
+          if (seq !== requestSeq || isAbortError(error)) return;
+        });
+
+      const audioPromise = getGaplessPlaybackUri(surahNumber, {
+        signal: downloadAbort?.signal,
+        onProgress: (bytesWritten, totalBytes) => reportDownloadProgress(seq, bytesWritten, totalBytes),
+      }).catch((error) => {
+        if (seq !== requestSeq || isAbortError(error)) return;
+      });
+
+      await Promise.all([metaPromise, audioPromise]);
+    } catch (error) {
+      if (seq !== requestSeq || isAbortError(error)) return;
+    }
+  })();
+}
+
 async function loadGaplessSource(seq: number): Promise<void> {
   const { surahNumber, ayahCount } = useRecitationStore.getState();
   if (!surahNumber) return;
 
   suppressStatus = true;
+  holdClock(0);
   useRecitationStore.setState({
     awaitingAudio: true,
     error: null,
+    positionSeconds: 0,
+    durationSeconds: 0,
   });
 
   try {
-    let url: string | undefined;
     let size = 0;
-    try {
-      const meta = await getGaplessSurahMeta(surahNumber, ayahCount, downloadAbort?.signal);
-      if (seq !== requestSeq) return;
-      url = meta.url;
-      size = meta.size;
-      useRecitationStore.setState({ timings: meta.ayahs, downloadBytesTotal: meta.size });
-    } catch (error) {
-      if (seq !== requestSeq || isAbortError(error)) return;
-    }
+    const metaPromise = getGaplessSurahMeta(surahNumber, ayahCount, downloadAbort?.signal)
+      .then((meta) => {
+        if (seq !== requestSeq) return meta;
+        size = meta.size;
+        useRecitationStore.setState((state) => ({
+          timings: meta.ayahs,
+          downloadBytesTotal: state.downloadBytesTotal > 0 ? state.downloadBytesTotal : meta.size,
+        }));
+        return meta;
+      })
+      .catch((error) => {
+        if (seq !== requestSeq || isAbortError(error)) return undefined;
+        return undefined;
+      });
 
     const cached = getCachedGaplessUri(surahNumber);
-    if (cached && size > 0) {
-      useRecitationStore.setState({ downloadBytesWritten: size, downloadBytesTotal: size });
+    if (cached) {
+      const knownSize = size || useRecitationStore.getState().downloadBytesTotal;
+      if (knownSize > 0) {
+        useRecitationStore.setState({ downloadBytesWritten: knownSize, downloadBytesTotal: knownSize });
+      }
     }
 
-    const uri = await getGaplessPlaybackUri(surahNumber, {
-      url,
+    const uriPromise = getGaplessPlaybackUri(surahNumber, {
       signal: downloadAbort?.signal,
-      onProgress: (bytesWritten, totalBytes) => {
-        if (seq !== requestSeq) return;
-        useRecitationStore.setState({
-          downloadBytesWritten: bytesWritten,
-          downloadBytesTotal: totalBytes > 0 ? totalBytes : size,
-        });
-      },
+      onProgress: (bytesWritten, totalBytes) => reportDownloadProgress(seq, bytesWritten, totalBytes),
     });
+
+    const [meta, uri] = await Promise.all([metaPromise, uriPromise]);
     if (seq !== requestSeq) return;
+    if (meta?.size && getCachedGaplessUri(surahNumber)) {
+      useRecitationStore.setState({ downloadBytesWritten: meta.size, downloadBytesTotal: meta.size });
+    }
 
     const instance = await ensurePlayer();
     if (seq !== requestSeq) return;
@@ -323,6 +403,8 @@ async function loadGaplessSource(seq: number): Promise<void> {
       await instance.seekTo(fromMs / 1000);
       seeking = false;
       if (seq !== requestSeq) return;
+      holdClock(fromMs / 1000);
+      useRecitationStore.setState({ positionSeconds: fromMs / 1000 });
       bumpProgressEpoch();
       if (wantPlaying) instance.play();
       activateLockScreen();
@@ -359,13 +441,14 @@ function playbackFailed(): void {
 
 async function loadBismillah(seq: number): Promise<void> {
   suppressStatus = true;
-  pendingSeekSeconds = null;
+  pendingSeekSeconds = BISMILLAH_AUDIO_START_SECONDS;
+  holdClock(BISMILLAH_AUDIO_START_SECONDS);
   useRecitationStore.setState({
     playingBismillah: true,
     ayahNumber: 0,
     awaitingAudio: true,
     error: null,
-    positionSeconds: 0,
+    positionSeconds: BISMILLAH_AUDIO_START_SECONDS,
     durationSeconds: 0,
   });
 
@@ -382,7 +465,6 @@ async function loadBismillah(seq: number): Promise<void> {
     loadedSurah = BISMILLAH_SURAH;
     suppressStatus = false;
     bumpProgressEpoch();
-    if (wantPlaying) instance.play();
     activateLockScreen();
   } catch (error) {
     if (seq !== requestSeq || isAbortError(error)) return;
@@ -391,36 +473,15 @@ async function loadBismillah(seq: number): Promise<void> {
   }
 }
 
-function preloadGapless(seq: number, surahNumber: number, ayahCount: number): void {
-  void (async () => {
-    try {
-      const meta = await getGaplessSurahMeta(surahNumber, ayahCount, downloadAbort?.signal);
-      if (seq !== requestSeq) return;
-      useRecitationStore.setState({ timings: meta.ayahs, downloadBytesTotal: meta.size });
-      const cached = getCachedGaplessUri(surahNumber);
-      if (cached && meta.size > 0) {
-        useRecitationStore.setState({ downloadBytesWritten: meta.size, downloadBytesTotal: meta.size });
-      }
-      await getGaplessPlaybackUri(surahNumber, {
-        url: meta.url,
-        signal: downloadAbort?.signal,
-        onProgress: (bytesWritten, totalBytes) => {
-          if (seq !== requestSeq) return;
-          useRecitationStore.setState({
-            downloadBytesWritten: bytesWritten,
-            downloadBytesTotal: totalBytes > 0 ? totalBytes : meta.size,
-          });
-        },
-      });
-    } catch (error) {
-      if (seq !== requestSeq || isAbortError(error)) return;
-    }
-  })();
-}
-
 async function startGaplessAfterBismillah(seq: number): Promise<void> {
   if (seq !== requestSeq) return;
-  useRecitationStore.setState({ playingBismillah: false, ayahNumber: 1, awaitingAudio: true });
+  useRecitationStore.setState({
+    playingBismillah: false,
+    ayahNumber: 1,
+    awaitingAudio: true,
+    positionSeconds: 0,
+    durationSeconds: 0,
+  });
   await loadGaplessSource(seq);
 }
 
@@ -470,9 +531,7 @@ export async function playSurah(surahNumber: number, fromAyah = 1): Promise<void
     ayahCount: meta.ac,
     playingBismillah: openingBismillah,
   });
-  if (openingBismillah) {
-    preloadGapless(seq, surahNumber, meta.ac);
-  }
+  prepareGaplessSurah(seq, surahNumber, meta.ac);
   await loadCurrent(seq);
 }
 
@@ -546,9 +605,11 @@ export function skipPreviousAyah(): void {
   const state = useRecitationStore.getState();
   const clock = player?.currentTime ?? state.positionSeconds;
   if (state.playingBismillah) {
-    if (clock > 2 && player) {
+    if (clock > BISMILLAH_AUDIO_START_SECONDS + 2 && player) {
       wantPlaying = true;
-      void player.seekTo(0).then(() => {
+      holdClock(BISMILLAH_AUDIO_START_SECONDS);
+      void player.seekTo(BISMILLAH_AUDIO_START_SECONDS).then(() => {
+        useRecitationStore.setState({ positionSeconds: BISMILLAH_AUDIO_START_SECONDS });
         bumpProgressEpoch();
         if (wantPlaying) player?.play();
       });
@@ -595,6 +656,8 @@ export function stopRecitation(): void {
   wantPlaying = false;
   pendingSeekSeconds = null;
   seeking = false;
+  holdPositionSeconds = null;
+  holdPositionUntil = 0;
   loadedUri = null;
   loadedKind = null;
   loadedSurah = null;

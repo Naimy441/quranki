@@ -41,7 +41,7 @@ export default function QuranScreen() {
           keyboardShouldPersistTaps="handled"
           ListHeaderComponent={
             <View style={styles.header}>
-              <RecentSurahsRow />
+              
 
               <View style={styles.searchRow}>
                 <View style={styles.searchWrap}>
@@ -56,6 +56,7 @@ export default function QuranScreen() {
                     elevation={0}
                   />
                 </View>
+                
                 <Pressable
                   onPress={() => {
                     hapticLight();
@@ -71,6 +72,7 @@ export default function QuranScreen() {
                   <Ionicons name={hasSaved ? 'bookmark' : 'bookmark-outline'} size={20} color={theme.primary} />
                 </Pressable>
               </View>
+              <RecentSurahsRow />
             </View>
           }
           renderItem={({ item }) => (

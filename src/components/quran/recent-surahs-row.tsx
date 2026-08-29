@@ -15,9 +15,6 @@ export function RecentSurahsRow() {
 
   return (
     <View style={styles.section}>
-      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.heading}>
-        RECENT
-      </ThemedText>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {recentSurahs.map((entry) => {
           const meta = getSurahMeta(entry.n);

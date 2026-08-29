@@ -47,7 +47,9 @@ export function SurahListRow({ surah }: { surah: SurahIndexEntry }) {
         </View>
       </View>
 
-      <SurahNameText surahNumber={surah.n} style={styles.arabicName} />
+      <View style={styles.arabicNameWrap}>
+        <SurahNameText surahNumber={surah.n} style={styles.arabicName} />
+      </View>
 
       <Ionicons name="chevron-forward" size={16} color={theme.textMuted} style={styles.chevron} />
     </Pressable>
@@ -90,12 +92,16 @@ const styles = StyleSheet.create({
   capitalize: {
     textTransform: 'capitalize',
   },
+  arabicNameWrap: {
+    justifyContent: 'center',
+    // The QCF name glyphs sit high in their line box; a little top pad drops the ink
+    // onto the same midline as the English title without clipping flourishes.
+    paddingTop: 6,
+  },
   arabicName: {
     fontSize: 28,
     lineHeight: 44,
     flexShrink: 0,
-    // Android resolves unset/'auto' textAlign from the app's *layout* direction (LTR here), not
-    // from the text's own script the way iOS does - without this, Arabic renders left-aligned.
     textAlign: 'right',
   },
   chevron: {

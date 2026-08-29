@@ -11,6 +11,11 @@ const GAPPED_CDN = 'https://audio-cdn.tarteel.ai/quran/husaryMujawwad';
 const GAPLESS_CDN = 'https://audio-cdn.tarteel.ai/quran/surah/husary/mujawwad/mp3';
 const GAPLESS_RECITATION_ID = 164;
 
+/** Husary's gapped 1:1 file (the inserted opening Bismillah) has studio padding on both ends.
+ *  Measured on `001001.mp3`: audible recitation runs ~3.85s–8.65s of a 10.4s file. */
+export const BISMILLAH_AUDIO_START_SECONDS = 3.65;
+export const BISMILLAH_AUDIO_END_SECONDS = 8.65;
+
 export type AyahTiming = [fromMs: number, toMs: number];
 
 export interface GaplessSurahMeta {
