@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
 import { useEffect } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -11,6 +10,7 @@ import { highlightAffix, shapeQpcArabic } from '@/lib/arabic-display';
 import { hapticLight } from '@/lib/haptics';
 import { getWord, type Word } from '@/lib/levels';
 import { getSurahMeta } from '@/lib/quran-reader';
+import { stopWordPronunciation } from '@/lib/word-pronunciation';
 import type { VocabExample } from '@/lib/vocab-examples';
 import { playAyah, stopRecitation, useRecitationStore } from '@/store/recitation-store';
 
@@ -44,7 +44,7 @@ export function VerseExample({ word, example }: VerseExampleProps) {
 
   const handlePlay = () => {
     hapticLight();
-    void Speech.stop();
+    stopWordPronunciation();
     void playAyah(example.s, example.a);
   };
 

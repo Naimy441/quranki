@@ -20,12 +20,6 @@ const THEME_OPTIONS = [
   { value: 'dark', label: 'Dark', icon: 'moon-outline' as const },
 ];
 
-const TTS_OPTIONS = [
-  { value: '0.6', label: 'Slow' },
-  { value: '0.85', label: 'Normal' },
-  { value: '1.1', label: 'Fast' },
-];
-
 function sessionPaceLabel(count: number): string {
   if (count <= 5) return 'Relaxed';
   if (count <= 10) return 'Comfortable';
@@ -124,14 +118,6 @@ export default function SettingsScreen() {
                 {WORDS_PER_SESSION_MAX}
               </ThemedText>
             </View>
-          </SettingsSection>
-
-          <SettingsSection title="Voice">
-            <ChoiceGrid
-              options={TTS_OPTIONS}
-              value={String(settings.ttsRate)}
-              onChange={(value) => updateSettings({ ttsRate: Number(value) })}
-            />
           </SettingsSection>
 
           <SettingsSection title="Appearance">

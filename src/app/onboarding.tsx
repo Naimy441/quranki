@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -17,8 +16,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { getArabicVoiceAsync, toSpeechText } from '@/lib/arabic-speech';
 import { hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
+import { playWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
 import {
   getCoverageThroughLevel,
   LAST_LEVEL_NUMBER,
@@ -92,40 +91,34 @@ type StepId = (typeof STEPS)[number]['id'];
 export default function OnboardingScreen() {
   const theme = useTheme();
   const completeOnboarding = useProgressStore((state) => state.completeOnboarding);
-  const ttsRate = useProgressStore((state) => state.settings.ttsRate);
   const [index, setIndex] = useState(0);
   const [wordsPerDay, setWordsPerDay] = useState(String(DEFAULT_SETTINGS.wordsPerSession));
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => () => {
-    Speech.stop();
+    stopWordPronunciation();
   }, []);
 
   const step = STEPS[index];
   const isLast = index === STEPS.length - 1;
 
   const handleSpeak = async () => {
-    const voice = await getArabicVoiceAsync();
+    stopWordPronunciation();
     setIsSpeaking(true);
-    Speech.speak(toSpeechText(DEMO_WORD.arabic), {
-      language: 'ar-SA',
-      voice: voice?.identifier,
-      rate: ttsRate,
-      onDone: () => setIsSpeaking(false),
-      onStopped: () => setIsSpeaking(false),
-      onError: () => setIsSpeaking(false),
-    });
+    void playWordPronunciation(DEMO_WORD.id, () => setIsSpeaking(false))
+      .then((played) => { if (!played) setIsSpeaking(false); })
+      .catch(() => setIsSpeaking(false));
   };
 
   const goNext = () => {
     if (isLast) {
       hapticSuccess();
-      Speech.stop();
+      stopWordPronunciation();
       completeOnboarding(Number(wordsPerDay));
       return;
     }
     hapticMedium();
-    Speech.stop();
+    stopWordPronunciation();
     setIsSpeaking(false);
     setIndex((current) => current + 1);
   };
@@ -133,7 +126,7 @@ export default function OnboardingScreen() {
   const goBack = () => {
     if (index === 0) return;
     hapticSelection();
-    Speech.stop();
+    stopWordPronunciation();
     setIsSpeaking(false);
     setIndex((current) => current - 1);
   };

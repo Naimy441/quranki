@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import * as Speech from 'expo-speech';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, ProgressBar } from 'react-native-paper';
@@ -13,10 +12,10 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { getArabicVoiceAsync, toSpeechText } from '@/lib/arabic-speech';
 import { createNewCard, deserializeCard, formatInterval, previewGrades, State, type GradeName } from '@/lib/fsrs';
 import { hapticHeavy, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
 import { getUpcomingLearning, type SessionWord } from '@/lib/levels';
+import { playWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
 import { useProgressStore } from '@/store/progress-store';
 import { stopRecitation } from '@/store/recitation-store';
 
@@ -41,7 +40,6 @@ interface SessionRunnerProps {
 export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: SessionRunnerProps) {
   const theme = useTheme();
   const progress = useProgressStore((state) => state.progress);
-  const ttsRate = useProgressStore((state) => state.settings.ttsRate);
   const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
   const gradeWord = useProgressStore((state) => state.gradeWord);
 
@@ -62,6 +60,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
   useEffect(
     () => () => {
       stopRecitation();
+      stopWordPronunciation();
     },
     [],
   );
@@ -82,40 +81,18 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
 
   const handleSpeak = async () => {
     if (!currentEntry) return;
-    // Passing `language: 'ar-SA'` and hoping some installed voice matches that exact tag is what
-    // this used to do - on Android that's a bad bet (see getArabicVoiceAsync), and a mismatch
-    // tends to fail *silently* rather than with a catchable error, which looks exactly like "the
-    // button does nothing" instead of a real, explainable failure. Resolving an actual installed
-    // voice up front means we can tell the difference between "no Arabic voice on this device" and
-    // "picked one, something else went wrong" instead of guessing from silence either way.
-    const voice = await getArabicVoiceAsync();
-    if (!voice) {
-      Alert.alert(
-        'No Arabic voice found',
-        "This device doesn't have an Arabic text-to-speech voice installed. Install \"Google Text-to-Speech\" from the Play Store, then enable an Arabic voice under Settings > Accessibility > Text-to-speech output (wording varies by manufacturer).",
-      );
-      return;
-    }
     hapticSelection();
     stopRecitation();
-    void Speech.stop();
+    stopWordPronunciation();
     setIsSpeaking(true);
-    Speech.speak(toSpeechText(currentEntry.word.arabic), {
-      voice: voice.identifier,
-      language: voice.language,
-      rate: ttsRate,
-      onDone: () => setIsSpeaking(false),
-      onStopped: () => setIsSpeaking(false),
-      onError: () => {
-        setIsSpeaking(false);
-        Alert.alert('Couldn\u2019t play audio', 'The text-to-speech voice failed unexpectedly. Please try again.');
-      },
-    });
+    void playWordPronunciation(currentEntry.word.id, () => setIsSpeaking(false))
+      .then((played) => { if (!played) setIsSpeaking(false); })
+      .catch(() => setIsSpeaking(false));
   };
 
   const handleClose = () => {
     if (Platform.OS === 'web') {
-      void Speech.stop();
+      stopWordPronunciation();
       stopRecitation();
       router.back();
       return;
@@ -126,7 +103,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
         text: 'End session',
         style: 'destructive',
         onPress: () => {
-          void Speech.stop();
+          stopWordPronunciation();
           stopRecitation();
           router.back();
         },
@@ -155,7 +132,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
       setIndex(index + 1);
       setRevealed(false);
     } else {
-      void Speech.stop();
+      stopWordPronunciation();
       setPhase('summary');
     }
   };

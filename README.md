@@ -36,7 +36,7 @@ Quranki is a React Native (Expo) app with two parts:
 - [React Native Paper](https://reactnativepaper.com/) (Material Design 3 components)
 - `react-native-reanimated` + `react-native-gesture-handler` for the swipeable Qur'an reader
 - `@react-native-async-storage/async-storage` for local persistence
-- `expo-speech`, `expo-haptics`, `expo-font`
+- `expo-audio`, `expo-haptics`, `expo-font`
 
 ## Getting started
 

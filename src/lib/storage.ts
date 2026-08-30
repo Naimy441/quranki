@@ -18,7 +18,6 @@ const QURAN_MARKS_KEY = 'quranki:quran-marks:v1';
 
 export interface Settings {
   wordsPerSession: number;
-  ttsRate: number;
   themePreference: 'system' | 'light' | 'dark';
   /** Brand accent used for buttons, progress, and selected states. Defaults to green. */
   accentColor: AccentId;
@@ -58,7 +57,6 @@ export interface Meta {
 
 export const DEFAULT_SETTINGS: Settings = {
   wordsPerSession: 5,
-  ttsRate: 0.85,
   themePreference: 'system',
   accentColor: DEFAULT_ACCENT,
   readerArabicSize: 30,
