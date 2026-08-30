@@ -4,11 +4,25 @@ export interface TextSegment {
   c?: string;
 }
 
+/** A Quranic Arabic Corpus morphological segment attached to a reader word. */
+export interface ReaderMorphSegment {
+  /** Arabic text belonging to this segment. */
+  t: string;
+  /** Where the segment sits in the word. */
+  k: 'prefix' | 'stem' | 'suffix';
+  /** Quranic Arabic Corpus part-of-speech tag for this segment. */
+  p: string;
+  /** Quranic Arabic Corpus tags, excluding location, lemma, root, and segment-position tags. */
+  f: string[];
+}
+
 export interface ReaderWord {
   /** 1-based position of this word within the ayah. */
   p: number;
   ar: TextSegment[];
   en: TextSegment[];
+  /** Optional word-by-word Latin transliteration. */
+  tl?: string;
   /** Unified vocabulary id for this Qur'an word, if one could be resolved (see
    *  scripts/build-quran-reader-data.js). Either:
    *   - one of the curated src/data/quranic-words.json study word ids ("01-001"), matched by
@@ -31,6 +45,8 @@ export interface ReaderWord {
   rt?: string;
   /** Corpus stem POS column: `N` (noun), `V` (verb), or `P` (particle). */
   ps?: string;
+  /** Quranic Arabic Corpus prefix, stem, and suffix analysis for this exact word occurrence. */
+  m?: ReaderMorphSegment[];
 }
 
 /** A run of the full ayah translation: either plain text, or a footnote marker with its body. */

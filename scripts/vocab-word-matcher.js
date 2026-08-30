@@ -631,6 +631,18 @@ function loadMorphologyStems(ayahWordOrder) {
       // Corpus POS column as written (N/V/P). Distinct from `pos`, which collapses to V vs N
       // for the matcher. Reader enrichment uses this; matching does not.
       corpusPos: stem?.pos ?? null,
+      readerSegments: segments.map((segment) => ({
+        t: segment.text,
+        k: segment.feats.includes('PREF') ? 'prefix' : segment.feats.includes('SUFF') ? 'suffix' : 'stem',
+        p: segment.pos,
+        f: segment.feats.filter(
+          (feature) =>
+            feature !== 'PREF' &&
+            feature !== 'SUFF' &&
+            !feature.startsWith('LEM:') &&
+            !feature.startsWith('ROOT:'),
+        ),
+      })),
       feats: stem?.feats ?? [],
       // Preposition+pronoun words (بِهِ "with it") have the clitic as the morphological "stem"
       // after a PREF tagged P. Those are not independent هو/هِيَ; they belong to the preposition.

@@ -11,6 +11,7 @@ import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AyahMarkSheet } from '@/components/quran/ayah-mark-sheet';
+import { QuranJumpSheet } from '@/components/quran/quran-jump-sheet';
 import { RecitationPlayer } from '@/components/quran/recitation-player';
 import { ReaderSettingsSheet } from '@/components/quran/reader-settings-sheet';
 import { SurahPage } from '@/components/quran/surah-page';
@@ -27,11 +28,6 @@ import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 import { useQuranMarksStore } from '@/store/quran-marks-store';
 import { stopRecitation, toggleSurahPlayback, useRecitationStore } from '@/store/recitation-store';
-
-const ARABIC_SIZE_RANGE = { min: 18, max: 38, step: 4 };
-const GLOSS_SIZE_RANGE = { min: 11, max: 19, step: 2 };
-const DEFAULT_ARABIC_SIZE = 30;
-const DEFAULT_GLOSS_SIZE = 15;
 
 const ACTIVE_INITIAL_BATCH = 12;
 // The neighboring surahs a swipe away only need a handful of ayahs pre-rendered so they already
@@ -66,7 +62,10 @@ export default function SurahReaderScreen() {
   // avoids an extra cascading render pass: React bails out and re-renders immediately with the
   // synced value before anything commits.
   const paramSurah = Number(surah);
-  if (paramSurah !== active) setActive(paramSurah);
+  if (paramSurah !== active) {
+    setActive(paramSurah);
+    setHeaderSurah(paramSurah);
+  }
 
   const progress = useProgressStore((s) => s.progress);
   const hiddenVocabIds = useMemo(() => getHiddenVocabIds(progress), [progress]);
@@ -75,15 +74,16 @@ export default function SurahReaderScreen() {
   const markKnown = useKnownWordsStore((s) => s.markKnown);
   const unmarkKnown = useKnownWordsStore((s) => s.unmarkKnown);
   const knownWordIds = useMemo(() => getKnownWordIds(knownWords), [knownWords]);
-  const [showTranslation, setShowTranslation] = useState(true);
-  const [arabicSize, setArabicSize] = useState(DEFAULT_ARABIC_SIZE);
-  const [glossSize, setGlossSize] = useState(DEFAULT_GLOSS_SIZE);
+  const arabicSize = useProgressStore((s) => s.settings.readerArabicSize);
+  const glossSize = useProgressStore((s) => s.settings.readerGlossSize);
+  const showTranslation = useProgressStore((s) => s.settings.readerShowTranslation);
+  const showTransliteration = useProgressStore((s) => s.settings.readerTransliteration);
+  const transliterationSize = useProgressStore((s) => s.settings.readerTransliterationSize);
+  const updateSettings = useProgressStore((s) => s.updateSettings);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [selectedWord, setSelectedWord] = useState<ReaderWord | null>(null);
   const [markAyah, setMarkAyah] = useState<number | null>(null);
-  const handleOpenMarks = useCallback((ayah: number) => {
-    setMarkAyah(ayah);
-  }, []);
+  const [jumpVisible, setJumpVisible] = useState(false);
   const noteOpenedSurah = useQuranMarksStore((s) => s.noteOpenedSurah);
   const setLastRead = useQuranMarksStore((s) => s.setLastRead);
   const hasSaved = useQuranMarksStore((s) => s.pinPlacements.length > 0 || s.bookmarks.length > 0);
@@ -147,10 +147,6 @@ export default function SurahReaderScreen() {
     translateX.value = active * screenWidth;
   }, [screenWidth, active, translateX]);
 
-  useLayoutEffect(() => {
-    setHeaderSurah(active);
-  }, [active]);
-
   const commitShift = (direction: 1 | -1) => {
     const next = active + direction;
     setActive(next);
@@ -203,17 +199,16 @@ export default function SurahReaderScreen() {
   if (!meta) {
     return <ThemedView style={styles.flex} />;
   }
+  const displayedHeaderMeta = headerMeta ?? meta;
 
   return (
     <ThemedView style={styles.flex}>
       <Stack.Screen
         options={{
-          title: headerMeta.tr,
+          title: displayedHeaderMeta.tr,
           headerBackTitle: "Qur'an",
           headerTitle: () => (
-            <Text numberOfLines={1} style={[styles.headerTitle, { color: theme.text }]}>
-              {headerMeta.tr}
-            </Text>
+            <Text numberOfLines={1} style={[styles.headerTitle, { color: theme.text }]}>{displayedHeaderMeta.tr}</Text>
           ),
           // Horizontal pans change chapters. The stack's edge-swipe would otherwise
           // pop back to the list and leave the reader.
@@ -246,6 +241,13 @@ export default function SurahReaderScreen() {
                 <Ionicons name={hasSaved ? 'bookmark' : 'bookmark-outline'} size={22} color={theme.text} />
               </Pressable>
               <Pressable
+                onPress={() => setJumpVisible(true)}
+                hitSlop={10}
+                accessibilityLabel="Jump to surah and ayah"
+                style={styles.headerButton}>
+                <Ionicons name="navigate-outline" size={21} color={theme.text} />
+              </Pressable>
+              <Pressable
                 onPress={() => {
                   hapticLight();
                   setSettingsVisible(true);
@@ -272,12 +274,14 @@ export default function SurahReaderScreen() {
                     <SurahPage
                       surahNumber={surahNumber}
                       showTranslation={showTranslation}
+                      showTransliteration={showTransliteration}
                       arabicSize={arabicSize}
                       glossSize={glossSize}
+                      transliterationSize={transliterationSize}
                       hiddenVocabIds={hiddenVocabIds}
                       knownWordIds={knownWordIds}
                       onLongPressWord={setSelectedWord}
-                      onOpenMarks={handleOpenMarks}
+                      onOpenMarks={setMarkAyah}
                       focusAyah={surahNumber === active ? focusAyah : 0}
                       isActive={surahNumber === active}
                       onVisibleAyah={(ayah) => setLastRead(surahNumber, ayah)}
@@ -300,16 +304,32 @@ export default function SurahReaderScreen() {
         visible={settingsVisible}
         onDismiss={() => setSettingsVisible(false)}
         arabicSize={arabicSize}
-        onArabicSizeChange={setArabicSize}
-        arabicSizeRange={ARABIC_SIZE_RANGE}
+        onArabicSizeChange={(value) => updateSettings({ readerArabicSize: value })}
         glossSize={glossSize}
-        onGlossSizeChange={setGlossSize}
-        glossSizeRange={GLOSS_SIZE_RANGE}
+        onGlossSizeChange={(value) => updateSettings({ readerGlossSize: value })}
         showTranslation={showTranslation}
-        onShowTranslationChange={setShowTranslation}
+        onShowTranslationChange={(value) => updateSettings({ readerShowTranslation: value })}
+        showTransliteration={showTransliteration}
+        onShowTransliterationChange={(value) => updateSettings({ readerTransliteration: value })}
+        transliterationSize={transliterationSize}
+        onTransliterationSizeChange={(value) => updateSettings({ readerTransliterationSize: value })}
       />
 
       <AyahMarkSheet surah={active} ayah={markAyah} onDismiss={() => setMarkAyah(null)} />
+
+      <QuranJumpSheet
+        visible={jumpVisible}
+        initialSurah={active}
+        initialAyah={focusAyah || 1}
+        onDismiss={() => setJumpVisible(false)}
+        onJump={(jumpSurah, jumpAyah) => {
+          setJumpVisible(false);
+          setHeaderSurah(jumpSurah);
+          setActive(jumpSurah);
+          setLastRead(jumpSurah, jumpAyah);
+          router.setParams({ surah: String(jumpSurah), ayah: String(jumpAyah) });
+        }}
+      />
 
       <WordDetailSheet
         word={selectedWord}

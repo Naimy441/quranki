@@ -22,6 +22,12 @@ export interface Settings {
   themePreference: 'system' | 'light' | 'dark';
   /** Brand accent used for buttons, progress, and selected states. Defaults to green. */
   accentColor: AccentId;
+  readerArabicSize: number;
+  readerGlossSize: number;
+  readerShowTranslation: boolean;
+  /** Keep the Qur'an reader's optional transliteration enabled across sessions. */
+  readerTransliteration: boolean;
+  readerTransliterationSize: number;
 }
 
 /** Inclusive bounds for the Settings "new words per day" slider. */
@@ -55,6 +61,11 @@ export const DEFAULT_SETTINGS: Settings = {
   ttsRate: 0.85,
   themePreference: 'system',
   accentColor: DEFAULT_ACCENT,
+  readerArabicSize: 30,
+  readerGlossSize: 15,
+  readerShowTranslation: true,
+  readerTransliteration: false,
+  readerTransliterationSize: 13,
 };
 
 export const DEFAULT_META: Meta = {
@@ -95,6 +106,17 @@ export async function loadSettingsAsync(): Promise<Settings> {
     ...settings,
     wordsPerSession: clampWordsPerSession(settings.wordsPerSession),
     accentColor: isAccentId(settings.accentColor) ? settings.accentColor : DEFAULT_ACCENT,
+    readerArabicSize: Number.isFinite(settings.readerArabicSize)
+      ? Math.min(38, Math.max(18, settings.readerArabicSize))
+      : DEFAULT_SETTINGS.readerArabicSize,
+    readerGlossSize: Number.isFinite(settings.readerGlossSize)
+      ? Math.min(19, Math.max(11, settings.readerGlossSize))
+      : DEFAULT_SETTINGS.readerGlossSize,
+    readerShowTranslation: settings.readerShowTranslation !== false,
+    readerTransliteration: Boolean(settings.readerTransliteration),
+    readerTransliterationSize: Number.isFinite(settings.readerTransliterationSize)
+      ? Math.min(18, Math.max(10, settings.readerTransliterationSize))
+      : DEFAULT_SETTINGS.readerTransliterationSize,
   };
 }
 

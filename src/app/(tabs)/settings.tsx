@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import Slider from '@expo/ui/community/slider';
+import SliderControl from '@expo/ui/community/slider';
 import { router } from 'expo-router';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChoiceGrid } from '@/components/quranki/choice-grid';
+import { ReaderDisplaySettings } from '@/components/quran/reader-display-settings';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ACCENTS, BottomTabInset, MaxContentWidth, Radius, Spacing, type AccentId } from '@/constants/theme';
@@ -101,7 +102,7 @@ export default function SettingsScreen() {
                 {sessionPaceLabel(settings.wordsPerSession)}
               </ThemedText>
             </View>
-            <Slider
+            <SliderControl
               value={clampWordsPerSession(settings.wordsPerSession)}
               minimumValue={WORDS_PER_SESSION_MIN}
               maximumValue={WORDS_PER_SESSION_MAX}
@@ -142,6 +143,21 @@ export default function SettingsScreen() {
             <AccentPicker
               value={settings.accentColor ?? 'green'}
               onChange={(accentColor) => updateSettings({ accentColor })}
+            />
+          </SettingsSection>
+
+          <SettingsSection title="Qur'an">
+            <ReaderDisplaySettings
+              arabicSize={settings.readerArabicSize}
+              onArabicSizeChange={(readerArabicSize) => updateSettings({ readerArabicSize })}
+              glossSize={settings.readerGlossSize}
+              onGlossSizeChange={(readerGlossSize) => updateSettings({ readerGlossSize })}
+              showTranslation={settings.readerShowTranslation}
+              onShowTranslationChange={(readerShowTranslation) => updateSettings({ readerShowTranslation })}
+              showTransliteration={settings.readerTransliteration}
+              onShowTransliterationChange={(readerTransliteration) => updateSettings({ readerTransliteration })}
+              transliterationSize={settings.readerTransliterationSize}
+              onTransliterationSizeChange={(readerTransliterationSize) => updateSettings({ readerTransliterationSize })}
             />
           </SettingsSection>
 

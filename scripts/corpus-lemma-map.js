@@ -254,6 +254,7 @@ function attachMorphology(word, loc, stemByLocation) {
   if (stem.lightLemma) word.lm = stem.lightLemma;
   if (stem.root) word.rt = stem.root;
   if (stem.corpusPos) word.ps = stem.corpusPos;
+  if (stem.readerSegments?.length) word.m = stem.readerSegments;
 }
 
 module.exports = {

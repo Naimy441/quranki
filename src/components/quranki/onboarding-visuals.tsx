@@ -10,7 +10,7 @@ import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
 import { createNewCard, previewGrades } from '@/lib/fsrs';
 import { hapticSelection } from '@/lib/haptics';
 import { getCoverageThroughLevel, LAST_LEVEL_NUMBER, LEVELS, THEMATIC_LEVEL_COUNT, THEMATIC_WORD_COUNT, WORD_COUNT } from '@/lib/levels';
-import { glossColor, tajweedColor } from '@/lib/quran-colors';
+import { glossColor } from '@/lib/quran-colors';
 import { BISMILLAH_WORDS } from '@/lib/quran-reader';
 import type { ReaderWord } from '@/lib/quran-reader-types';
 import { formatCount } from '@/lib/stats';
@@ -133,11 +133,7 @@ function PreviewWord({
         pressed && tappable && { backgroundColor: theme.backgroundSelected },
       ]}>
       <Text style={[styles.previewArabic, ArabicTextStyle, { color: theme.text }]}>
-        {word.ar.map((seg, i) => (
-          <Text key={i} style={{ color: tajweedColor(seg.c, scheme, theme.text) }}>
-            {seg.t}
-          </Text>
-        ))}
+        {word.ar.map((seg) => seg.t).join('')}
       </Text>
       {!hidden && (
         <>

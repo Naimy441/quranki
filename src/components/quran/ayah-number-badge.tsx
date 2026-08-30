@@ -44,10 +44,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: Spacing.two,
     left: Spacing.three,
+    height: 26,
+    justifyContent: 'center',
     zIndex: 1,
   },
   cornerText: {
-    fontSize: 12,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
   },
   marker: {

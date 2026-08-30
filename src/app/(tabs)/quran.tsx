@@ -6,17 +6,20 @@ import { Searchbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RecentSurahsRow } from '@/components/quran/recent-surahs-row';
+import { QuranJumpSheet } from '@/components/quran/quran-jump-sheet';
 import { SurahListRow } from '@/components/quran/surah-list-row';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticLight } from '@/lib/haptics';
+import { openQuranLocation } from '@/lib/quran-nav';
 import { SURAH_INDEX } from '@/lib/quran-reader';
 import { useQuranMarksStore } from '@/store/quran-marks-store';
 
 export default function QuranScreen() {
   const theme = useTheme();
   const [query, setQuery] = useState('');
+  const [jumpVisible, setJumpVisible] = useState(false);
   const hasSaved = useQuranMarksStore((s) => s.pinPlacements.length > 0 || s.bookmarks.length > 0);
 
   const normalized = query.trim().toLowerCase();
@@ -57,6 +60,14 @@ export default function QuranScreen() {
                     elevation={0}
                   />
                 </View>
+
+                <Pressable
+                  onPress={() => setJumpVisible(true)}
+                  hitSlop={10}
+                  accessibilityLabel="Jump to surah and ayah"
+                  style={({ pressed }) => [styles.jumpButton, { backgroundColor: theme.backgroundElement }, pressed && styles.pressed]}>
+                  <Ionicons name="navigate-outline" size={21} color={theme.primary} />
+                </Pressable>
                 
                 <Pressable
                   onPress={() => {
@@ -81,6 +92,15 @@ export default function QuranScreen() {
               <SurahListRow surah={item} />
             </View>
           )}
+        />
+        <QuranJumpSheet
+          visible={jumpVisible}
+          initialSurah={1}
+          onDismiss={() => setJumpVisible(false)}
+          onJump={(surah, ayah) => {
+            setJumpVisible(false);
+            openQuranLocation(surah, ayah);
+          }}
         />
       </SafeAreaView>
     </ThemedView>
@@ -109,6 +129,13 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   savedButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  jumpButton: {
     width: 48,
     height: 48,
     borderRadius: 16,

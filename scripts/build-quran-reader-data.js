@@ -126,6 +126,9 @@ function main() {
   const translations = JSON.parse(
     fs.readFileSync(path.join(DATA_DIR, 'colored-english-wbw-translation.json'), 'utf8'),
   );
+  const transliterations = JSON.parse(
+    fs.readFileSync(path.join(DATA_DIR, 'english-wbw-transliteration.json'), 'utf8'),
+  );
   const surahMeta = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'quran-metadata-surah-name.json'), 'utf8'));
   const ayahTranslations = JSON.parse(
     fs.readFileSync(path.join(DATA_DIR, 'en-sahih-international-with-footnote-tags.json'), 'utf8'),
@@ -173,7 +176,13 @@ function main() {
         }
 
         const englishSegments = parseTranslationSegments(translations[location]);
-        words.push({ p: wordNumber, ar: arabicSegments, en: englishSegments });
+        const transliteration = transliterations[location];
+        words.push({
+          p: wordNumber,
+          ar: arabicSegments,
+          en: englishSegments,
+          ...(transliteration ? { tl: transliteration } : {}),
+        });
         wordNumber += 1;
       }
       if (words.length === 0) {

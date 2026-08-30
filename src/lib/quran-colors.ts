@@ -1,10 +1,6 @@
 /**
  * Color palettes for the Qur'an reader.
  *
- * Tajweed rule colors: ghunnah orange, ikhfa red, idgham purple, idgham without ghunnah grey,
- * iqlab blue, qalqalah green. Madd stays in the blue family; silent letters stay grey. Dark-mode
- * variants are brighter for contrast against a near-black background.
- *
  * Word-by-word gloss colors are a lighter, decorative categorization of the translation's part
  * of speech (`n` noun, `v` verb, `pn` proper noun, `p` particle, `paren` clarifying aside,
  * `punc` punctuation), tuned to sit comfortably alongside the app's green brand accent.
@@ -13,29 +9,17 @@
 type SchemeColors = { light: string; dark: string };
 
 export const TajweedColors: Record<string, SchemeColors> = {
-  ham_wasl: { light: '#AAAAAA', dark: '#8B8F8C' },
-  slnt: { light: '#AAAAAA', dark: '#8B8F8C' },
-  laam_shamsiyah: { light: '#AAAAAA', dark: '#8B8F8C' },
-  madda_normal: { light: '#537FFF', dark: '#7C9CFF' },
-  madda_permissible: { light: '#4050FF', dark: '#6B7BFF' },
-  madda_necessary: { light: '#000EBC', dark: '#5C6DFF' },
-  madda_obligatory_mottasel: { light: '#2144C1', dark: '#6079E8' },
-  madda_obligatory_monfasel: { light: '#2144C1', dark: '#6079E8' },
-  qalaqah: { light: '#1B9E4B', dark: '#3DDB70' },
-  ikhafa: { light: '#D61F26', dark: '#FF5A5F' },
-  ikhafa_shafawi: { light: '#D61F26', dark: '#FF5A5F' },
-  idgham_shafawi: { light: '#8B2FC9', dark: '#C77DFF' },
-  idgham_ghunnah: { light: '#8B2FC9', dark: '#C77DFF' },
-  idgham_wo_ghunnah: { light: '#8A8A8A', dark: '#B0B0B0' },
-  idgham_mutajanisayn: { light: '#8A8A8A', dark: '#B0B0B0' },
-  idgham_mutaqaribayn: { light: '#8A8A8A', dark: '#B0B0B0' },
-  iqlab: { light: '#1876D2', dark: '#4EA3F5' },
-  ghunnah: { light: '#FF7E1E', dark: '#FF9A47' },
+  ham_wasl: { light: '#AAAAAA', dark: '#8B8F8C' }, slnt: { light: '#AAAAAA', dark: '#8B8F8C' }, laam_shamsiyah: { light: '#AAAAAA', dark: '#8B8F8C' },
+  madda_normal: { light: '#537FFF', dark: '#7C9CFF' }, madda_permissible: { light: '#4050FF', dark: '#6B7BFF' }, madda_necessary: { light: '#000EBC', dark: '#5C6DFF' },
+  madda_obligatory_mottasel: { light: '#2144C1', dark: '#6079E8' }, madda_obligatory_monfasel: { light: '#2144C1', dark: '#6079E8' },
+  qalaqah: { light: '#1B9E4B', dark: '#3DDB70' }, ikhafa: { light: '#D61F26', dark: '#FF5A5F' }, ikhafa_shafawi: { light: '#D61F26', dark: '#FF5A5F' },
+  idgham_shafawi: { light: '#8B2FC9', dark: '#C77DFF' }, idgham_ghunnah: { light: '#8B2FC9', dark: '#C77DFF' }, idgham_wo_ghunnah: { light: '#8A8A8A', dark: '#B0B0B0' },
+  idgham_mutajanisayn: { light: '#8A8A8A', dark: '#B0B0B0' }, idgham_mutaqaribayn: { light: '#8A8A8A', dark: '#B0B0B0' },
+  iqlab: { light: '#1876D2', dark: '#4EA3F5' }, ghunnah: { light: '#FF7E1E', dark: '#FF9A47' },
 };
 
 export function tajweedColor(cls: string | undefined, scheme: 'light' | 'dark', fallback: string): string {
-  if (!cls) return fallback;
-  return TajweedColors[cls]?.[scheme] ?? fallback;
+  return cls ? (TajweedColors[cls]?.[scheme] ?? fallback) : fallback;
 }
 
 export const GlossColors: Record<string, SchemeColors> = {
@@ -50,16 +34,3 @@ export function glossColor(cls: string | undefined, scheme: 'light' | 'dark', fa
   if (!cls) return fallback;
   return GlossColors[cls]?.[scheme] ?? fallback;
 }
-
-/** Legend rows for an in-app "About tajweed colors" reference. */
-export const TajweedLegend: { label: string; classes: string[] }[] = [
-  { label: 'Ghunnah (nasalization)', classes: ['ghunnah'] },
-  { label: 'Silent / not pronounced', classes: ['ham_wasl', 'slnt', 'laam_shamsiyah'] },
-  { label: 'Qalqalah (echo)', classes: ['qalaqah'] },
-  { label: 'Madd (prolongation)', classes: ['madda_normal', 'madda_permissible'] },
-  { label: 'Madd (obligatory / necessary)', classes: ['madda_necessary', 'madda_obligatory_mottasel', 'madda_obligatory_monfasel'] },
-  { label: 'Ikhafa (hidden pronunciation)', classes: ['ikhafa', 'ikhafa_shafawi'] },
-  { label: 'Idgham (assimilation)', classes: ['idgham_shafawi', 'idgham_ghunnah'] },
-  { label: 'Idgham without ghunnah', classes: ['idgham_wo_ghunnah', 'idgham_mutajanisayn', 'idgham_mutaqaribayn'] },
-  { label: 'Iqlab (conversion to meem)', classes: ['iqlab'] },
-];

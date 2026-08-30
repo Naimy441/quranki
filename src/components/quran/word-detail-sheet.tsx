@@ -1,17 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRef } from 'react';
-import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from 'react-native-paper';
 
 import { ArabicText } from '@/components/arabic-text';
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
+import { ArabicTextStyle, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticSelection, hapticSuccess, hapticWarning } from '@/lib/haptics';
 import type { Level } from '@/lib/levels';
 import { getWordOccurrenceCount } from '@/lib/quran-coverage';
 import { getLemmaEntry, getRootEntry, posLabel } from '@/lib/quran-morphology';
-import type { ReaderWord } from '@/lib/quran-reader-types';
+import type { ReaderMorphSegment, ReaderWord } from '@/lib/quran-reader-types';
 import { formatCount } from '@/lib/stats';
 
 interface WordDetailSheetProps {
@@ -29,20 +28,89 @@ interface WordDetailSheetProps {
   onForget: (word: ReaderWord) => void;
 }
 
-const POS_DOT: Record<string, string> = {
-  N: '#E6B325',
-  V: '#5AA6E0',
-  P: '#94A39B',
+const MORPH_COLORS = ['#3A7FC1', '#B95B9D', '#2C9A78', '#C7772F', '#7A67C7', '#B94E52', '#168F9C', '#8A7D38'];
+
+function morphologyColor(index: number): string {
+  return MORPH_COLORS[index % MORPH_COLORS.length];
+}
+
+const FEATURE_LABELS: Record<string, string> = {
+  P: 'preposition',
+  CONJ: 'conjunction',
+  REM: 'connective',
+  DET: 'definite article',
+  FUT: 'future particle',
+  EMPH: 'emphasis',
+  IMPV: 'imperative',
+  IMPF: 'imperfect verb',
+  PERF: 'perfect verb',
+  ACT_PCPL: 'active participle',
+  PASS_PCPL: 'passive participle',
+  PRON: 'pronoun',
+  REL: 'relative pronoun',
+  DEM: 'demonstrative',
+  NEG: 'negation',
+  COND: 'conditional particle',
+  INTG: 'question particle',
+  SUB: 'subordinating particle',
+  CAUS: 'causal particle',
+  VOC: 'vocative particle',
+  NOM: 'nominative',
+  ACC: 'accusative',
+  GEN: 'genitive',
+  ADJ: 'adjective',
+  M: 'masculine',
+  F: 'feminine',
+  MS: 'masculine singular',
+  FS: 'feminine singular',
+  MP: 'masculine plural',
+  FP: 'feminine plural',
+  '1S': 'I',
+  '1P': 'we / us',
+  '2MS': 'you (masc. singular)',
+  '2FS': 'you (fem. singular)',
+  '2MP': 'you (masc. plural)',
+  '2FP': 'you (fem. plural)',
+  '3MS': 'he / it',
+  '3FS': 'she / it',
+  '3MP': 'they (masc.)',
+  '3FP': 'they (fem.)',
+  'MOOD:IND': 'indicative',
+  'MOOD:SUBJ': 'subjunctive',
+  'MOOD:JUS': 'jussive',
 };
+
+function morphologyLabel(segment: ReaderMorphSegment): string {
+  const tags = segment.f;
+  const first =
+    tags.includes('FUT') ? 'future particle' :
+    segment.k === 'prefix' && tags.includes('EMPH') ? 'emphatic lām' :
+    segment.k === 'prefix' && tags.includes('IMPV') ? 'command lām' :
+    tags.map((tag) => FEATURE_LABELS[tag] ?? (tag.startsWith('VF:') ? `form ${tag.slice(3)}` : '')).find(Boolean) ??
+    (segment.p === 'V' ? 'verb' : segment.p === 'N' ? 'noun' : 'particle');
+  const form = tags.find((tag) => tag.startsWith('VF:'));
+  const label = form && !first.startsWith('form ') ? `${first} · form ${form.slice(3)}` : first;
+  return label.replace(/(^|[\s·])([a-z])/g, (_, boundary: string, letter: string) => `${boundary}${letter.toUpperCase()}`);
+}
+
+function RootLetters({ root }: { root: string }) {
+  return (
+    <View style={styles.rootLetters} accessibilityLabel={`Root letters ${root}`}>
+      {Array.from(root).map((letter, index) => (
+        <ArabicText key={`${letter}-${index}`} style={styles.rootLetter}>
+          {letter}
+        </ArabicText>
+      ))}
+    </View>
+  );
+}
 
 /** Small centered sheet opened by long-pressing a word in the Qur'an reader. Shows corpus
  *  lemma/root analysis when morphology is attached, and lets the user mark a resolvable vocab
  *  id as known — hiding its translation everywhere that same word appears. */
 export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMarkKnown, onForget }: WordDetailSheetProps) {
   const theme = useTheme();
-  const shownRef = useRef({ word, isKnown, masteredLevel });
-  if (word) shownRef.current = { word, isKnown, masteredLevel };
-  const shown = shownRef.current;
+  const shown = { word, isKnown, masteredLevel };
   const arabic = shown.word?.ar.map((seg) => seg.t).join('') ?? '';
   const lemmaEntry = getLemmaEntry(shown.word?.lm);
   const rootEntry = getRootEntry(shown.word?.rt ?? lemmaEntry?.root);
@@ -51,6 +119,8 @@ export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMar
   const rootArabic = shown.word?.rt ?? lemmaEntry?.root ?? '';
   const vOccurrences = shown.word?.v ? getWordOccurrenceCount(shown.word.v) : 0;
   const canMarkKnown = shown.word?.v !== undefined;
+  const morphology = shown.word?.m ?? [];
+  const hasMorphology = morphology.length > 0;
 
   const handlePress = () => {
     if (!shown.word || !canMarkKnown) return;
@@ -87,7 +157,7 @@ export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMar
       <Pressable style={styles.backdrop} onPress={onDismiss}>
         <Pressable style={[styles.sheet, { backgroundColor: theme.card }]} onPress={(e) => e.stopPropagation()}>
           <View style={styles.headerRow}>
-            <ThemedText type="smallBold">Word</ThemedText>
+            <ThemedText type="smallBold">{pos ?? 'Word'}</ThemedText>
             <Pressable
               onPress={() => {
                 hapticSelection();
@@ -99,43 +169,50 @@ export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMar
           </View>
 
           <ScrollView bounces={false} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-            <ArabicText style={styles.arabic}>{arabic}</ArabicText>
+            {!hasMorphology ? <ArabicText style={styles.arabic}>{arabic}</ArabicText> : null}
 
-            {pos ? (
-              <View style={styles.posRow}>
-                <View
-                  style={[
-                    styles.posDot,
-                    { backgroundColor: POS_DOT[shown.word?.ps ?? lemmaEntry?.pos ?? ''] ?? theme.textMuted },
-                  ]}
-                />
-                <ThemedText type="smallBold" themeColor="textSecondary">
-                  {pos}
-                </ThemedText>
+            {hasMorphology ? (
+              <View style={styles.morphology}>
+                <Text style={[styles.morphWord, ArabicTextStyle, { color: theme.text }]}>
+                  {morphology.map((segment, index) => {
+                    const color = morphologyColor(index);
+                    return (
+                      <Text key={`${segment.t}-${index}`} style={{ color }}>
+                        {segment.t}
+                      </Text>
+                    );
+                  })}
+                </Text>
+                <View style={styles.morphologyKey}>
+                  {morphology.map((segment, index) => {
+                    const color = morphologyColor(index);
+                    return (
+                      <View key={`${segment.t}-${index}`} style={styles.morphologyKeyRow}>
+                        <View style={[styles.morphologyDot, { backgroundColor: color }]} />
+                        <ThemedText type="small" style={[styles.morphKeyLabel, { color }]}>
+                          {morphologyLabel(segment)}
+                        </ThemedText>
+                      </View>
+                    );
+                  })}
+                </View>
               </View>
             ) : null}
 
-            {lemmaEntry ? (
+            {lemmaEntry || rootEntry ? (
               <View style={styles.stats}>
-                <View style={[styles.statRow, { borderColor: theme.border }]}>
-                  <ThemedText type="small" themeColor="textMuted">
-                    Lemma
-                  </ThemedText>
-                  <ArabicText style={styles.statArabic}>{lemmaEntry.arabic}</ArabicText>
-                  <ThemedText type="smallBold">
-                    {lemmaCount === 1 ? 'once' : `${formatCount(lemmaCount)} times`}
-                  </ThemedText>
-                </View>
+                {lemmaEntry ? (
+                  <View style={[styles.statRow, { borderColor: theme.border }]}>
+                    <ThemedText type="small" themeColor="textMuted">Lemma</ThemedText>
+                    <ArabicText style={styles.statArabic}>{lemmaEntry.arabic}</ArabicText>
+                    <ThemedText type="smallBold">{lemmaCount === 1 ? 'once' : `${formatCount(lemmaCount)} times`}</ThemedText>
+                  </View>
+                ) : null}
                 {rootEntry ? (
                   <View style={[styles.statRow, { borderColor: theme.border }]}>
-                    <ThemedText type="small" themeColor="textMuted">
-                      Root
-                    </ThemedText>
-                    <ArabicText style={styles.statArabic}>{rootArabic}</ArabicText>
-                    <ThemedText type="smallBold">
-                      {formatCount(rootEntry.count)} times · {formatCount(rootEntry.lemmas.length)}{' '}
-                      {rootEntry.lemmas.length === 1 ? 'form' : 'forms'}
-                    </ThemedText>
+                    <ThemedText type="small" themeColor="textMuted">Root</ThemedText>
+                    <RootLetters root={rootArabic} />
+                    <ThemedText type="smallBold">{formatCount(rootEntry.count)} times</ThemedText>
                   </View>
                 ) : null}
               </View>
@@ -145,31 +222,6 @@ export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMar
                   ? 'Appears once in the Qur\u2019an'
                   : `Appears ${formatCount(vOccurrences)} times in the Qur\u2019an`}
               </ThemedText>
-            ) : null}
-
-            {rootEntry && rootEntry.lemmas.length > 1 ? (
-              <View style={styles.formList}>
-                <ThemedText type="smallBold" themeColor="textSecondary">
-                  Derived forms
-                </ThemedText>
-                {rootEntry.lemmas.map((form) => {
-                  const active = form.lemma === shown.word?.lm;
-                  return (
-                    <View
-                      key={form.lemma}
-                      style={[
-                        styles.formRow,
-                        { borderColor: theme.border },
-                        active && { backgroundColor: theme.backgroundSelected },
-                      ]}>
-                      <ArabicText style={styles.formArabic}>{form.arabic}</ArabicText>
-                      <ThemedText type="small" themeColor={active ? 'text' : 'textSecondary'}>
-                        {formatCount(form.count)} {form.count === 1 ? 'time' : 'times'}
-                      </ThemedText>
-                    </View>
-                  );
-                })}
-              </View>
             ) : null}
 
             {canMarkKnown ? (
@@ -229,21 +281,37 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     writingDirection: 'rtl',
   },
-  posRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  morphology: {
+    gap: Spacing.two,
+  },
+  morphWord: {
+    fontSize: 34,
+    lineHeight: 50,
+    textAlign: 'center',
+    writingDirection: 'rtl',
+  },
+  morphologyKey: {
     gap: Spacing.one,
   },
-  posDot: {
+  morphologyKeyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  morphologyDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: Radius.pill,
+  },
+  morphKeyLabel: {
+    flex: 1,
   },
   stats: {
+    flexDirection: 'row',
     gap: Spacing.two,
   },
   statRow: {
+    flex: 1,
     alignItems: 'center',
     gap: 2,
     paddingVertical: Spacing.two,
@@ -253,21 +321,14 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 36,
   },
-  formList: {
+  rootLetters: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
     gap: Spacing.one,
   },
-  formRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.one,
-    borderRadius: Radius.small,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  formArabic: {
-    fontSize: 20,
-    lineHeight: 32,
+  rootLetter: {
+    fontSize: 22,
+    lineHeight: 34,
   },
   occurrences: {
     textAlign: 'center',

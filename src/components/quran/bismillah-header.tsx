@@ -10,8 +10,10 @@ import { useRecitationStore } from '@/store/recitation-store';
 interface BismillahHeaderProps {
   surahNumber: number;
   showTranslation: boolean;
+  showTransliteration: boolean;
   arabicSize: number;
   glossSize: number;
+  transliterationSize: number;
   hiddenVocabIds: Set<string>;
   knownWordIds: Set<string>;
   onLongPressWord?: (word: ReaderWord) => void;
@@ -21,8 +23,10 @@ interface BismillahHeaderProps {
 export function BismillahHeader({
   surahNumber,
   showTranslation,
+  showTransliteration,
   arabicSize,
   glossSize,
+  transliterationSize,
   hiddenVocabIds,
   knownWordIds,
   onLongPressWord,
@@ -43,8 +47,10 @@ export function BismillahHeader({
           key={word.p}
           word={word}
           showTranslation={showTranslation}
+          showTransliteration={showTransliteration}
           arabicSize={arabicSize}
           glossSize={glossSize}
+          transliterationSize={transliterationSize}
           hiddenVocabIds={hiddenVocabIds}
           knownWordIds={knownWordIds}
           onLongPressWord={onLongPressWord}
