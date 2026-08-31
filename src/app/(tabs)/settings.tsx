@@ -1,12 +1,12 @@
-import { Ionicons } from '@expo/vector-icons';
 import SliderControl from '@expo/ui/community/slider';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ChoiceGrid } from '@/components/quranki/choice-grid';
 import { ReaderDisplaySettings } from '@/components/quran/reader-display-settings';
+import { ChoiceGrid } from '@/components/quranki/choice-grid';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ACCENTS, BottomTabInset, MaxContentWidth, Radius, Spacing, type AccentId } from '@/constants/theme';
@@ -161,7 +161,7 @@ export default function SettingsScreen() {
             />
           </SettingsSection>
 
-          <SettingsSection title="Qur'an">
+          <SettingsSection title="Quran">
             <ReaderDisplaySettings
               arabicSize={settings.readerArabicSize}
               onArabicSizeChange={(readerArabicSize) => updateSettings({ readerArabicSize })}

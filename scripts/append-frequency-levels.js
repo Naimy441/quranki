@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Appends leftover corpus lemmas (5+ Qur'an occurrences, not already in levels 1–47) as
+ * Appends leftover corpus lemmas (5+ Quran occurrences, not already in levels 1–47) as
  * frequency-ordered study levels 48–99. Re-run after changing leftover coverage, then
  * `node scripts/build-quran-reader-data.js` so those locations switch from lem:… to 48-001 etc.
  */

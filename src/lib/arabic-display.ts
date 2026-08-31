@@ -1,6 +1,6 @@
 import type { Word } from '@/lib/levels';
 
-/** Harakat, Qur'anic recitation marks, and tatweel - ignored when matching letters. */
+/** Harakat, Quranic recitation marks, and tatweel - ignored when matching letters. */
 const MARKS = /[\u0640\u064B-\u065F\u0670\u06D6-\u06ED]/;
 
 /** Characters the Uthmanic Hafs font typically has no glyph for - commas, plus, ASCII, etc.
@@ -116,7 +116,7 @@ function partsFromWindow(surface: string, letters: LetterSpan[], window: { start
 }
 
 /**
- * Split a Qur'an word's surface form so the study affix (or the matching letters of the whole
+ * Split a Quran word's surface form so the study affix (or the matching letters of the whole
  * word) can be colored. Matching is letter-based: harakat are ignored, then mapped back onto
  * the original string so the highlighted run keeps its vowels and recitation marks.
  */

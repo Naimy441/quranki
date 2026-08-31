@@ -14,7 +14,7 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { createNewCard, deserializeCard, formatInterval, previewGrades, State, type GradeName } from '@/lib/fsrs';
 import { hapticHeavy, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
-import { getUpcomingLearning, type SessionWord } from '@/lib/levels';
+import { getUpcomingLearning, isStudyWord, type SessionWord } from '@/lib/levels';
 import { playWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
 import { useProgressStore } from '@/store/progress-store';
 import { stopRecitation } from '@/store/recitation-store';
@@ -116,13 +116,14 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
     hapticGrade(grade);
     stopRecitation();
     const nextCard = gradeWord(currentEntry.word.id, grade);
-    setRatingCounts((prev) => ({ ...prev, [grade]: prev[grade] + 1 }));
+    if (isStudyWord(currentEntry.word)) {
+      setRatingCounts((prev) => ({ ...prev, [grade]: prev[grade] + 1 }));
+    }
 
     // Still Learning/Relearning (not yet graduated to Review) means it's due again in minutes -
     // requeue it at the end of this session, the same "you'll see it again soon" behavior Anki
-    // gives a card that hasn't graduated yet, rather than only showing it next time a session is
-    // built (which, for same-day intervals, could otherwise be tomorrow).
-    const needsRequeue = nextCard.state !== State.Review && currentEntry.word.kind !== 'grammar';
+    // gives a card that hasn't graduated yet, rather than only showing it later this sitting.
+    const needsRequeue = nextCard.state !== State.Review && isStudyWord(currentEntry.word);
     const nextLength = sessionQueue.length + (needsRequeue ? 1 : 0);
     if (needsRequeue) {
       setSessionQueue((prev) => [...prev, { ...currentEntry, reason: 'due' }]);
@@ -139,6 +140,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
 
   if (phase === 'summary') {
     const unlockedNewLevel = maxUnlockedLevel > initialMaxUnlockedLevel;
+    const reviewedCount = queue.filter((entry) => isStudyWord(entry.word)).length;
     return (
       <ThemedView style={styles.flex}>
         <SafeAreaView style={styles.flex}>
@@ -154,11 +156,13 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
             <ThemedText themeColor="textSecondary" style={styles.summarySubtitle}>
               {queue.length === 0
                 ? emptyMessage
-                : `You reviewed ${queue.length} ${queue.length === 1 ? 'word' : 'words'}.`}
+                : reviewedCount === 0
+                  ? 'Grammar intro done.'
+                  : `You reviewed ${reviewedCount} ${reviewedCount === 1 ? 'word' : 'words'}.`}
             </ThemedText>
-            {queue.length > 0 ? <UpcomingReviewNote /> : null}
+            {reviewedCount > 0 ? <UpcomingReviewNote /> : null}
 
-            {queue.length > 0 && (
+            {reviewedCount > 0 && (
               <View style={styles.ratingSummaryRow}>
                 {(['again', 'hard', 'good', 'easy'] as GradeName[]).map((grade) => (
                   <View key={grade} style={styles.ratingSummaryItem}>
@@ -204,6 +208,11 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
     return <ThemedView style={styles.flex} />;
   }
 
+  const studyTotal = sessionQueue.filter((entry) => isStudyWord(entry.word)).length;
+  const studyCompleted = sessionQueue.slice(0, index).filter((entry) => isStudyWord(entry.word)).length;
+  const studyPosition = isStudyWord(currentEntry.word) ? studyCompleted + 1 : studyCompleted;
+  const studyProgress = studyTotal === 0 ? 0 : studyCompleted / studyTotal;
+
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex}>
@@ -217,9 +226,9 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
             style={styles.closeButton}>
             <Ionicons name="close" size={24} color={theme.textSecondary} />
           </Pressable>
-          <ProgressBar progress={index / sessionQueue.length} color={theme.primary} style={styles.progressBar} />
+          <ProgressBar progress={studyProgress} color={theme.primary} style={styles.progressBar} />
           <ThemedText type="small" themeColor="textSecondary" style={styles.progressLabel}>
-            {index + 1}/{sessionQueue.length}
+            {studyTotal === 0 ? '' : `${Math.max(studyPosition, 1)}/${studyTotal}`}
           </ThemedText>
         </View>
 

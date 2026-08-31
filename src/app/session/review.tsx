@@ -13,15 +13,14 @@ export default function DailyReviewScreen() {
   const newCardsToday = useProgressStore((state) => state.newCardsToday);
   const reviewCountDate = useProgressStore((state) => state.reviewCountDate);
 
-  const [queue] = useState(() =>
-    buildGlobalSessionQueue(
-      progress,
-      new Date(),
-      wordsPerSession,
-      reviewsCompletedToday(reviewCountDate, reviewsToday),
-      newCardsCompletedToday(reviewCountDate, newCardsToday),
-    ),
-  );
+  const [queue] = useState(() => {
+    const now = new Date();
+    const reviewsAlready = reviewsCompletedToday(reviewCountDate, reviewsToday, now);
+    const newAlready = newCardsCompletedToday(reviewCountDate, newCardsToday, now);
+    const today = buildGlobalSessionQueue(progress, now, wordsPerSession, reviewsAlready, newAlready);
+    if (today.length > 0) return today;
+    return buildGlobalSessionQueue(progress, now, wordsPerSession, reviewsAlready, newAlready, true);
+  });
 
   return (
     <SessionRunner

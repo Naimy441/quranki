@@ -110,7 +110,7 @@ function displayMorphologyArabic(text: string): string {
   return text.replace(/\u06DF/g, '');
 }
 
-/** Small centered sheet opened by long-pressing a word in the Qur'an reader. Shows corpus
+/** Small centered sheet opened by long-pressing a word in the Quran reader. Shows corpus
  *  lemma/root analysis when morphology is attached, and lets the user mark a resolvable vocab
  *  id as known — hiding its translation everywhere that same word appears. */
 export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMarkKnown, onForget }: WordDetailSheetProps) {

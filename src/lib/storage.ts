@@ -24,9 +24,9 @@ export interface Settings {
   readerArabicSize: number;
   readerGlossSize: number;
   readerShowTranslation: boolean;
-  /** Whether the Qur'an reader shows the per-ayah vocabulary-coverage percentage. */
+  /** Whether the Quran reader shows the per-ayah vocabulary-coverage percentage. */
   readerShowAyahCoverage: boolean;
-  /** Keep the Qur'an reader's optional transliteration enabled across sessions. */
+  /** Keep the Quran reader's optional transliteration enabled across sessions. */
   readerTransliteration: boolean;
   readerTransliterationSize: number;
 }
@@ -50,9 +50,9 @@ export interface Meta {
   /** How many Review-state cards have been graded on `reviewCountDate`. Caps the daily review
    *  queue at DAILY_REVIEW_LIMIT without touching new-word introductions. */
   reviewsToday: number;
-  /** How many unseen words have been introduced on `reviewCountDate`. Caps new cards at the
-   *  Settings "new words per day" value so finishing a session does not immediately deal another
-   *  batch. */
+  /** How many unseen words have been introduced on `reviewCountDate`. Caps the default day's
+   *  new-card batch at the Settings "new words per day" value so finishing a session does not
+   *  immediately deal another. The learner can still start another session by hand. */
   newCardsToday: number;
   /** True once the first-launch explainer has been finished. Absent on older installs - hydrate
    *  infers it from existing progress so an update doesn't replay onboarding for current users. */

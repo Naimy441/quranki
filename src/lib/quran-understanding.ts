@@ -1,6 +1,6 @@
+import { isHurufMuqattaatAyah } from '@/lib/huruf-muqattaat';
 import { getSurahAyahs, SURAH_COUNT } from '@/lib/quran-reader';
 import type { ReaderAyah } from '@/lib/quran-reader-types';
-import { isHurufMuqattaatAyah } from '@/lib/huruf-muqattaat';
 
 export interface AyahUnderstanding {
   /** Words whose vocabulary id is in the learner's recognized vocabulary. */
@@ -22,7 +22,7 @@ export interface QuranAyahUnderstandingSummary {
   average: number;
   ayahCount: number;
   histogram: AyahUnderstandingHistogramBin[];
-  /** Average ayah-understanding score for every surah, in Qur'an order. */
+  /** Average ayah-understanding score for every surah, in Quran order. */
   surahAverages: number[];
 }
 
@@ -38,7 +38,7 @@ function createHistogram(counts: number[]): AyahUnderstandingHistogramBin[] {
 
 /**
  * Estimates how much of an ayah's vocabulary the learner can follow. This is deliberately a
- * simple, unweighted measure: each displayed Qur'an word counts exactly once. A word without a
+ * simple, unweighted measure: each displayed Quran word counts exactly once. A word without a
  * resolved vocabulary id is not yet recognized and therefore counts as unknown.
  */
 export function getAyahUnderstanding(ayah: ReaderAyah, recognizedVocabIds: Set<string>, surahNumber?: number): AyahUnderstanding {

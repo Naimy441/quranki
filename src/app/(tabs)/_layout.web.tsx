@@ -15,7 +15,7 @@ export default function TabLayout() {
             <TabButton icon="📖">Learn</TabButton>
           </TabTrigger>
           <TabTrigger name="quran" href="/quran" asChild>
-            <TabButton icon="📗">Qur&apos;an</TabButton>
+            <TabButton icon="📗">Quran</TabButton>
           </TabTrigger>
           <TabTrigger name="progress" href="/progress" asChild>
             <TabButton icon="📊">Progress</TabButton>

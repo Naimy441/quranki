@@ -18,7 +18,7 @@ interface QuranJumpSheetProps {
   onJump: (surah: number, ayah: number) => void;
 }
 
-/** Linked wheels for jumping anywhere in the Qur'an without leaving the current screen first. */
+/** Linked wheels for jumping anywhere in the Quran without leaving the current screen first. */
 export function QuranJumpSheet({ visible, initialSurah, initialAyah = 1, onDismiss, onJump }: QuranJumpSheetProps) {
   const theme = useTheme();
   const [surah, setSurah] = useState(initialSurah);

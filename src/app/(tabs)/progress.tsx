@@ -1,13 +1,17 @@
-import { useMemo } from 'react';
+import { useIsFocused } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AyahUnderstandingHistogram } from '@/components/quranki/ayah-understanding-histogram';
+import { MeterBar } from '@/components/quranki/meter-bar';
 import { StatCard } from '@/components/quranki/stat-card';
 import { SurahUnderstandingChart } from '@/components/quranki/surah-understanding-chart';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { useFocusedComputation } from '@/hooks/use-focused-computation';
+import { useFocusedProgressValue } from '@/hooks/use-focused-meter';
 import { useTheme } from '@/hooks/use-theme';
 import { getAllLevelStatuses, getMasteredVocabIds, LEVEL_COUNT, THEMATIC_LEVEL_COUNT, totalMasteredWords, WORD_COUNT, type LevelStatus } from '@/lib/levels';
 import { countMemorizedQuranWords, TOTAL_QURAN_WORDS } from '@/lib/quran-coverage';
@@ -16,70 +20,61 @@ import { computeStreak, formatCount } from '@/lib/stats';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 
-function parseHex(color: string): { r: number; g: number; b: number } | null {
-  const hex = color.replace('#', '');
-  if (hex.length !== 6) return null;
-  return {
-    r: Number.parseInt(hex.slice(0, 2), 16),
-    g: Number.parseInt(hex.slice(2, 4), 16),
-    b: Number.parseInt(hex.slice(4, 6), 16),
-  };
-}
+function LevelCell({
+  status,
+  theme,
+  enabled,
+}: {
+  status: LevelStatus;
+  theme: ReturnType<typeof useTheme>;
+  enabled: boolean;
+}) {
+  const ratio = useFocusedProgressValue(status.totalCount === 0 ? 0 : status.masteredCount / status.totalCount, enabled);
+  const from = theme.backgroundElement;
+  const to = theme.primary;
+  const onPrimary = theme.onPrimary;
+  const text = theme.text;
+  const cellStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(ratio.value, [0, 1], [from, to]),
+  }));
+  const labelStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(ratio.value, [0, 0.45, 0.55, 1], [text, text, onPrimary, onPrimary]),
+  }));
 
-function mixHex(from: string, to: string, t: number): string {
-  const a = parseHex(from);
-  const b = parseHex(to);
-  if (!a || !b) return t >= 1 ? to : from;
-  const m = (x: number, y: number) => Math.round(x + (y - x) * t);
-  return `#${[m(a.r, b.r), m(a.g, b.g), m(a.b, b.b)].map((n) => n.toString(16).padStart(2, '0')).join('')}`;
-}
-
-function renderLevelCell(status: LevelStatus, theme: ReturnType<typeof useTheme>) {
-  const ratio = status.totalCount === 0 ? 0 : status.masteredCount / status.totalCount;
-  // Empty → pale, 3/10 less green than 7/10, full primary when every word is mastered.
-  const cellColor = ratio >= 1 ? theme.primary : mixHex(theme.backgroundElement, theme.primary, ratio);
-  const onDark = ratio >= 0.5;
   return (
-    <View
-      key={status.level.id}
-      style={[styles.gridCell, { backgroundColor: cellColor, borderColor: theme.border }]}>
-      <ThemedText type="small" themeColor={onDark ? 'onPrimary' : 'text'}>
-        {status.level.number}
-      </ThemedText>
-    </View>
+    <Animated.View style={[styles.gridCell, { borderColor: theme.border }, cellStyle]}>
+      <Animated.Text style={[styles.cellLabel, labelStyle]}>{status.level.number}</Animated.Text>
+    </Animated.View>
   );
 }
 
 export default function ProgressScreen() {
   const theme = useTheme();
+  const focused = useIsFocused();
   const progress = useProgressStore((state) => state.progress);
   const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
   const reviewDates = useProgressStore((state) => state.reviewDates);
   const streakGraceDates = useProgressStore((state) => state.streakGraceDates);
   const knownWords = useKnownWordsStore((state) => state.knownWords);
 
-  const now = new Date();
-  const statuses = getAllLevelStatuses(progress, now);
-  const mastered = totalMasteredWords(progress, now);
-  const streak = computeStreak(reviewDates, streakGraceDates, now);
-
-  // "Overall memorization" is real Qur'an text coverage, not just "N of WORD_COUNT vocab items": one
-  // mastered word like "the/that" can single-handedly cover thousands of on-screen occurrences,
-  // so this is a very different (and much more telling) number than the vocab-list stat above.
-  // Unioned with manually-marked-known word ids (see useKnownWordsStore) so a word the user
-  // already recognized outside the FSRS curriculum - which has no flashcard review of its own to
-  // "master" - still counts toward real text coverage here, the same way it already does for
-  // hiding its translation in the reader.
-  const recognizedVocabIds = useMemo(() => {
-    const ids = getMasteredVocabIds(progress);
-    for (const id of Object.keys(knownWords)) ids.add(id);
-    return ids;
-  }, [progress, knownWords]);
-  const memorizedQuranWords = useMemo(() => countMemorizedQuranWords(recognizedVocabIds), [recognizedVocabIds]);
-  const overallProgress = TOTAL_QURAN_WORDS === 0 ? 0 : memorizedQuranWords / TOTAL_QURAN_WORDS;
-  const ayahUnderstanding = useMemo(
-    () => getQuranAyahUnderstandingSummary(recognizedVocabIds),
-    [recognizedVocabIds],
+  const { statuses, mastered, streak, memorizedQuranWords, overallProgress, ayahUnderstanding } = useFocusedComputation(
+    () => {
+      const now = new Date();
+      const statuses = getAllLevelStatuses(progress, now);
+      const mastered = totalMasteredWords(progress, now);
+      const streak = computeStreak(reviewDates, streakGraceDates, now);
+      const ids = getMasteredVocabIds(progress);
+      for (const id of Object.keys(knownWords)) ids.add(id);
+      const memorizedQuranWords = countMemorizedQuranWords(ids);
+      return {
+        statuses,
+        mastered,
+        streak,
+        memorizedQuranWords,
+        overallProgress: TOTAL_QURAN_WORDS === 0 ? 0 : memorizedQuranWords / TOTAL_QURAN_WORDS,
+        ayahUnderstanding: getQuranAyahUnderstandingSummary(ids),
+      };
+    },
   );
 
   return (
@@ -91,7 +86,7 @@ export default function ProgressScreen() {
 
 
           <View style={styles.statsRow}>
-            <StatCard icon="checkmark-done" label="Words mastered" value={`${mastered}/${WORD_COUNT}`}  />
+            <StatCard icon="checkmark-done" label="Words mastered" value={`${mastered}/${WORD_COUNT}`} />
             <StatCard icon="flame" label="Day streak" value={String(streak)} />
             <StatCard icon="albums" label="Level reached" value={`${maxUnlockedLevel}/${LEVEL_COUNT}`} />
           </View>
@@ -104,15 +99,10 @@ export default function ProgressScreen() {
               </ThemedText>
             </View>
             <View style={[styles.progressTrack, { backgroundColor: theme.card }]}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { backgroundColor: theme.primary, width: `${Math.round(overallProgress * 100)}%` },
-                ]}
-              />
+              <MeterBar axis="x" progress={overallProgress} color={theme.primary} enabled={focused} />
             </View>
             <ThemedText type="small" themeColor="textSecondary">
-              {formatCount(memorizedQuranWords)} of {formatCount(TOTAL_QURAN_WORDS)} words in the Qur&apos;an
+              {formatCount(memorizedQuranWords)} of {formatCount(TOTAL_QURAN_WORDS)} words in the Quran
             </ThemedText>
           </View>
 
@@ -124,12 +114,7 @@ export default function ProgressScreen() {
               </ThemedText>
             </View>
             <View style={[styles.progressTrack, { backgroundColor: theme.card }]}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { backgroundColor: theme.primary, width: `${Math.round(ayahUnderstanding.average * 100)}%` },
-                ]}
-              />
+              <MeterBar axis="x" progress={ayahUnderstanding.average} color={theme.primary} enabled={focused} />
             </View>
             <AyahUnderstandingHistogram bins={ayahUnderstanding.histogram} ayahCount={ayahUnderstanding.ayahCount} />
             <ThemedText type="small" themeColor="textSecondary">
@@ -141,7 +126,7 @@ export default function ProgressScreen() {
             <ThemedText type="smallBold">Average surah understanding</ThemedText>
             <SurahUnderstandingChart averages={ayahUnderstanding.surahAverages} />
             <ThemedText type="small" themeColor="textSecondary">
-              Each bar is one surah, in Qur&apos;an order
+              Each bar is one surah, in Quran order
             </ThemedText>
           </View>
 
@@ -149,12 +134,15 @@ export default function ProgressScreen() {
             Levels
           </ThemedText>
           <View style={styles.grid}>
-            {statuses.slice(0, THEMATIC_LEVEL_COUNT).map((status) => renderLevelCell(status, theme))}
+            {statuses.slice(0, THEMATIC_LEVEL_COUNT).map((status) => (
+              <LevelCell key={status.level.id} status={status} theme={theme} enabled={focused} />
+            ))}
             <View style={styles.gridDivider}>
               <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
-             
             </View>
-            {statuses.slice(THEMATIC_LEVEL_COUNT).map((status) => renderLevelCell(status, theme))}
+            {statuses.slice(THEMATIC_LEVEL_COUNT).map((status) => (
+              <LevelCell key={status.level.id} status={status} theme={theme} enabled={focused} />
+            ))}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -197,9 +185,10 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     overflow: 'hidden',
   },
-  progressFill: {
-    height: '100%',
-    borderRadius: Radius.pill,
+  cellLabel: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500',
   },
   sectionLabel: {
     marginTop: -Spacing.two,

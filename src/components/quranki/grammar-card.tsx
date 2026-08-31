@@ -81,7 +81,7 @@ export function GrammarCard({ word }: GrammarCardProps) {
         {example ? (
           <View style={[styles.exampleBox, { backgroundColor: theme.backgroundElement }]}>
             <ThemedText type="smallBold" themeColor="textMuted" style={styles.exampleLabel}>
-              In the Qur&apos;an
+              In the Quran
             </ThemedText>
             <VerseExample word={word} example={example} />
           </View>

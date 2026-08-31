@@ -2,7 +2,7 @@
 # Source: https://github.com/mustafa0x/quran-morphology (fork of https://corpus.quran.com).
 # Original corpus (C) 2011 Kais Dukes, GNU General Public License - see corpus.quran.com for
 # terms of use. Used here at build time only (see scripts/vocab-word-matcher.js) to tag which
-# on-screen Qur'an words correspond to studied vocabulary; not bundled into the shipped app.
+# on-screen Quran words correspond to studied vocabulary; not bundled into the shipped app.
 #
 1:1:1:1	بِ	P	P|PREF|LEM:ب
 1:1:1:2	سْمِ	N	ROOT:سمو|LEM:اسْم|M|GEN

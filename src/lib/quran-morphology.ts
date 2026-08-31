@@ -59,7 +59,7 @@ export function getVocabLemmas(vocabId: string | undefined): VocabLemmaMapping |
   return vocabLemmas[vocabId];
 }
 
-/** How many Qur'an tokens share this corpus lemma (aligned ayahs only). */
+/** How many Quran tokens share this corpus lemma (aligned ayahs only). */
 export function getLemmaOccurrenceCount(lemma: string | undefined): number {
   return getLemmaEntry(lemma)?.count ?? 0;
 }

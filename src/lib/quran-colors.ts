@@ -1,5 +1,5 @@
 /**
- * Color palettes for the Qur'an reader.
+ * Color palettes for the Quran reader.
  *
  * Word-by-word gloss colors are a lighter, decorative categorization of the translation's part
  * of speech (`n` noun, `v` verb, `pn` proper noun, `p` particle, `paren` clarifying aside,

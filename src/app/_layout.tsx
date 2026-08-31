@@ -11,10 +11,10 @@ import { StreakGraceNotice } from '@/components/quranki/streak-grace-notice';
 import { createPaperTheme } from '@/constants/paper-theme';
 import { ArabicFont, Colors, SurahNameFont } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
+import { getStreakReclaimOpportunity } from '@/lib/stats';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 import { useQuranMarksStore } from '@/store/quran-marks-store';
-import { getStreakReclaimOpportunity } from '@/lib/stats';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -103,9 +103,9 @@ export default function RootLayout() {
               <Stack.Screen name="grammar/[id]" options={{ title: 'Grammar', headerBackTitle: 'Levels' }} />
               <Stack.Screen
                 name="quran/[surah]"
-                options={{ title: '', headerBackTitle: "Qur'an", gestureEnabled: false, fullScreenGestureEnabled: false }}
+                options={{ title: '', headerBackTitle: "Quran", gestureEnabled: false, fullScreenGestureEnabled: false }}
               />
-              <Stack.Screen name="saved" options={{ title: 'Saved', headerBackTitle: "Qur'an" }} />
+              <Stack.Screen name="saved" options={{ title: 'Saved', headerBackTitle: "Quran" }} />
               <Stack.Screen name="known-words" options={{ title: 'Known words', headerBackTitle: 'Settings' }} />
               <Stack.Screen
                 name="session/review"

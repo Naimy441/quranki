@@ -27,7 +27,7 @@ export default function TabLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="quran" contentStyle={screenStyle}>
-        <NativeTabs.Trigger.Label>Qur&apos;an</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Quran</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="text.book.closed.fill" md="import_contacts" />
       </NativeTabs.Trigger>
 

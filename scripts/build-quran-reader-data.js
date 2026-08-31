@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * One-off data-prep script for the Qur'an reader.
+ * One-off data-prep script for the Quran reader.
  *
  * Splits the large source JSON blobs (qpc-hafs-tajweed.json,
  * colored-english-wbw-translation.json, quran-metadata-surah-name.json) into:
@@ -18,7 +18,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const { buildVocabMatches, buildLemmaFallbackTags, loadMorphologyStems, collectAffixLocations, citationPhraseTokens, findPhraseRuns, findPartialExampleHits, collectStudyCores, normalizeLight } = require('./vocab-word-matcher');
+const { buildVocabMatches, buildLemmaFallbackTags, loadMorphologyStems, collectAffixLocations, citationPhraseTokens, citationPhraseTokenizations, findPhraseRuns, findPartialExampleHits, collectStudyCores, collectVerbPersonLocations, INDEPENDENT_PRONOUN_BY_PERSON, normalizeLight } = require('./vocab-word-matcher');
 const { verifyAlignment, buildMorphologyIndex, buildVocabLemmaMap, attachMorphology } = require('./corpus-lemma-map');
 
 const ROOT = path.join(__dirname, '..');
@@ -36,7 +36,7 @@ const ARABIC_INDIC_DIGITS = /^[\u0660-\u0669]+$/;
 // active rule wins for any given run of text, and outer rules apply to the rest of their range.
 const TOKEN_RE = /<rule class=(?:"([a-zA-Z_]+)"[^>]*|'([a-zA-Z_]+)'|([a-zA-Z_]+))>|<\/rule>|([^<]+)/g;
 
-// Combining diacritics (harakat, tanween, Qur'anic annotation signs like small high marks)
+// Combining diacritics (harakat, tanween, Quranic annotation signs like small high marks)
 // have no width of their own - they're positioned by the font purely via GPOS mark-to-base
 // attachment onto the glyph before them. The tajweed markup frequently closes/opens a <rule>
 // tag right between a letter and its own trailing mark (e.g. a qalqalah letter tagged alone,
@@ -140,7 +140,7 @@ function main() {
   let bismillahWords = null;
   const ayahsBySurah = new Map();
   // Built up across every surah so word-family matching (see vocab-word-matcher.js) can expand a
-  // single study word to every Qur'an occurrence sharing its root, wherever in the muṣḥaf it is.
+  // single study word to every Quran occurrence sharing its root, wherever in the muṣḥaf it is.
   const surfaceByLocation = new Map();
   const ayahWordOrder = new Map();
 
@@ -269,10 +269,10 @@ function main() {
     const outPath = path.join(SURAHS_OUT_DIR, `${String(surahNumber).padStart(3, '0')}.json`);
     fs.writeFileSync(outPath, JSON.stringify(ayahs));
   }
-  console.log(`Tagged ${taggedCount} of ${surfaceByLocation.size} Qur'an words with a vocabulary id.`);
+  console.log(`Tagged ${taggedCount} of ${surfaceByLocation.size} Quran words with a vocabulary id.`);
 
   // How many times each vocab id (curated study word OR generated lemma id) actually occurs
-  // across the whole Qur'an - lets the app show "X of the Qur'an's Y words are ones you know"
+  // across the whole Quran - lets the app show "X of the Quran's Y words are ones you know"
   // (real text coverage) rather than just "X of 547 vocab items mastered" (see
   // src/lib/quran-coverage.ts), and lets the reader show "appears N times" when a user marks an
   // arbitrary word as known.
@@ -364,6 +364,10 @@ function main() {
   function packExample(s, a, p, n, ayah, hits) {
     const idx = ayah.w.findIndex((word) => word.p === p);
     if (idx < 0) return null;
+    const toIndex = (wordP) => {
+      const found = ayah.w.findIndex((word) => word.p === wordP);
+      return found >= 0 ? found + 1 : wordP;
+    };
     const example = {
       s,
       a,
@@ -371,7 +375,8 @@ function main() {
       w: ayah.w.map((word) => word.ar.map((seg) => seg.t).join('')),
       tr: ayahPlainTranslation(ayah).slice(0, 180),
     };
-    if (hits && hits.length > 1) example.hits = hits;
+    const hitIndexes = (hits ?? []).map(toIndex).filter((pos, i, arr) => arr.indexOf(pos) === i);
+    if (hitIndexes.length > 1) example.hits = hitIndexes;
     else if (n > 1) example.n = n;
     return example;
   }
@@ -389,17 +394,25 @@ function main() {
         best = { s, a, p, n, ayah, hits };
       }
     }
-    return best ? packExample(best.s, best.a, best.p, best.n, best.ayah, best.hits) : null;
+    return best;
   }
 
   const studyCores = collectStudyCores(studyById);
+  const personByIndependentId = Object.fromEntries(
+    Object.entries(INDEPENDENT_PRONOUN_BY_PERSON).map(([person, id]) => [id, person]),
+  );
   const vocabExamples = {};
   for (const [id, study] of studyById) {
     if (study.kind === 'grammar') continue;
-    const locations = locationsByVocabId.get(id) ?? [];
-    const tokens = citationPhraseTokens(study.arabic ?? '');
-    const phraseRuns =
-      tokens.length > 1 ? findPhraseRuns(tokens, ayahWordOrder, surfaceByLocation, stemByLocation) : [];
+    const locations = [...(locationsByVocabId.get(id) ?? [])];
+    const person = personByIndependentId[id];
+    if (person && locations.length === 0 && study.exampleVerse) {
+      locations.push(...collectVerbPersonLocations(stemByLocation, person, study.arabic));
+    }
+    const phraseRuns = [];
+    for (const tokens of citationPhraseTokenizations(study)) {
+      phraseRuns.push(...findPhraseRuns(tokens, ayahWordOrder, surfaceByLocation, stemByLocation));
+    }
     const preferred = study.exampleVerse;
 
     const fromRun = (run, bonus) => {
@@ -415,29 +428,61 @@ function main() {
       return { s, a, p, n, ayah, bonus };
     };
 
-    let picked = null;
+    const hitsInAyah = (s, a) => {
+      const prefix = `${s}:${a}:`;
+      const positions = new Set();
+      for (const loc of locations) {
+        if (loc.startsWith(prefix)) positions.add(Number(loc.split(':')[2]));
+      }
+      for (const run of phraseRuns) {
+        if (!run.loc.startsWith(prefix)) continue;
+        const start = Number(run.loc.split(':')[2]);
+        for (let i = 0; i < run.n; i += 1) positions.add(start + i);
+        for (const hit of run.hits ?? []) positions.add(hit);
+      }
+      const inAyah = findPartialExampleHits(
+        study,
+        studyCores,
+        ayahWordOrder,
+        surfaceByLocation,
+        stemByLocation,
+        prefix,
+      );
+      for (const run of inAyah) {
+        positions.add(Number(run.loc.split(':')[2]));
+        for (const hit of run.hits ?? []) positions.add(hit);
+      }
+      return [...positions].sort((x, y) => x - y);
+    };
+
+    let best = null;
     if (preferred) {
       const inAyah = (item) => item.s === preferred.s && item.a === preferred.a;
-      picked = pickFromCandidates(phraseRuns.map((run) => fromRun(run, 80)).filter(inAyah), study);
-      if (!picked) {
+      best = pickFromCandidates(phraseRuns.map((run) => fromRun(run, 80)).filter(inAyah), study);
+      if (!best) {
         const locPrefix = `${preferred.s}:${preferred.a}:`;
-        picked = pickFromCandidates(
+        best = pickFromCandidates(
           locations.filter((loc) => loc.startsWith(locPrefix)).map((loc) => fromLoc(loc, 80)),
           study,
         );
       }
     }
-    if (!picked && phraseRuns.length > 0) {
-      picked = pickFromCandidates(phraseRuns.map((run) => fromRun(run, 50)), study);
+    if (!best && phraseRuns.length > 0) {
+      best = pickFromCandidates(phraseRuns.map((run) => fromRun(run, 50)), study);
     }
-    if (!picked) {
-      picked = pickFromCandidates(locations.map((loc) => fromLoc(loc, 0)), study);
+    if (!best) {
+      best = pickFromCandidates(locations.map((loc) => fromLoc(loc, 0)), study);
     }
-    if (!picked) {
+    if (!best) {
       const partial = findPartialExampleHits(study, studyCores, ayahWordOrder, surfaceByLocation, stemByLocation);
-      picked = pickFromCandidates(partial.map((run) => fromRun(run, 15)), study);
+      best = pickFromCandidates(partial.map((run) => fromRun(run, 15)), study);
     }
-    if (picked) vocabExamples[id] = picked;
+    if (best) {
+      const extraHits = hitsInAyah(best.s, best.a);
+      const hits = extraHits.length > 1 ? extraHits : best.hits;
+      const packed = packExample(best.s, best.a, best.p, best.n, best.ayah, hits);
+      if (packed) vocabExamples[id] = packed;
+    }
   }
   for (const [id, ofId] of exampleOfById) {
     if (!vocabExamples[id] && vocabExamples[ofId]) vocabExamples[id] = vocabExamples[ofId];

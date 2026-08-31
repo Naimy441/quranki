@@ -651,6 +651,17 @@ export function skipPreviousAyah(): void {
 }
 
 export function stopRecitation(): void {
+  const recitation = useRecitationStore.getState();
+  if (
+    !player &&
+    !wantPlaying &&
+    !downloadAbort &&
+    !recitation.visible &&
+    !recitation.playing &&
+    !recitation.awaitingAudio
+  ) {
+    return;
+  }
   requestSeq += 1;
   playerEpoch += 1;
   wantPlaying = false;

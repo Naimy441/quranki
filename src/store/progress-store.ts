@@ -1,28 +1,28 @@
 import { create } from 'zustand';
 
 import {
-  createNewCard,
-  deserializeCard,
-  gradeCard,
-  isWordMastered,
-  serializeCard,
-  State,
-  type Card,
-  type GradeName,
+    createNewCard,
+    deserializeCard,
+    gradeCard,
+    isWordMastered,
+    serializeCard,
+    State,
+    type Card,
+    type GradeName,
 } from '@/lib/fsrs';
-import { computeReachedLevel, getLevel, getWord, LAST_LEVEL_NUMBER, LEVELS, type ProgressMap, type WordProgress } from '@/lib/levels';
+import { computeReachedLevel, getLevel, getWord, LAST_LEVEL_NUMBER, LEVELS, nextReachedLevel, type ProgressMap, type WordProgress } from '@/lib/levels';
 import { getStreakReclaimOpportunity } from '@/lib/stats';
 import {
-  clampWordsPerSession,
-  DEFAULT_META,
-  DEFAULT_SETTINGS,
-  loadMetaAsync,
-  loadProgressAsync,
-  loadSettingsAsync,
-  saveMetaAsync,
-  saveProgressAsync,
-  saveSettingsAsync,
-  type Settings,
+    clampWordsPerSession,
+    DEFAULT_META,
+    DEFAULT_SETTINGS,
+    loadMetaAsync,
+    loadProgressAsync,
+    loadSettingsAsync,
+    saveMetaAsync,
+    saveProgressAsync,
+    saveSettingsAsync,
+    type Settings,
 } from '@/lib/storage';
 
 interface ProgressState {
@@ -37,7 +37,7 @@ interface ProgressState {
   reviewsToday: number;
   newCardsToday: number;
   onboardingCompleted: boolean;
-  /** In-memory peek counts for the Qur'an reader (not persisted). A hidden word's first reveal
+  /** In-memory peek counts for the Quran reader (not persisted). A hidden word's first reveal
    *  is a free hint; the second reveal of that same vocab id lapses it. Cleared when the word
    *  is graded in a real review. */
   readerPeeks: Record<string, number>;
@@ -173,7 +173,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       reclaimableStreak > 0 && !state.streakGraceDates.includes(missedDay)
         ? [...state.streakGraceDates, missedDay]
         : state.streakGraceDates;
-    const nextMaxUnlockedLevel = computeReachedLevel(nextProgress);
+    const nextMaxUnlockedLevel = nextReachedLevel(nextProgress, state.maxUnlockedLevel);
     const countsAsDailyReview = existing !== undefined && card.state === State.Review;
     const isNewIntroduction = existing === undefined && getWord(wordId)?.kind !== 'grammar';
     const reviewsToday = (state.reviewCountDate === key ? state.reviewsToday : 0) + (countsAsDailyReview ? 1 : 0);
@@ -258,7 +258,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   },
 
   /** Dev-only helper: instantly marks every word as mastered (Review state, last grade "good",
-   *  due 30 days out) without playing through real reviews - lets the Qur'an reader's word-hiding
+   *  due 30 days out) without playing through real reviews - lets the Quran reader's word-hiding
    *  feature be tested without grinding through the full curriculum. Not exposed in production. */
   masterAllWords: () => {
     const now = new Date();
@@ -291,7 +291,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   },
 
   /** Called when a curated study word (one matching the 547-word id pattern) is marked "known"
-   *  in the Qur'an reader (see useKnownWordsStore) - fabricates the same kind of Review-state,
+   *  in the Quran reader (see useKnownWordsStore) - fabricates the same kind of Review-state,
    *  due-in-30-days progress entry as `masterAllWords`, but for one word and tagged
    *  `autoMastered: true` so it can be safely undone later. Never overwrites *real* mastery
    *  (a card already in Review state from an actual Good/Easy grade) - marking a word you

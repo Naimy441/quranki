@@ -6,28 +6,28 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChoiceGrid } from '@/components/quranki/choice-grid';
 import {
-  OnboardingAyahPreview,
-  OnboardingCoveragePreview,
-  OnboardingFlashPreview,
-  OnboardingIntentionPreview,
-  OnboardingTapHint,
+    OnboardingAyahPreview,
+    OnboardingCoveragePreview,
+    OnboardingFlashPreview,
+    OnboardingIntentionPreview,
+    OnboardingTapHint,
 } from '@/components/quranki/onboarding-visuals';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
-import { playWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
 import {
-  getCoverageThroughLevel,
-  LAST_LEVEL_NUMBER,
-  LEVELS,
-  THEMATIC_LEVEL_COUNT,
-  THEMATIC_WORD_COUNT,
-  WORD_COUNT,
+    getCoverageThroughLevel,
+    LAST_LEVEL_NUMBER,
+    LEVELS,
+    THEMATIC_LEVEL_COUNT,
+    THEMATIC_WORD_COUNT,
+    WORD_COUNT,
 } from '@/lib/levels';
 import { formatCount } from '@/lib/stats';
 import { DEFAULT_SETTINGS } from '@/lib/storage';
+import { playWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
 import { useProgressStore } from '@/store/progress-store';
 
 const DEMO_WORD = LEVELS[0].words[0];
@@ -45,7 +45,7 @@ function coverageCopy(): { title: string; body: string } {
   const extra = full.percent - core.percent;
   return {
     title: 'A little goes far',
-    body: `The first ${formatCount(THEMATIC_WORD_COUNT)} words cover ${core.percent}% of the Qur'an. Going on to ${formatCount(WORD_COUNT)} adds another ${extra}% — ${full.percent}% in all.`,
+    body: `The first ${formatCount(THEMATIC_WORD_COUNT)} words cover ${core.percent}% of the Quran. Going on to ${formatCount(WORD_COUNT)} adds another ${extra}% — ${full.percent}% in all.`,
   };
 }
 

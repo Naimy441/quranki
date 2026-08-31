@@ -5,15 +5,15 @@
 <h1 align="center">Quranki</h1>
 
 <p align="center">
-  Learn Qur'anic vocabulary with spaced repetition, and read the Qur'an word-by-word with Tajweed coloring.
+  Learn Quranic vocabulary with spaced repetition, and read the Quran word-by-word with Tajweed coloring.
 </p>
 
 ## What is Quranki?
 
 Quranki is a React Native (Expo) app with two parts:
 
-1. **Vocabulary trainer** — An Anki-style spaced repetition system for the most frequent words in the Qur'an, split into 47 progressive levels. Each word is scheduled with the [FSRS](https://github.com/open-spaced-repetition/ts-fsrs) algorithm (Again / Hard / Good / Easy), so review timing adapts to how well you actually know each word.
-2. **Qur'an reader** — Browse and read all 114 surahs, ayah by ayah, with word-by-word Tajweed-colored Arabic, word-by-word English gloss, and full ayah translations (Sahih International, with expandable footnotes). Words you've already mastered in the trainer are hidden from the word-by-word translation until you tap them, turning the reader into a live comprehension check.
+1. **Vocabulary trainer** — An Anki-style spaced repetition system for the most frequent words in the Quran, split into 141 progressive levels. Each word is scheduled with the [FSRS](https://github.com/open-spaced-repetition/ts-fsrs) algorithm (Again / Hard / Good / Easy), so review timing adapts to how well you actually know each word.
+2. **Quran reader** — Browse and read all 114 surahs, ayah by ayah, with word-by-word Tajweed-colored Arabic, word-by-word English gloss, and full ayah translations (Sahih International, with expandable footnotes). Words you've already mastered in the trainer are hidden from the word-by-word translation until you tap them, turning the reader into a live comprehension check.
 
 ## Features
 
@@ -21,10 +21,10 @@ Quranki is a React Native (Expo) app with two parts:
 - **47-level curriculum** — new vocabulary is introduced level by level; levels are recommended, not hard-gated, so review is never blocked.
 - **Configurable session size** — choose how many new words to study per session.
 - **Text-to-speech playback** for Arabic pronunciation, plus haptic feedback on grading.
-- **Full Qur'an reader** with Tajweed-colored Arabic (Uthmanic Hafs V18 font), word-by-word gloss, ayah translations, and expandable footnotes.
+- **Full Quran reader** with Tajweed-colored Arabic (Uthmanic Hafs V18 font), word-by-word gloss, ayah translations, and expandable footnotes.
 - **Fluid swipe navigation** between surahs with adjacent-surah preloading.
 - **Adjustable font sizes** for Arabic and translation text, independently.
-- **Progress dashboard** — streaks, per-level mastery, and overall Qur'an memorization coverage (how many actual words of the Qur'an text you've learned, not just unique vocabulary).
+- **Progress dashboard** — streaks, per-level mastery, and overall Quran memorization coverage (how many actual words of the Quran text you've learned, not just unique vocabulary).
 - **Fully local & offline** — progress is stored on-device with AsyncStorage; no account or network connection required.
 
 ## Tech stack
@@ -34,7 +34,7 @@ Quranki is a React Native (Expo) app with two parts:
 - [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs) for spaced repetition scheduling
 - [Zustand](https://github.com/pmndrs/zustand) for app state
 - [React Native Paper](https://reactnativepaper.com/) (Material Design 3 components)
-- `react-native-reanimated` + `react-native-gesture-handler` for the swipeable Qur'an reader
+- `react-native-reanimated` + `react-native-gesture-handler` for the swipeable Quran reader
 - `@react-native-async-storage/async-storage` for local persistence
 - `expo-audio`, `expo-haptics`, `expo-font`
 
@@ -66,11 +66,11 @@ Quranki is a React Native (Expo) app with two parts:
 ```
 src/
   app/                    # Expo Router screens (file-based routing)
-    (tabs)/               # Learn / Qur'an / Progress / Settings tabs
+    (tabs)/               # Learn / Quran / Progress / Settings tabs
     level/[id].tsx         # Level detail (word list before starting a session)
     session/[id].tsx       # Study session (new level or practice)
     session/review.tsx     # Global FSRS review queue
-    quran/[surah].tsx       # Qur'an reader (swipeable surah pager)
+    quran/[surah].tsx       # Quran reader (swipeable surah pager)
   components/
     quranki/               # Flash card, grading buttons, level card, stat card, etc.
     quran/                  # Ayah block, word cell, tajweed rendering, settings sheet, footnotes
@@ -79,22 +79,22 @@ src/
     levels.ts               # Level/curriculum helpers, unlock logic
     storage.ts               # AsyncStorage persistence layer
     quran-reader.ts, quran-colors.ts, quran-reader-types.ts
-    quran-coverage.ts        # Qur'an-wide memorization coverage stats
+    quran-coverage.ts        # Quran-wide memorization coverage stats
     stats.ts                 # Streak/formatting helpers
   store/
     progress-store.ts        # Zustand store for progress + settings
   data/
-    quranic-words.json        # The 47-level vocabulary curriculum
-    quran/                     # Per-surah Qur'an text, generated by scripts/build-quran-reader-data.js
+    quranic-words.json        # The 141-level vocabulary curriculum
+    quran/                     # Per-surah Quran text, generated by scripts/build-quran-reader-data.js
     qpc-hafs-tajweed.json, en-sahih-international-with-footnote-tags.json, ...
 scripts/
-  build-quran-reader-data.js  # Preprocesses raw Qur'an data into src/data/quran/
-  vocab-word-matcher.js       # Matches studied vocabulary to Qur'an occurrences for word-hiding + coverage stats
+  build-quran-reader-data.js  # Preprocesses raw Quran data into src/data/quran/
+  vocab-word-matcher.js       # Matches studied vocabulary to Quran occurrences for word-hiding + coverage stats
 ```
 
 ## Data pipeline
 
-The Qur'an reader and word-hiding feature depend on generated data files. If you change the source JSON in `src/data/`, regenerate them with:
+The Quran reader and word-hiding feature depend on generated data files. If you change the source JSON in `src/data/`, regenerate them with:
 
 ```bash
 node scripts/build-quran-reader-data.js
@@ -116,10 +116,10 @@ This rebuilds `src/data/quran/surahs/*.json`, `src/data/quran/surah-index.json`,
 
 Quranki wouldn't exist without the following open resources:
 
-- **[80% of Qur'anic Words](https://www.kalamullah.com/80-percent-of-quranic-words.html)** by Dr. AbdulAzeez AbdulRaheem — the classified word list (covering ~82.6% of the Qur'an's total word count) that Quranki's vocabulary curriculum is ultimately based on.
+- **[80% of Quranic Words](https://www.kalamullah.com/80-percent-of-quranic-words.html)** by Dr. AbdulAzeez AbdulRaheem — the classified word list (covering ~82.6% of the Quran's total word count) that Quranki's vocabulary curriculum is ultimately based on.
 - **[80 Percent Quranic Words](https://ankiweb.net/shared/info/1905238053)** on AnkiWeb — the Anki deck adaptation of the above word list. This deck, not the original word list document, is the actual source Quranki's 47-level curriculum (`src/data/quranic-words.json`) was built from — its pre-split, per-card level tagging was far easier to extract programmatically than parsing the source PDF/list, and it's also what inspired Quranki's spaced-repetition approach to teaching the words in the first place.
-- **[Quranic Arabic Corpus](https://corpus.quran.com/)** by Kais Dukes — the word-by-word morphological segmentation and grammatical tagging (part of speech, lemma, root) that `scripts/vocab-word-matcher.js` uses to reliably match studied vocabulary to every occurrence of that word across the Qur'an, via the [Arabic-script transliteration](https://github.com/mustafa0x/quran-morphology) of Corpus v0.4 (`scripts/data/quran-morphology.txt`, kept verbatim as downloaded, GNU GPL).
-- **[Quranic Universal Library (QUL)](https://qul.tarteel.ai/)** by [Tarteel AI](https://www.tarteel.ai/) — the source of the Qur'an text, Tajweed rules (`qpc-hafs-tajweed.json`), word-by-word and ayah translations, and morphology/grammar data that power the Qur'an reader and vocabulary-matching pipeline.
+- **[Quranic Arabic Corpus](https://corpus.quran.com/)** by Kais Dukes — the word-by-word morphological segmentation and grammatical tagging (part of speech, lemma, root) that `scripts/vocab-word-matcher.js` uses to reliably match studied vocabulary to every occurrence of that word across the Quran, via the [Arabic-script transliteration](https://github.com/mustafa0x/quran-morphology) of Corpus v0.4 (`scripts/data/quran-morphology.txt`, kept verbatim as downloaded, GNU GPL).
+- **[Quranic Universal Library (QUL)](https://qul.tarteel.ai/)** by [Tarteel AI](https://www.tarteel.ai/) — the source of the Quran text, Tajweed rules (`qpc-hafs-tajweed.json`), word-by-word and ayah translations, and morphology/grammar data that power the Quran reader and vocabulary-matching pipeline.
 
 May Allah reward everyone who worked on these resources and made them freely available.
 

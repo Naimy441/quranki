@@ -35,7 +35,7 @@ export interface WordProgress {
   lastGrade: GradeName | null;
   reviewedAt: string;
   /** True only when this progress entry was fabricated by marking the word "known" in the
-   *  Qur'an reader (see useKnownWordsStore), rather than earned through a real flashcard review.
+   *  Quran reader (see useKnownWordsStore), rather than earned through a real flashcard review.
    *  Lets "forget this word" safely undo *only* that fabricated mastery - a real review always
    *  writes a fresh entry without this flag, so genuine progress is never at risk of being wiped
    *  by an unrelated "forget" action. */
@@ -46,7 +46,7 @@ export type ProgressMap = Record<string, WordProgress>;
 
 const data = quranicWordsData as { deck: string; levelCount: number; wordCount: number; levels: Level[] };
 
-function isStudyWord(word: Word): boolean {
+export function isStudyWord(word: Word): boolean {
   return word.kind !== 'grammar';
 }
 
@@ -75,7 +75,7 @@ for (const level of LEVELS) {
 }
 
 export interface LevelCoverage {
-  /** Qur'an tokens covered if every study word through this level is known. */
+  /** Quran tokens covered if every study word through this level is known. */
   quranWords: number;
   percent: number;
 }
@@ -93,7 +93,7 @@ const coverageThroughLevel: LevelCoverage[] = [];
   }
 }
 
-/** Qur'an-text coverage the learner would have after mastering every word through `levelNumber`. */
+/** Quran-text coverage the learner would have after mastering every word through `levelNumber`. */
 export function getCoverageThroughLevel(levelNumber: number): LevelCoverage {
   return coverageThroughLevel[levelNumber] ?? { quranWords: 0, percent: 0 };
 }
@@ -122,7 +122,7 @@ export interface WordState {
   isMastered: boolean;
 }
 
-/** Study word ids whose translations should start hidden in the Qur'an reader: anything the
+/** Study word ids whose translations should start hidden in the Quran reader: anything the
  *  learner is supposed to know (Review or Learning), but not New or Relearning. Distinct from
  *  `getMasteredVocabIds`, which is the stricter Good/Easy graduation used for stats and unlocks. */
 export function getHiddenVocabIds(progressMap: ProgressMap): Set<string> {
@@ -204,13 +204,19 @@ function isLevelFullyMastered(level: Level, progressMap: ProgressMap): boolean {
 
 /** The learner's current level: the first level that is not yet fully mastered, after a
  *  consecutive prefix of completed levels. Isolated words (including ones marked known in the
- *  Qur'an reader) do not skip ahead — only finishing every study word in level 1, then 2, and
+ *  Quran reader) do not skip ahead — only finishing every study word in level 1, then 2, and
  *  so on, advances this. Display-only; levels are not a gate on new cards. */
 export function computeReachedLevel(progressMap: ProgressMap): number {
   for (const level of LEVELS) {
     if (!isLevelFullyMastered(level, progressMap)) return Math.max(level.number, 1);
   }
   return Math.max(LAST_LEVEL_NUMBER, 1);
+}
+
+/** Displayed level only moves forward from reviews. A lapse (Again) must not pull it back;
+ *  forgetting an auto-mastered word still uses `computeReachedLevel` directly. */
+export function nextReachedLevel(progressMap: ProgressMap, currentMax: number): number {
+  return Math.max(currentMax, computeReachedLevel(progressMap));
 }
 
 /** The first level that still has an unseen word - where sequential new-card introduction is
@@ -260,6 +266,7 @@ export function getUpcomingLearning(progressMap: ProgressMap, now: Date): Upcomi
   let count = 0;
   for (const level of LEVELS) {
     for (const word of level.words) {
+      if (!isStudyWord(word)) continue;
       const state = getWordState(word, progressMap, now);
       if (!state.progress) continue;
       const card = deserializeCard(state.progress.card);
@@ -282,6 +289,9 @@ export function getUpcomingLearning(progressMap: ProgressMap, now: Date): Upcomi
  * today. Grammar intros in that same stretch are included for free so they don't consume the
  * new-word quota. Levels never lock new cards - they are only the insertion order. Reviews
  * never consume the new-word quota.
+ *
+ * The new-card cap is the default day's batch, not a hard stop: pass `ignoreNewCardCap` when
+ * the learner explicitly starts another session after finishing today's.
  */
 export function buildGlobalSessionQueue(
   progressMap: ProgressMap,
@@ -289,9 +299,12 @@ export function buildGlobalSessionQueue(
   wordsPerSession: number,
   reviewsAlreadyToday: number = 0,
   newCardsAlreadyToday: number = 0,
+  ignoreNewCardCap: boolean = false,
 ): SessionWord[] {
   const remainingReviewSlots = Math.max(0, DAILY_REVIEW_LIMIT - reviewsAlreadyToday);
-  const remainingNewSlots = Math.max(0, wordsPerSession - newCardsAlreadyToday);
+  const remainingNewSlots = ignoreNewCardCap
+    ? wordsPerSession
+    : Math.max(0, wordsPerSession - newCardsAlreadyToday);
   const learning: (SessionWord & { dueTime: number })[] = [];
   const reviews: (SessionWord & { dueTime: number })[] = [];
   const fresh: SessionWord[] = [];
@@ -299,6 +312,10 @@ export function buildGlobalSessionQueue(
   for (const level of LEVELS) {
     for (const word of level.words) {
       const state = getWordState(word, progressMap, now);
+      if (!isStudyWord(word)) {
+        if (state.isNew) fresh.push({ word, levelNumber: level.number, reason: 'new' });
+        continue;
+      }
       if (isLearningDue(state)) {
         learning.push({ word, levelNumber: level.number, reason: 'due', dueTime: cardDueTime(state) });
       } else if (isReviewDue(state)) {
@@ -349,6 +366,7 @@ export function totalDueWords(progressMap: ProgressMap, now: Date): number {
   let count = 0;
   for (const level of LEVELS) {
     for (const word of level.words) {
+      if (!isStudyWord(word)) continue;
       const state = getWordState(word, progressMap, now);
       if (state.isDue) count += 1;
     }

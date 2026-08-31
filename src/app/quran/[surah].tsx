@@ -12,8 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AyahMarkSheet } from '@/components/quran/ayah-mark-sheet';
 import { QuranJumpSheet } from '@/components/quran/quran-jump-sheet';
-import { RecitationPlayer } from '@/components/quran/recitation-player';
 import { ReaderSettingsSheet } from '@/components/quran/reader-settings-sheet';
+import { RecitationPlayer } from '@/components/quran/recitation-player';
 import { SurahPage } from '@/components/quran/surah-page';
 import { WordDetailSheet } from '@/components/quran/word-detail-sheet';
 import { ThemedView } from '@/components/themed-view';
@@ -212,7 +212,7 @@ export default function SurahReaderScreen() {
       <Stack.Screen
         options={{
           title: displayedHeaderMeta.tr,
-          headerBackTitle: "Qur'an",
+          headerBackTitle: "Quran",
           headerTitle: () => (
             <Text numberOfLines={1} style={[styles.headerTitle, { color: theme.text }]}>{displayedHeaderMeta.tr}</Text>
           ),

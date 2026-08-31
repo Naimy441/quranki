@@ -212,14 +212,14 @@
         {
           "isSuffix": true,
           "arabic": "هُمْ",
-          "english": "their (attached, masculine)",
+          "english": "their, them (attached, masculine)",
           "id": "03-006",
           "note": "Not a standalone word - it attaches to the end of a noun (or verb)."
         },
         {
           "isSuffix": true,
           "arabic": "هُنَّ",
-          "english": "their (attached, feminine)",
+          "english": "their, them (attached, feminine)",
           "id": "03-007",
           "note": "Not a standalone word - it attaches to the end of a noun (or verb)."
         },
@@ -247,7 +247,7 @@
         {
           "isSuffix": true,
           "arabic": "هُمَا",
-          "english": "their (attached, dual)",
+          "english": "their, them (attached, dual)",
           "id": "03-011",
           "note": "Not a standalone word - it attaches to the end of a noun (or verb)."
         },
@@ -309,7 +309,12 @@
         {
           "arabic": "أَنْتُنَّ",
           "english": "you (female plural)",
-          "id": "04-009"
+          "id": "04-009",
+          "note": "Does not appear as its own word in the Quran; the example shows the feminine-plural \"you\" on a verb.",
+          "exampleVerse": {
+            "s": 33,
+            "a": 32
+          }
         },
         {
           "arabic": "نَحْنُ",
@@ -349,18 +354,30 @@
             "بَيْنَ أَيْدِي",
             "بَيْنَ يَدَيْ"
           ],
-          "english": "in front of",
-          "id": "05-003"
+          "english": "before / in the presence of",
+          "id": "05-003",
+          "exampleVerse": {
+            "s": 25,
+            "a": 48
+          }
         },
         {
           "arabic": "خَلْفَ",
           "english": "back, after",
-          "id": "05-004"
+          "id": "05-004",
+          "exampleVerse": {
+            "s": 19,
+            "a": 59
+          }
         },
         {
           "arabic": "أَمَامَ",
-          "english": "in front of",
-          "id": "05-005"
+          "english": "ahead of / in front of",
+          "id": "05-005",
+          "exampleVerse": {
+            "s": 75,
+            "a": 5
+          }
         },
         {
           "arabic": "وَرَاء",
@@ -1348,7 +1365,7 @@
         },
         {
           "arabic": "قُرْآن",
-          "english": "Qur'an, reading, recitation",
+          "english": "Quran, reading, recitation",
           "id": "18-003"
         },
         {
@@ -7899,9 +7916,13 @@
       "words": [
         {
           "arabic": "أَنَّى",
-          "english": "how",
+          "english": "how, wherever",
           "variant": "اَنَّي",
-          "id": "105-007"
+          "id": "105-007",
+          "exampleVerse": {
+            "s": 44,
+            "a": 13
+          }
         },
         {
           "arabic": "كَي",

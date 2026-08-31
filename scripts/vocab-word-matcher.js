@@ -1,19 +1,19 @@
 /**
  * Matches Quranki's study words/phrases (src/data/quranic-words.json) against every word of
- * the Qur'an, so the reader can know which on-screen words the user has already studied - and
+ * the Quran, so the reader can know which on-screen words the user has already studied - and
  * later, whether they've mastered them - in order to hide/reveal their word-by-word translation.
  *
  * A citation-form vocabulary word (e.g. the verb "هَدَى") doesn't literally reappear everywhere
  * it's relevant - Arabic morphology means the same word surfaces as many different letter
  * sequences ("يَهْدِى", "اهْتَدَىٰ", "هُدًى", "مُهْتَدٍ", ...), and nouns are almost always fused
- * with a leading "ال" or other single-letter prefixes with no space ("الشَّمْس" is one Qur'an
+ * with a leading "ال" or other single-letter prefixes with no space ("الشَّمْس" is one Quran
  * word, not "شَمْس" with a separate "ال"). Simple diacritic-insensitive string matching alone
  * only reaches ~20k of the deck's documented 64,282-word coverage for exactly this reason.
  *
- * To close that gap, this uses the Qur'anic Arabic Corpus's morphological segmentation
+ * To close that gap, this uses the Quranic Arabic Corpus's morphological segmentation
  * (scripts/data/quran-morphology.txt, from https://github.com/mustafa0x/quran-morphology, an
  * Arabic-script transliteration of the Quranic Arabic Corpus v0.4, (c) Kais Dukes, GNU GPL -
- * kept verbatim as downloaded, see its header for the license/attribution terms): every Qur'an
+ * kept verbatim as downloaded, see its header for the license/attribution terms): every Quran
  * word is pre-split into prefix/stem/suffix segments, and each stem segment is tagged with its
  * dictionary LEMMA and (usually) its ROOT.
  *
@@ -40,7 +40,7 @@
  *      token isn't *also* the heavy form of some other, distinct study word - an ambiguous
  *      fallback is dropped rather than guessed at.
  *
- * After seeding, a lemma-completion pass tags every remaining Qur'an word that shares a study
+ * After seeding, a lemma-completion pass tags every remaining Quran word that shares a study
  * word's dominant corpus lemma. Hiding a word in the reader is keyed on that study id, so this
  * is what makes "I already know this" cover every inflection of the same dictionary word
  * ("المبينِ", "مبيناً", "مبينون") without also swallowing unrelated derivatives that happen to
@@ -51,7 +51,7 @@
  * several senses of "ما", stay split by their own surface matches instead.
  *
  * A handful of study words are citation *phrases* rather than single words (e.g. "بَيْنَ يَدَيْ"
- * "in front of") - these are never matched as a contiguous run of adjacent Qur'an words. Instead,
+ * "in front of") - these are never matched as a contiguous run of adjacent Quran words. Instead,
  * each space-separated word in the citation is registered as its own ordinary single-word
  * candidate under the same id (see loadStudyForms), so a learner who recognizes just one piece of
  * the phrase has it hidden everywhere *that* word appears. Because a split-off word like that is
@@ -69,7 +69,7 @@ const MORPHOLOGY_PATH = path.join(__dirname, 'data', 'quran-morphology.txt');
 
 const ALEF_FAMILY = '\u0627\u0622\u0623\u0625\u0671';
 
-/** Study words that share citation text but are different vocabulary. The Qur'anic Arabic Corpus
+/** Study words that share citation text but are different vocabulary. The Quranic Arabic Corpus
  *  tags each occurrence with a feature the deck's own English glosses map onto - without this,
  *  the earlier card swallows every spelling-identical hit (or a shadda-only surface like 2:29's
  *  "مَّا" "what" is left untagged because loose matching refuses to pick a winner). */
@@ -120,6 +120,10 @@ const FEATURE_SENSE = {
   // بَدَأ "originate" vs بَدَا "appear": alef-hamza folds to alef, so the surfaces collide.
   '61-012': (stem) => stem.rawRoot === 'بدأ',
   '63-012': (stem) => stem.rawRoot === 'بدو',
+  // أَمَامَ "in front of" vs إِمام "leader": same letters once hamza/vowels fold, but the
+  // corpus lemmas stay distinct. Without this split the noun card swallows 75:5's أَمَامَهُ.
+  '05-005': (stem) => lemmaIs(stem, 'أَمام'),
+  '108-005': (stem) => lemmaIs(stem, 'إِمام'),
 };
 
 /** Independent personal pronouns in the corpus are tagged PRON + person, with no LEM - so the
@@ -348,7 +352,7 @@ function stripFinalCaseVowel(text) {
 }
 
 /** Spelling-variant-only cleanup shared by both normalization tiers: strips tatweel/joiners and
- *  Qur'anic annotation marks, and unifies letters that are typically written inconsistently
+ *  Quranic annotation marks, and unifies letters that are typically written inconsistently
  *  between "clean" dictionary text and the Uthmani mushaf script for the same word (hamza-seat
  *  and alef variants, dagger alif, alef maksura vs. yeh) - without touching stem-internal short
  *  vowels. */
@@ -370,7 +374,7 @@ function normalizeLight(text) {
           // instead would silently drop the very letter it sits on out of the normalized text
           // entirely (see e.g. "بَيْنَ" losing its ن) wherever a comparison expects it to survive.
           .replace(/\u06e1/g, '\u0652')
-          .replace(/[\u06d6-\u06ed]/g, ''), // remaining small Qur'anic pause/annotation marks
+          .replace(/[\u06d6-\u06ed]/g, ''), // remaining small Quranic pause/annotation marks
       ),
     ),
   );
@@ -428,7 +432,7 @@ function endsWithBareFatha(word) {
 }
 
 /** One matchable single-word unit derived from a study word: parallel light/heavy normalized
- *  token plus the id it should tag matching Qur'an words with. `looksLikeVerb` is this word's own
+ *  token plus the id it should tag matching Quran words with. `looksLikeVerb` is this word's own
  *  citation-form verb guess (see endsWithBareFatha). `synthetic` marks a token that isn't itself
  *  a real deck entry but was auto-derived by splitting a multi-word citation into its individual
  *  words (see loadStudyForms) - used by buildVocabMatches to make sure a word the deck already
@@ -472,7 +476,7 @@ function loadStudyForms() {
           // A citation with more than one space-separated word (e.g. "لَا إِلهَ" "no god", "بَيْنَ
           // يَدَيْ" "in front of") is never matched as a contiguous phrase - the deck's own
           // citation form is just a gloss for the *concept*, but the individual words that make it
-          // up are each real, independent Qur'an vocabulary in their own right, and a learner who
+          // up are each real, independent Quran vocabulary in their own right, and a learner who
           // recognizes one of them (e.g. "لَا" "no/not") should have it hidden everywhere it
           // appears, not only in the handful of places it happens to sit next to the citation's
           // other word. So each word is registered as its own ordinary single-token form below,
@@ -668,7 +672,7 @@ function addToIndex(index, key, value) {
   index.get(key).push(value);
 }
 
-/** Builds the full location -> study-id map for the whole Qur'an in one pass.
+/** Builds the full location -> study-id map for the whole Quran in one pass.
  *  `rawSurfaceByLocation` is `"surah:ayah:word" -> rawArabicText` (undiacritic-stripped, as
  *  rendered), and `ayahWordOrder` is `"surah:ayah" -> ["surah:ayah:word", ...]` in word order
  *  (both derived by the caller from the same per-surah reader data used to render the app, so
@@ -1116,6 +1120,7 @@ const ATTACHED_LEMMA_CARDS = {
   '18-009': (stem) => lemmaIs(stem, 'لَيْل', 'لَيْلَة'),
   '19-001': (stem) => lemmaIs(stem, 'اَصْحاب', 'صاحِب', 'صاحب'),
   '20-004': (stem) => lemmaIs(stem, 'آخِر') && hasFeat(stem, 'FS'),
+  '05-005': (stem) => lemmaIs(stem, 'أَمام'),
   '25-002': (stem) => lemmaIs(stem, 'اباء', 'آباء'),
   '25-004': (stem) => lemmaIs(stem, 'رِجال'),
   '25-005': (stem) => lemmaIs(stem, 'نِساء'),
@@ -1221,12 +1226,12 @@ function tagGluedPrefixes(stemByLocation, matchByLocation) {
 }
 
 /**
- * Fallback pass, run *after* `buildVocabMatches`: for every Qur'an word position that still has
- * no curated study-word match, but does have a resolvable Qur'anic Arabic Corpus dictionary
+ * Fallback pass, run *after* `buildVocabMatches`: for every Quran word position that still has
+ * no curated study-word match, but does have a resolvable Quranic Arabic Corpus dictionary
  * lemma, generates a stable, deterministic id ("lem:<lightLemma>") grouping every occurrence of
  * that same lemma. This lets a user who already knows a word *outside* the 547-word curriculum
  * still mark it "known" once (see `useKnownWordsStore`) and have every occurrence of that word
- * recognized across the whole Qur'an, the same way curriculum mastery already works via
+ * recognized across the whole Quran, the same way curriculum mastery already works via
  * `ReaderWord.v` + `getMasteredVocabIds`.
  *
  * A lemma is skipped entirely (left untagged, same as today) only if a *majority* of its
@@ -1412,6 +1417,24 @@ function citationPhraseTokens(arabic) {
   return first.split(/\s+/).filter(Boolean);
 }
 
+/** Every multi-word citation listed on a study card (`arabic` alternatives and `forms`). */
+function citationPhraseTokenizations(study) {
+  const texts = [study?.arabic, ...(study?.forms ?? [])].filter(Boolean);
+  const out = [];
+  const seen = new Set();
+  for (const text of texts) {
+    for (const piece of String(text).split(/[,\u060c]/)) {
+      const tokens = piece.trim().split(/\s+/).filter(Boolean);
+      if (tokens.length < 2) continue;
+      const key = tokens.join(' ');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(tokens);
+    }
+  }
+  return out;
+}
+
 /** Mushaf spellings often write a dagger alif the deck citation omitted (إِله vs إِلَٰه). */
 function lettersMatchFlexible(citation, surface) {
   const cit = [...hamzaFold(normalizeArabic(citation))];
@@ -1426,7 +1449,22 @@ function lettersMatchFlexible(citation, surface) {
   return i === cit.length;
 }
 
-function locationMatchesPhraseToken(token, loc, rawSurfaceByLocation, stemByLocation) {
+/** Citation letters are a prefix of the surface, allowing a trailing clitic (يَدَيْهِ). */
+function lettersMatchAsPrefix(citation, surface) {
+  const cit = [...hamzaFold(normalizeArabic(citation))];
+  const sur = [...hamzaFold(normalizeArabic(surface))];
+  if (cit.length === 0 || sur.length === 0) return false;
+  let i = 0;
+  for (const ch of sur) {
+    if (i >= cit.length) return true;
+    if (ch === cit[i]) i += 1;
+    else if (ch === '\u0627') continue;
+    else return false;
+  }
+  return i === cit.length;
+}
+
+function locationMatchesPhraseToken(token, loc, rawSurfaceByLocation, stemByLocation, allowTrailing = false) {
   const stem = stemByLocation.get(loc);
   const surface = stem?.lightSurface || normalizeLight(rawSurfaceByLocation.get(loc) ?? '');
   if (!surface) return false;
@@ -1436,13 +1474,16 @@ function locationMatchesPhraseToken(token, loc, rawSurfaceByLocation, stemByLoca
   if (stem?.heavyLemma === normalizeArabic(token)) return true;
   if (normalizeLightLoose(surface) === normalizeLightLoose(token)) return true;
   const raw = rawSurfaceByLocation.get(loc) ?? surface;
-  return lettersMatchFlexible(token, stem?.lightSurface || raw);
+  const candidate = stem?.lightSurface || raw;
+  if (lettersMatchFlexible(token, candidate)) return true;
+  return allowTrailing ? lettersMatchAsPrefix(token, candidate) : false;
 }
 
 /**
  * Adjacent mushaf words matching a multi-word citation, in order. Used to pick verse examples
  * for phrase cards so "لَا إِلهَ" shows a shahada ayah rather than a random "لَا" (e.g. ولا in
  * 1:7). Reader tagging still splits phrases into individual words; this is example-only.
+ * The last token may carry a possessive/object suffix (بين يديه).
  */
 function findPhraseRuns(tokens, ayahWordOrder, rawSurfaceByLocation, stemByLocation) {
   if (!tokens || tokens.length < 2) return [];
@@ -1451,7 +1492,16 @@ function findPhraseRuns(tokens, ayahWordOrder, rawSurfaceByLocation, stemByLocat
     for (let i = 0; i <= locations.length - tokens.length; i += 1) {
       let ok = true;
       for (let j = 0; j < tokens.length; j += 1) {
-        if (!locationMatchesPhraseToken(tokens[j], locations[i + j], rawSurfaceByLocation, stemByLocation)) {
+        const last = j === tokens.length - 1;
+        if (
+          !locationMatchesPhraseToken(
+            tokens[j],
+            locations[i + j],
+            rawSurfaceByLocation,
+            stemByLocation,
+            last,
+          )
+        ) {
           ok = false;
           break;
         }
@@ -1460,6 +1510,24 @@ function findPhraseRuns(tokens, ayahWordOrder, rawSurfaceByLocation, stemByLocat
     }
   }
   return runs;
+}
+
+/** Verb-word locations whose morphology carries this person tag (e.g. 2FP on لَسْتُنَّ).
+ *  Used only for flashcard examples of independent pronouns that never appear standalone.
+ *  When `citation` is set, keep verbs whose letters include that pronoun's ending (تن on أنتن)
+ *  so imperfect 2FP نَ (تخضعن، قلن) is not treated as the independent pronoun. */
+function collectVerbPersonLocations(stemByLocation, personTag, citation) {
+  const ending = citation ? letterCore(citation).slice(-2) : '';
+  const locs = [];
+  for (const [loc, stem] of stemByLocation) {
+    if (stem?.pos !== 'V' || !hasFeat(stem, personTag)) continue;
+    if (ending) {
+      const core = letterCore(stem.lightSurface || stem.heavySurface || '');
+      if (!core.includes(ending)) continue;
+    }
+    locs.push(loc);
+  }
+  return locs;
 }
 
 function letterCore(text) {
@@ -1532,24 +1600,36 @@ function studyNeedles(word) {
  * that *contains* the citation letters (القرآن for قرآن) or an ayah that has both halves of a
  * "ما ... إلا" pattern. Highlighting the matching letters is the caller's job.
  */
-function findPartialExampleHits(word, otherCores, ayahWordOrder, rawSurfaceByLocation, stemByLocation) {
+function findPartialExampleHits(word, otherCores, ayahWordOrder, rawSurfaceByLocation, stemByLocation, locPrefix) {
   const needles = studyNeedles(word);
   if (needles.length === 0) return [];
   const coreNeedles = needles.filter((needle) => needle.kind === 'core');
   const maxCore = Math.max(0, ...coreNeedles.map((needle) => needle.core.length));
   const used = needles.filter((needle) => needle.kind !== 'core' || needle.core.length === maxCore);
   const hits = [];
+  const locOk = (loc) => !locPrefix || loc.startsWith(locPrefix);
+  const ayahKey = locPrefix ? locPrefix.replace(/:$/, '') : null;
+  const scopedLocs =
+    ayahKey && ayahWordOrder.has(ayahKey)
+      ? ayahWordOrder.get(ayahKey)
+      : [...rawSurfaceByLocation.keys()];
   for (const needle of used) {
     if (needle.kind === 'core') {
-      if (otherCores.get(needle.core) === '*') continue;
-      const variants = coreVariants(needle.core).filter((core) => otherCores.get(core) !== '*');
-      for (const loc of rawSurfaceByLocation.keys()) {
+      if (!locPrefix && otherCores.get(needle.core) === '*') continue;
+      const variants = coreVariants(needle.core).filter(
+        (core) => locPrefix || otherCores.get(core) !== '*',
+      );
+      for (const loc of scopedLocs) {
+        if (!locOk(loc)) continue;
         const cores = locationCores(loc, rawSurfaceByLocation, stemByLocation);
         if (!variants.some((variant) => cores.some((core) => coreContains(core, variant)))) continue;
         hits.push({ loc, n: 1 });
       }
     } else {
-      for (const locations of ayahWordOrder.values()) {
+      const ayahLists = ayahKey && ayahWordOrder.has(ayahKey)
+        ? [ayahWordOrder.get(ayahKey)]
+        : [...ayahWordOrder.values()];
+      for (const locations of ayahLists) {
         const matched = [];
         let cursor = 0;
         for (const token of needle.tokens) {
@@ -1603,7 +1683,10 @@ module.exports = {
   buildLemmaFallbackTags,
   collectAffixLocations,
   citationPhraseTokens,
+  citationPhraseTokenizations,
   findPhraseRuns,
   findPartialExampleHits,
   collectStudyCores,
+  collectVerbPersonLocations,
+  INDEPENDENT_PRONOUN_BY_PERSON,
 };

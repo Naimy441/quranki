@@ -1,5 +1,7 @@
+import { useIsFocused } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { MeterBar } from '@/components/quranki/meter-bar';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -14,6 +16,7 @@ interface AyahUnderstandingHistogramProps {
 /** Distribution of the same unweighted per-ayah vocabulary estimate shown in the reader. */
 export function AyahUnderstandingHistogram({ bins, ayahCount, countLabel = 'ayahs' }: AyahUnderstandingHistogramProps) {
   const theme = useTheme();
+  const focused = useIsFocused();
   const largestBin = Math.max(...bins.map((bin) => bin.ayahCount), 1);
 
   return (
@@ -22,7 +25,7 @@ export function AyahUnderstandingHistogram({ bins, ayahCount, countLabel = 'ayah
         {bins.map((bin) => (
           <View key={bin.label} style={styles.column} accessibilityLabel={`${bin.label}: ${bin.ayahCount} ${countLabel}`}>
             <View style={[styles.track, { backgroundColor: theme.card }]}>
-              {bin.ayahCount > 0 && <View style={[styles.bar, { backgroundColor: theme.primary, height: `${(bin.ayahCount / largestBin) * 100}%` }]} />}
+              <MeterBar progress={bin.ayahCount / largestBin} color={theme.primary} enabled={focused} style={styles.bar} />
             </View>
             <ThemedText type="small" themeColor="textMuted" style={styles.label} numberOfLines={1}>
               {bin.min}
@@ -30,7 +33,6 @@ export function AyahUnderstandingHistogram({ bins, ayahCount, countLabel = 'ayah
           </View>
         ))}
       </View>
-
     </View>
   );
 }

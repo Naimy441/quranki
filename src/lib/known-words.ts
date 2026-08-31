@@ -1,5 +1,5 @@
 /**
- * Types + pure helpers for user-marked "known" Qur'an words - words the reader should hide the
+ * Types + pure helpers for user-marked "known" Quran words - words the reader should hide the
  * translation for even though they aren't part of the FSRS curriculum (or are, but
  * haven't been mastered through a real review yet). Keys into the same id space as
  * `ReaderWord.v`: either a curated study word id ("01-001") or a generated corpus-lemma id

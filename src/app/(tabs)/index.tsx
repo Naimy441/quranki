@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SectionList, StyleSheet, View } from 'react-native';
 import { Button } from 'react-native-paper';
@@ -18,6 +19,7 @@ import {
   getGrammarIntro,
   getIntroductionFrontier,
   getUpcomingLearning,
+  isStudyWord,
   LEVEL_COUNT,
   THEMATIC_LEVEL_COUNT,
   totalMasteredWords,
@@ -56,15 +58,19 @@ export default function LearnScreen() {
 
   const now = new Date();
   const statuses = getAllLevelStatuses(progress, now);
-  const todaySession = buildGlobalSessionQueue(
-    progress,
-    now,
-    wordsPerSession,
-    reviewsCompletedToday(reviewCountDate, reviewsToday, now),
-    newCardsCompletedToday(reviewCountDate, newCardsToday, now),
-  );
-  const dueCount = todaySession.filter((entry) => entry.reason === 'due').length;
-  const newCount = todaySession.filter((entry) => entry.reason === 'new').length;
+  const reviewsAlready = reviewsCompletedToday(reviewCountDate, reviewsToday, now);
+  const newAlready = newCardsCompletedToday(reviewCountDate, newCardsToday, now);
+  const todaySession = buildGlobalSessionQueue(progress, now, wordsPerSession, reviewsAlready, newAlready);
+  const extraSession =
+    todaySession.length > 0
+      ? []
+      : buildGlobalSessionQueue(progress, now, wordsPerSession, reviewsAlready, newAlready, true);
+  const canStart = todaySession.length > 0 || extraSession.length > 0;
+  const studyToday = todaySession.filter((entry) => isStudyWord(entry.word));
+  const extraStudy = extraSession.filter((entry) => isStudyWord(entry.word));
+  const hasWorkToday = studyToday.length > 0;
+  const dueCount = studyToday.filter((entry) => entry.reason === 'due').length;
+  const newCount = studyToday.filter((entry) => entry.reason === 'new').length;
   const upcoming = getUpcomingLearning(progress, now);
   const newRemaining = Math.max(0, wordsPerSession - newCardsCompletedToday(reviewCountDate, newCardsToday, now));
   const mastered = totalMasteredWords(progress, now);
@@ -99,33 +105,42 @@ export default function LearnScreen() {
 
 
               <View style={[styles.heroCard, { backgroundColor: theme.primary }]}>
-                <View style={styles.heroTextBlock}>
-                  <ThemedText themeColor="onPrimary" type="smallBold" style={styles.heroLabel}>
-                    {todaySession.length > 0 ? "TODAY'S REVIEW" : 'ALL CAUGHT UP'}
-                  </ThemedText>
-                  <ThemedText themeColor="onPrimary" style={styles.heroCount}>
-                    {todaySession.length > 0 ? todaySession.length : '🎉'}
-                  </ThemedText>
-                  {todaySession.length > 0 ? (
-                    <ThemedText themeColor="onPrimary" type="small" style={styles.heroBreakdown}>
-                      {dueCount} due for review - {newCount} new
+                <View style={styles.heroRow}>
+                  <View style={styles.heroIconWrap}>
+                    <View style={[styles.heroIconFill, { backgroundColor: theme.onPrimary }]} />
+                    <Ionicons
+                      name={hasWorkToday ? 'book-outline' : 'checkmark'}
+                      size={22}
+                      color={theme.onPrimary}
+                    />
+                  </View>
+                  <View style={styles.heroTextBlock}>
+                    <ThemedText themeColor="onPrimary" type="smallBold">
+                      {hasWorkToday
+                        ? "Today's review"
+                        : extraSession.length > 0
+                          ? 'Session done'
+                          : 'All caught up'}
                     </ThemedText>
-                  ) : upcoming ? (
                     <ThemedText themeColor="onPrimary" type="small" style={styles.heroBreakdown}>
-                      {upcoming.count} {upcoming.count === 1 ? 'word' : 'words'} come back in{' '}
-                      {formatInterval(upcoming.ms)}
+                      {hasWorkToday
+                        ? [
+                            dueCount > 0 ? `${dueCount} due` : null,
+                            newCount > 0 ? `${newCount} new` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')
+                        : extraSession.length > 0
+                          ? 'Start another if you want.'
+                          : upcoming
+                            ? `${upcoming.count} ${upcoming.count === 1 ? 'word' : 'words'} come back in ${formatInterval(upcoming.ms)}`
+                            : newRemaining === 0
+                              ? 'More new words tomorrow.'
+                              : 'Nothing due right now.'}
                     </ThemedText>
-                  ) : newRemaining === 0 ? (
-                    <ThemedText themeColor="onPrimary" type="small" style={styles.heroBreakdown}>
-                      Today&apos;s new words are done. More tomorrow.
-                    </ThemedText>
-                  ) : (
-                    <ThemedText themeColor="onPrimary" type="small" style={styles.heroBreakdown}>
-                      Nothing due right now. Check back later.
-                    </ThemedText>
-                  )}
+                  </View>
                 </View>
-                {todaySession.length > 0 && (
+                {hasWorkToday || canStart ? (
                   <Button
                     mode="contained"
                     style={styles.heroButton}
@@ -136,9 +151,13 @@ export default function LearnScreen() {
                       hapticMedium();
                       router.push('/session/review');
                     }}>
-                    Start
+                    {hasWorkToday
+                      ? `Start ${studyToday.length} ${studyToday.length === 1 ? 'word' : 'words'}`
+                      : extraStudy.length > 0
+                        ? `Study ${extraStudy.length} more`
+                        : 'Study more'}
                   </Button>
-                )}
+                ) : null}
               </View>
 
               <View style={styles.statsRow}>
@@ -208,35 +227,44 @@ const styles = StyleSheet.create({
     marginTop: -Spacing.two,
   },
   heroCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: Spacing.three,
     borderRadius: Radius.large,
     padding: Spacing.four,
     marginTop: Spacing.one,
   },
+  heroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  heroIconWrap: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroIconFill: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: Radius.pill,
+    opacity: 0.2,
+  },
   heroTextBlock: {
     flex: 1,
     gap: 2,
-  },
-  heroLabel: {
-    letterSpacing: 0.5,
-    opacity: 0.85,
-  },
-  heroCount: {
-    fontSize: 40,
-    lineHeight: 46,
-    fontWeight: '700',
   },
   heroBreakdown: {
     opacity: 0.9,
   },
   heroButton: {
     borderRadius: Radius.medium,
+    alignSelf: 'stretch',
   },
   heroButtonContent: {
     height: 44,
-    paddingHorizontal: Spacing.two,
   },
   statsRow: {
     flexDirection: 'row',

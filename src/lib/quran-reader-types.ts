@@ -23,10 +23,10 @@ export interface ReaderWord {
   en: TextSegment[];
   /** Optional word-by-word Latin transliteration. */
   tl?: string;
-  /** Unified vocabulary id for this Qur'an word, if one could be resolved (see
+  /** Unified vocabulary id for this Quran word, if one could be resolved (see
    *  scripts/build-quran-reader-data.js). Either:
    *   - one of the curated src/data/quranic-words.json study word ids ("01-001"), matched by
-   *     lemma/root/surface text via the Qur'anic Arabic Corpus morphology data, or
+   *     lemma/root/surface text via the Quranic Arabic Corpus morphology data, or
    *   - for a word outside the curriculum, a generated "lem:<lemma>" id (see
    *     scripts/vocab-word-matcher.js's buildLemmaFallbackTags) shared by every occurrence of
    *     that same corpus dictionary lemma.
@@ -35,7 +35,7 @@ export interface ReaderWord {
    *  kind of id - see useKnownWordsStore), whichever comes first. */
   v?: string;
   /**
-   * Qur'anic Arabic Corpus dictionary lemma (light-normalized LEM tag), attached by location
+   * Quranic Arabic Corpus dictionary lemma (light-normalized LEM tag), attached by location
    * (`surah:ayah:word`) rather than by matching Tajweed text. Used for analysis and, later,
    * lemma-based mastery. Absent on the handful of ayahs whose corpus word-count disagrees
    * with the reader, and on stems the corpus left unlemmatized.

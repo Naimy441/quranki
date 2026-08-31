@@ -10,8 +10,8 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { displayArabic } from '@/lib/arabic-display';
 import { getCoverageThroughLevel, getGrammarIntro, getLevel, getLevelStatus, type WordState } from '@/lib/levels';
-import { useProgressStore } from '@/store/progress-store';
 import { formatCount } from '@/lib/stats';
+import { useProgressStore } from '@/store/progress-store';
 
 function wordStatusLabel(state: WordState): { label: string; color: 'primary' | 'textSecondary' | 'danger' } {
   if (state.isMastered) return { label: 'Mastered', color: 'primary' };
@@ -51,7 +51,7 @@ export default function LevelDetailScreen() {
                 {level.title}
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Once mastered through here: {coverage.percent}% of the Qur&apos;an ({formatCount(coverage.quranWords)}{' '}
+                Once mastered through here: {coverage.percent}% of the Quran ({formatCount(coverage.quranWords)}{' '}
                 words).
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary">

@@ -13,13 +13,13 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticLight, hapticSelection, hapticSuccess, hapticWarning } from '@/lib/haptics';
 import {
-  DEFAULT_MARK_COLOR,
-  formatAyahLocation,
-  getAyahArabicPreview,
-  type Bookmark,
-  type BookmarkCollection,
-  type Pin,
-  type PinPlacement,
+    DEFAULT_MARK_COLOR,
+    formatAyahLocation,
+    getAyahArabicPreview,
+    type Bookmark,
+    type BookmarkCollection,
+    type Pin,
+    type PinPlacement,
 } from '@/lib/quran-marks';
 import { openQuranLocation } from '@/lib/quran-nav';
 import { useQuranMarksStore } from '@/store/quran-marks-store';
@@ -93,7 +93,7 @@ export default function SavedScreen() {
 
   return (
     <ThemedView style={styles.flex}>
-      <Stack.Screen options={{ title: 'Saved', headerBackTitle: "Qur'an", headerRight: () => null }} />
+      <Stack.Screen options={{ title: 'Saved', headerBackTitle: "Quran", headerRight: () => null }} />
       <SafeAreaView style={styles.flex} edges={['bottom']}>
         <ScrollView
           style={styles.scroll}
