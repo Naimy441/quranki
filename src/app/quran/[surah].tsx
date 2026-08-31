@@ -74,9 +74,15 @@ export default function SurahReaderScreen() {
   const markKnown = useKnownWordsStore((s) => s.markKnown);
   const unmarkKnown = useKnownWordsStore((s) => s.unmarkKnown);
   const knownWordIds = useMemo(() => getKnownWordIds(knownWords), [knownWords]);
+  const recognizedVocabIds = useMemo(() => {
+    const ids = getMasteredVocabIds(progress);
+    for (const id of knownWordIds) ids.add(id);
+    return ids;
+  }, [knownWordIds, progress]);
   const arabicSize = useProgressStore((s) => s.settings.readerArabicSize);
   const glossSize = useProgressStore((s) => s.settings.readerGlossSize);
   const showTranslation = useProgressStore((s) => s.settings.readerShowTranslation);
+  const showAyahCoverage = useProgressStore((s) => s.settings.readerShowAyahCoverage);
   const showTransliteration = useProgressStore((s) => s.settings.readerTransliteration);
   const transliterationSize = useProgressStore((s) => s.settings.readerTransliterationSize);
   const updateSettings = useProgressStore((s) => s.updateSettings);
@@ -280,6 +286,8 @@ export default function SurahReaderScreen() {
                       transliterationSize={transliterationSize}
                       hiddenVocabIds={hiddenVocabIds}
                       knownWordIds={knownWordIds}
+                      recognizedVocabIds={recognizedVocabIds}
+                      showAyahCoverage={showAyahCoverage}
                       onLongPressWord={setSelectedWord}
                       onOpenMarks={setMarkAyah}
                       focusAyah={surahNumber === active ? focusAyah : 0}
@@ -309,6 +317,8 @@ export default function SurahReaderScreen() {
         onGlossSizeChange={(value) => updateSettings({ readerGlossSize: value })}
         showTranslation={showTranslation}
         onShowTranslationChange={(value) => updateSettings({ readerShowTranslation: value })}
+        showAyahCoverage={showAyahCoverage}
+        onShowAyahCoverageChange={(value) => updateSettings({ readerShowAyahCoverage: value })}
         showTransliteration={showTransliteration}
         onShowTransliterationChange={(value) => updateSettings({ readerTransliteration: value })}
         transliterationSize={transliterationSize}

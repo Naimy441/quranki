@@ -1179,22 +1179,16 @@ function tagAttachedLemmas(stemByLocation, matchByLocation) {
   }
 }
 
-/** One-letter prefixes fused onto a word (وَكتاب, فَقال, سَيَعْلَم). Stem matching already
- *  claimed the word when the stem is a study card; leftover prefixed words belong to the
- *  prefix card. Skip when the stem lemma is already a study word (وأولئك must not become
- *  "and" just because the demonstrative surface missed). Definite الْ is skipped — tagging
- *  every leftover noun as "the" would hide the noun itself. */
+/** One-letter prefixes fused onto a word (وَكتاب, فَقال, سَيَعْلَم). Prefix cards only own a
+ *  whole reader word when it has no lexical stem lemma of its own. Otherwise the word must fall
+ *  through to the lemma fallback: assigning وَ to وَثُلَاثَ, for example, would make “three” and
+ *  every other unmatched و-prefixed word share the “and” card. Definite الْ is skipped too —
+ *  tagging every leftover noun as "the" would hide the noun itself. */
 function tagGluedPrefixes(stemByLocation, matchByLocation) {
   const skip = new Set(['ال', normalizeArabic('الْ')]);
-  const claimedLemmas = new Set();
-  for (const [loc, stem] of stemByLocation) {
-    const id = matchByLocation.get(loc);
-    if (!id || PREFIX_STUDY_IDS.has(id)) continue;
-    if (stem.lightLemma) claimedLemmas.add(stem.lightLemma);
-  }
   for (const [loc, stem] of stemByLocation) {
     if (matchByLocation.has(loc)) continue;
-    if (stem.lightLemma && claimedLemmas.has(stem.lightLemma)) continue;
+    if (stem.lightLemma) continue;
     if (stem.prefixEmphLam && stem.hasEmphNun) {
       matchByLocation.set(loc, '11-004');
       continue;

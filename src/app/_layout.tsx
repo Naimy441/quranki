@@ -2,17 +2,19 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Appearance } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 
+import { StreakGraceNotice } from '@/components/quranki/streak-grace-notice';
 import { createPaperTheme } from '@/constants/paper-theme';
 import { ArabicFont, Colors, SurahNameFont } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 import { useQuranMarksStore } from '@/store/quran-marks-store';
+import { getStreakReclaimOpportunity } from '@/lib/stats';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,7 +33,11 @@ export default function RootLayout() {
   const quranMarksHydrated = useQuranMarksStore((state) => state.hydrated);
   const themePreference = useProgressStore((state) => state.settings.themePreference);
   const hasFinishedOnboarding = useProgressStore(selectHasFinishedOnboarding);
+  const reviewDates = useProgressStore((state) => state.reviewDates);
+  const streakGraceDates = useProgressStore((state) => state.streakGraceDates);
   const colors = useTheme();
+  const [dismissedReclaimableStreak, setDismissedReclaimableStreak] = useState<number | null>(null);
+  const reclaimableStreak = getStreakReclaimOpportunity(reviewDates, streakGraceDates);
   const [fontsLoaded] = useFonts({
     [ArabicFont]: require('@/assets/fonts/UthmanicHafs1Ver18.ttf'),
     [SurahNameFont]: require('@/assets/fonts/surah_names.ttf'),
@@ -107,6 +113,11 @@ export default function RootLayout() {
               />
             </Stack.Protected>
           </Stack>
+          <StreakGraceNotice
+            visible={hasFinishedOnboarding && reclaimableStreak > 0 && dismissedReclaimableStreak !== reclaimableStreak}
+            streak={reclaimableStreak}
+            onDismiss={() => setDismissedReclaimableStreak(reclaimableStreak)}
+          />
         </ThemeProvider>
       </PaperProvider>
     </GestureHandlerRootView>

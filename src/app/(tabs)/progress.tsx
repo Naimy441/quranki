@@ -2,13 +2,16 @@ import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AyahUnderstandingHistogram } from '@/components/quranki/ayah-understanding-histogram';
 import { StatCard } from '@/components/quranki/stat-card';
+import { SurahUnderstandingChart } from '@/components/quranki/surah-understanding-chart';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getAllLevelStatuses, getMasteredVocabIds, LEVEL_COUNT, THEMATIC_LEVEL_COUNT, totalMasteredWords, WORD_COUNT, type LevelStatus } from '@/lib/levels';
 import { countMemorizedQuranWords, TOTAL_QURAN_WORDS } from '@/lib/quran-coverage';
+import { getQuranAyahUnderstandingSummary } from '@/lib/quran-understanding';
 import { computeStreak, formatCount } from '@/lib/stats';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
@@ -52,12 +55,13 @@ export default function ProgressScreen() {
   const progress = useProgressStore((state) => state.progress);
   const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
   const reviewDates = useProgressStore((state) => state.reviewDates);
+  const streakGraceDates = useProgressStore((state) => state.streakGraceDates);
   const knownWords = useKnownWordsStore((state) => state.knownWords);
 
   const now = new Date();
   const statuses = getAllLevelStatuses(progress, now);
   const mastered = totalMasteredWords(progress, now);
-  const streak = computeStreak(reviewDates, now);
+  const streak = computeStreak(reviewDates, streakGraceDates, now);
 
   // "Overall memorization" is real Qur'an text coverage, not just "N of WORD_COUNT vocab items": one
   // mastered word like "the/that" can single-handedly cover thousands of on-screen occurrences,
@@ -73,6 +77,10 @@ export default function ProgressScreen() {
   }, [progress, knownWords]);
   const memorizedQuranWords = useMemo(() => countMemorizedQuranWords(recognizedVocabIds), [recognizedVocabIds]);
   const overallProgress = TOTAL_QURAN_WORDS === 0 ? 0 : memorizedQuranWords / TOTAL_QURAN_WORDS;
+  const ayahUnderstanding = useMemo(
+    () => getQuranAyahUnderstandingSummary(recognizedVocabIds),
+    [recognizedVocabIds],
+  );
 
   return (
     <ThemedView style={styles.flex} collapsable={false}>
@@ -105,6 +113,35 @@ export default function ProgressScreen() {
             </View>
             <ThemedText type="small" themeColor="textSecondary">
               {formatCount(memorizedQuranWords)} of {formatCount(TOTAL_QURAN_WORDS)} words in the Qur&apos;an
+            </ThemedText>
+          </View>
+
+          <View style={[styles.overallCard, { backgroundColor: theme.backgroundElement }]}>
+            <View style={styles.overallHeader}>
+              <ThemedText type="smallBold">Average ayah understanding</ThemedText>
+              <ThemedText type="smallBold" themeColor="primary">
+                {Math.round(ayahUnderstanding.average * 100)}%
+              </ThemedText>
+            </View>
+            <View style={[styles.progressTrack, { backgroundColor: theme.card }]}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { backgroundColor: theme.primary, width: `${Math.round(ayahUnderstanding.average * 100)}%` },
+                ]}
+              />
+            </View>
+            <AyahUnderstandingHistogram bins={ayahUnderstanding.histogram} ayahCount={ayahUnderstanding.ayahCount} />
+            <ThemedText type="small" themeColor="textSecondary">
+              The share of vocabulary you know in a typical ayah
+            </ThemedText>
+          </View>
+
+          <View style={[styles.overallCard, { backgroundColor: theme.backgroundElement }]}>
+            <ThemedText type="smallBold">Average surah understanding</ThemedText>
+            <SurahUnderstandingChart averages={ayahUnderstanding.surahAverages} />
+            <ThemedText type="small" themeColor="textSecondary">
+              Each bar is one surah, in Qur&apos;an order
             </ThemedText>
           </View>
 

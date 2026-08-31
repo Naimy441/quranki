@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import SliderControl from '@expo/ui/community/slider';
-import { router } from 'expo-router';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChoiceGrid } from '@/components/quranki/choice-grid';
@@ -61,6 +62,34 @@ export default function SettingsScreen() {
   const resetProgress = useProgressStore((state) => state.resetProgress);
   const masterAllWords = useProgressStore((state) => state.masterAllWords);
   const setOnboardingCompleted = useProgressStore((state) => state.setOnboardingCompleted);
+  const [openingKnownWords, setOpeningKnownWords] = useState(false);
+  const openingKnownWordsRef = useRef(false);
+  const knownWordsNavigationFrame = useRef<number | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      openingKnownWordsRef.current = false;
+      setOpeningKnownWords(false);
+      return () => {
+        if (knownWordsNavigationFrame.current !== null) {
+          cancelAnimationFrame(knownWordsNavigationFrame.current);
+          knownWordsNavigationFrame.current = null;
+        }
+      };
+    }, []),
+  );
+
+  const openKnownWords = () => {
+    if (openingKnownWordsRef.current) return;
+    openingKnownWordsRef.current = true;
+    setOpeningKnownWords(true);
+    knownWordsNavigationFrame.current = requestAnimationFrame(() => {
+      knownWordsNavigationFrame.current = requestAnimationFrame(() => {
+        knownWordsNavigationFrame.current = null;
+        router.push('/known-words');
+      });
+    });
+  };
 
   const handleReset = () => {
     if (Platform.OS === 'web') {
@@ -140,6 +169,8 @@ export default function SettingsScreen() {
               onGlossSizeChange={(readerGlossSize) => updateSettings({ readerGlossSize })}
               showTranslation={settings.readerShowTranslation}
               onShowTranslationChange={(readerShowTranslation) => updateSettings({ readerShowTranslation })}
+              showAyahCoverage={settings.readerShowAyahCoverage}
+              onShowAyahCoverageChange={(readerShowAyahCoverage) => updateSettings({ readerShowAyahCoverage })}
               showTransliteration={settings.readerTransliteration}
               onShowTransliterationChange={(readerTransliteration) => updateSettings({ readerTransliteration })}
               transliterationSize={settings.readerTransliterationSize}
@@ -152,7 +183,8 @@ export default function SettingsScreen() {
               icon="list-outline"
               label="Known words"
               chevron
-              onPress={() => router.push('/known-words')}
+              loading={openingKnownWords}
+              onPress={openKnownWords}
             />
             <ActionRow icon="refresh-outline" label="Reset progress" destructive onPress={handleReset} />
             {__DEV__ && <ActionRow icon="flask-outline" label="Master all words" onPress={masterAllWords} />}
@@ -232,25 +264,30 @@ function ActionRow({
   label,
   destructive,
   chevron,
+  loading,
   onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   destructive?: boolean;
   chevron?: boolean;
+  loading?: boolean;
   onPress: () => void;
 }) {
   const theme = useTheme();
-  const color = destructive ? theme.danger : theme.text;
+  const color = destructive ? theme.danger : loading ? theme.textMuted : theme.text;
   return (
     <Pressable
+      disabled={loading}
       onPress={() => {
+        if (loading) return;
         hapticSelection();
         onPress();
       }}
       style={({ pressed }) => [
         styles.actionRow,
         { backgroundColor: theme.card, borderColor: theme.border },
+        loading && styles.loading,
         pressed && styles.pressed,
       ]}>
       <View style={[styles.actionIcon, { backgroundColor: destructive ? `${theme.danger}14` : theme.backgroundElement }]}>
@@ -259,7 +296,7 @@ function ActionRow({
       <ThemedText type="smallBold" style={[styles.actionLabel, { color }]}>
         {label}
       </ThemedText>
-      {chevron ? <Ionicons name="chevron-forward" size={16} color={theme.textMuted} /> : null}
+      {loading ? <ActivityIndicator size="small" color={theme.textMuted} /> : chevron ? <Ionicons name="chevron-forward" size={16} color={theme.textMuted} /> : null}
     </Pressable>
   );
 }
@@ -363,5 +400,8 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.8,
+  },
+  loading: {
+    opacity: 0.55,
   },
 });

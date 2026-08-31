@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Alert, FlatList, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Searchbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,13 +13,15 @@ import { useTheme } from '@/hooks/use-theme';
 import { displayArabic } from '@/lib/arabic-display';
 import { hapticWarning } from '@/lib/haptics';
 import { isCuratedWordId } from '@/lib/known-words';
-import { getWord } from '@/lib/levels';
+import { getMasteredVocabIds, getWord } from '@/lib/levels';
 import { getWordOccurrenceCount } from '@/lib/quran-coverage';
 import { formatCount } from '@/lib/stats';
 import { useKnownWordsStore } from '@/store/known-words-store';
+import { useProgressStore } from '@/store/progress-store';
 
 const HARAKAT = /[\u0640\u064B-\u065F\u0670\u06D6-\u06ED]/g;
-
+const INITIAL_RENDER_COUNT = 80;
+const RENDER_BATCH_SIZE = 120;
 function fold(text: string): string {
   return text.replace(HARAKAT, '').toLowerCase();
 }
@@ -30,24 +32,38 @@ export default function KnownWordsScreen() {
   const knownWords = useKnownWordsStore((state) => state.knownWords);
   const unmarkKnown = useKnownWordsStore((state) => state.unmarkKnown);
   const clearAllKnown = useKnownWordsStore((state) => state.clearAllKnown);
-  const knownCount = Object.keys(knownWords).length;
+  const progress = useProgressStore((state) => state.progress);
+  const masteredWordIds = useMemo(() => getMasteredVocabIds(progress), [progress]);
 
   const entries = useMemo(() => {
-    const rows = Object.entries(knownWords)
-      .map(([id, entry]) => {
+    const ids = new Set([...masteredWordIds, ...Object.keys(knownWords)]);
+    const rows = [...ids]
+      .map((id) => {
+        const entry = knownWords[id];
         const studyWord = isCuratedWordId(id) ? getWord(id) : undefined;
-        const arabic = studyWord ? displayArabic(studyWord) : entry.sampleArabic;
+        const arabic = studyWord ? displayArabic(studyWord) : entry?.sampleArabic ?? id;
         const english = studyWord ? studyWord.english : `${formatCount(getWordOccurrenceCount(id))} occurrences`;
-        return { id, arabic, english, addedAt: entry.addedAt };
+        return { id, arabic, english, addedAt: entry?.addedAt ?? '', manuallyKnown: entry !== undefined };
       })
-      .sort((a, b) => b.addedAt.localeCompare(a.addedAt));
+      .sort((a, b) => a.english.localeCompare(b.english, 'en', { sensitivity: 'base' }) || a.arabic.localeCompare(b.arabic));
 
     const needle = fold(query.trim());
     if (!needle) return rows;
     return rows.filter(
       (row) => fold(row.arabic).includes(needle) || fold(row.english).includes(needle),
     );
-  }, [knownWords, query]);
+  }, [knownWords, masteredWordIds, query]);
+  const knownCount = entries.length;
+  const [renderLimit, setRenderLimit] = useState(INITIAL_RENDER_COUNT);
+  const visibleEntries = entries.slice(0, renderLimit);
+
+  useEffect(() => {
+    if (renderLimit >= entries.length) return;
+    const timer = setTimeout(() => {
+      setRenderLimit((current) => Math.min(current + RENDER_BATCH_SIZE, entries.length));
+    }, 16);
+    return () => clearTimeout(timer);
+  }, [entries.length, renderLimit]);
 
   const confirmAction = (title: string, message: string, confirmLabel: string, onConfirm: () => void) => {
     if (Platform.OS === 'web') {
@@ -100,47 +116,44 @@ export default function KnownWordsScreen() {
         }}
       />
       <SafeAreaView style={styles.flex} edges={['bottom']}>
-        <FlatList
-          data={entries}
-          keyExtractor={(item) => item.id}
+        <ScrollView
           style={styles.list}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
-          ListHeaderComponent={
-            <View style={styles.header}>
-              <ThemedText type="small" themeColor="textSecondary">
-                {knownCount === 0
-                  ? 'No known words yet'
-                  : query.trim()
-                    ? `${formatCount(entries.length)} of ${formatCount(knownCount)} ${knownCount === 1 ? 'word' : 'words'}`
-                    : `${formatCount(knownCount)} ${knownCount === 1 ? 'word' : 'words'}`}
-              </ThemedText>
-              <Searchbar
-                placeholder="Search known words"
-                onChangeText={setQuery}
-                value={query}
-                style={[styles.search, { backgroundColor: theme.backgroundElement }]}
-                inputStyle={styles.searchInput}
-                iconColor={theme.textMuted}
-                placeholderTextColor={theme.textMuted}
-                elevation={0}
-              />
-            </View>
-          }
-          ListEmptyComponent={
+        >
+          <View style={styles.header}>
+            <ThemedText type="small" themeColor="textSecondary">
+              {knownCount === 0
+                ? 'No recognized words yet'
+                : query.trim()
+                  ? `${formatCount(entries.length)} of ${formatCount(knownCount)} recognized ${knownCount === 1 ? 'word' : 'words'}`
+                  : `${formatCount(knownCount)} recognized ${knownCount === 1 ? 'word' : 'words'}`}
+            </ThemedText>
+            <Searchbar
+              placeholder="Search recognized words"
+              onChangeText={setQuery}
+              value={query}
+              style={[styles.search, { backgroundColor: theme.backgroundElement }]}
+              inputStyle={styles.searchInput}
+              iconColor={theme.textMuted}
+              placeholderTextColor={theme.textMuted}
+              elevation={0}
+            />
+          </View>
+          {entries.length === 0 ? (
             <ThemedText type="small" themeColor="textMuted" style={styles.empty}>
               {query.trim()
                 ? 'No known words match that search.'
                 : 'Long-press a word in the Qur\u2019an to hide it.'}
             </ThemedText>
-          }
-          renderItem={({ item, index }) => (
+          ) : visibleEntries.map((item, index) => (
             <View
+              key={item.id}
               style={[
                 styles.row,
                 { backgroundColor: theme.card, borderColor: theme.border },
                 index === 0 && styles.rowFirst,
-                index === entries.length - 1 && styles.rowLast,
+                index === visibleEntries.length - 1 && visibleEntries.length === entries.length && styles.rowLast,
                 index > 0 && { borderTopWidth: StyleSheet.hairlineWidth },
               ]}>
               <View style={styles.textCol}>
@@ -149,18 +162,27 @@ export default function KnownWordsScreen() {
                   {item.english}
                 </ThemedText>
               </View>
-              <Pressable
-                onPress={() => {
-                  hapticWarning();
-                  handleForget(item.id);
-                }}
-                hitSlop={10}
-                accessibilityLabel="Forget this word">
-                <Ionicons name="close-circle" size={22} color={theme.textMuted} />
-              </Pressable>
+              {item.manuallyKnown ? (
+                <Pressable
+                  onPress={() => {
+                    hapticWarning();
+                    handleForget(item.id);
+                  }}
+                  hitSlop={10}
+                  accessibilityLabel="Forget this word">
+                  <Ionicons name="close-circle" size={22} color={theme.textMuted} />
+                </Pressable>
+              ) : (
+                <ThemedText type="small" themeColor="textMuted">Mastered</ThemedText>
+              )}
             </View>
-          )}
-        />
+          ))}
+          {visibleEntries.length < entries.length ? (
+            <View style={styles.loadingMore}>
+              <ActivityIndicator size="small" color={theme.primary} />
+            </View>
+          ) : null}
+        </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
@@ -220,5 +242,9 @@ const styles = StyleSheet.create({
   arabic: {
     fontSize: 22,
     lineHeight: 36,
+  },
+  loadingMore: {
+    alignItems: 'center',
+    paddingVertical: Spacing.three,
   },
 });

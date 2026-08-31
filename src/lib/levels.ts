@@ -128,6 +128,7 @@ export interface WordState {
 export function getHiddenVocabIds(progressMap: ProgressMap): Set<string> {
   const hidden = new Set<string>();
   for (const [wordId, progress] of Object.entries(progressMap)) {
+    if (getWord(wordId)?.kind === 'grammar') continue;
     if (shouldHideInReader(deserializeCard(progress.card))) hidden.add(wordId);
   }
   return hidden;
@@ -140,6 +141,7 @@ export function getHiddenVocabIds(progressMap: ProgressMap): Set<string> {
 export function getMasteredVocabIds(progressMap: ProgressMap): Set<string> {
   const mastered = new Set<string>();
   for (const [wordId, progress] of Object.entries(progressMap)) {
+    if (getWord(wordId)?.kind === 'grammar') continue;
     if (isWordMastered(deserializeCard(progress.card), progress.lastGrade)) mastered.add(wordId);
   }
   return mastered;

@@ -13,9 +13,9 @@ import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 
 const glueJoins = Platform.OS === 'android';
-interface WordCellProps { word: ReaderWord; showTranslation: boolean; showTransliteration: boolean; arabicSize: number; glossSize: number; transliterationSize: number; hiddenVocabIds: Set<string>; knownWordIds: Set<string>; onLongPressWord?: (word: ReaderWord) => void; }
+interface WordCellProps { word: ReaderWord; showTranslation: boolean; hideMeaning?: boolean; showTransliteration: boolean; arabicSize: number; glossSize: number; transliterationSize: number; hiddenVocabIds: Set<string>; knownWordIds: Set<string>; onLongPressWord?: (word: ReaderWord) => void; }
 
-export const WordCell = memo(function WordCell({ word, showTranslation, showTransliteration, arabicSize, glossSize, transliterationSize, hiddenVocabIds, knownWordIds, onLongPressWord }: WordCellProps) {
+export const WordCell = memo(function WordCell({ word, showTranslation, hideMeaning = false, showTransliteration, arabicSize, glossSize, transliterationSize, hiddenVocabIds, knownWordIds, onLongPressWord }: WordCellProps) {
   const theme = useTheme();
   const scheme = useAppColorScheme();
   const gradeWord = useProgressStore((state) => state.gradeWord);
@@ -44,7 +44,7 @@ export const WordCell = memo(function WordCell({ word, showTranslation, showTran
   return <Pressable style={({ pressed }) => [styles.cell, pressed && { backgroundColor: theme.backgroundSelected }]} onPress={handlePress} onLongPress={() => { if (onLongPressWord && (word.v !== undefined || word.lm !== undefined)) { hapticLongPress(); onLongPressWord(word); } }} delayLongPress={350} hitSlop={4}>
     <Text style={[styles.arabic, ArabicTextStyle, { color: theme.text, fontSize: arabicSize, lineHeight: arabicSize * 1.9, includeFontPadding: false }]}>{keepJoined ? joinedArabic : segments.map((segment, index) => <Text key={index} style={{ color: tajweedColor(segment.c, scheme, theme.text) }}>{glueJoins && index > 0 && '\u200D'}{segment.t}{glueJoins && index < segments.length - 1 && '\u200D'}</Text>)}</Text>
     {showTransliteration && word.tl ? <Text style={[styles.transliteration, { color: theme.primary, fontSize: transliterationSize, lineHeight: transliterationSize * 1.3 }]} numberOfLines={2}>{word.tl}</Text> : null}
-    {showTranslation && !isHidden && <><View style={[styles.divider, { backgroundColor: theme.border }]} /><Text style={[styles.english, { color: theme.textSecondary, fontSize: glossSize, lineHeight: glossSize * 1.25 }]} numberOfLines={2}>{word.en.length ? word.en.map((segment, index) => <Text key={index} style={{ color: glossColor(segment.c, scheme, theme.textSecondary) }}>{segment.t}</Text>) : <Text style={{ color: theme.textMuted }}>-</Text>}</Text></>}
+    {showTranslation && !hideMeaning && !isHidden && <><View style={[styles.divider, { backgroundColor: theme.border }]} /><Text style={[styles.english, { color: theme.textSecondary, fontSize: glossSize, lineHeight: glossSize * 1.25 }]} numberOfLines={2}>{word.en.length ? word.en.map((segment, index) => <Text key={index} style={{ color: glossColor(segment.c, scheme, theme.textSecondary) }}>{segment.t}</Text>) : <Text style={{ color: theme.textMuted }}>-</Text>}</Text></>}
   </Pressable>;
 });
 const styles = StyleSheet.create({ cell: { alignItems: 'center', paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, minWidth: 40, maxWidth: 170, borderRadius: Radius.medium }, arabic: { textAlign: 'center' }, transliteration: { textAlign: 'center', fontWeight: '600' }, divider: { height: 1, width: '80%', marginVertical: Spacing.one }, english: { textAlign: 'center', fontWeight: '500' } });

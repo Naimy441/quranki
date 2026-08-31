@@ -10,12 +10,16 @@ function toArabicIndic(n: number): string {
 }
 
 /** Western ayah number, pinned to the top-left corner of each ayah block. */
-export function AyahNumberBadge({ number }: { number: number }) {
+export function AyahNumberBadge({ number, understanding }: { number: number; understanding?: number }) {
   const theme = useTheme();
+  const percent = understanding === undefined ? undefined : Math.round(understanding * 100);
 
   return (
-    <View style={styles.corner} accessibilityLabel={`Ayah ${number}`}>
-      <Text style={[styles.cornerText, { color: theme.textMuted }]}>{number}</Text>
+    <View
+      style={styles.corner}
+      accessibilityLabel={percent === undefined ? `Ayah ${number}` : `Ayah ${number}, ${percent} percent vocabulary understood`}>
+      <Text style={[styles.cornerText, { color: theme.text }]}>{number}</Text>
+      {percent !== undefined && <Text style={[styles.understanding, { color: theme.primary }]}>{percent}%</Text>}
     </View>
   );
 }
@@ -45,12 +49,19 @@ const styles = StyleSheet.create({
     top: Spacing.two,
     left: Spacing.three,
     height: 26,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
     zIndex: 1,
   },
   cornerText: {
     fontSize: 16,
     lineHeight: 20,
+    fontWeight: '700',
+  },
+  understanding: {
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '700',
   },
   marker: {

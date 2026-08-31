@@ -24,6 +24,8 @@ export interface Settings {
   readerArabicSize: number;
   readerGlossSize: number;
   readerShowTranslation: boolean;
+  /** Whether the Qur'an reader shows the per-ayah vocabulary-coverage percentage. */
+  readerShowAyahCoverage: boolean;
   /** Keep the Qur'an reader's optional transliteration enabled across sessions. */
   readerTransliteration: boolean;
   readerTransliterationSize: number;
@@ -41,6 +43,8 @@ export function clampWordsPerSession(value: number): number {
 export interface Meta {
   maxUnlockedLevel: number;
   reviewDates: string[];
+  /** Days protected by a one-day streak grace. They connect a streak but do not increase it. */
+  streakGraceDates: string[];
   /** Calendar day (`YYYY-MM-DD`) that `reviewsToday` was last incremented. */
   reviewCountDate: string;
   /** How many Review-state cards have been graded on `reviewCountDate`. Caps the daily review
@@ -62,6 +66,7 @@ export const DEFAULT_SETTINGS: Settings = {
   readerArabicSize: 30,
   readerGlossSize: 15,
   readerShowTranslation: true,
+  readerShowAyahCoverage: true,
   readerTransliteration: false,
   readerTransliterationSize: 13,
 };
@@ -69,6 +74,7 @@ export const DEFAULT_SETTINGS: Settings = {
 export const DEFAULT_META: Meta = {
   maxUnlockedLevel: 1,
   reviewDates: [],
+  streakGraceDates: [],
   reviewCountDate: '',
   reviewsToday: 0,
   newCardsToday: 0,
@@ -111,6 +117,7 @@ export async function loadSettingsAsync(): Promise<Settings> {
       ? Math.min(19, Math.max(11, settings.readerGlossSize))
       : DEFAULT_SETTINGS.readerGlossSize,
     readerShowTranslation: settings.readerShowTranslation !== false,
+    readerShowAyahCoverage: settings.readerShowAyahCoverage !== false,
     readerTransliteration: Boolean(settings.readerTransliteration),
     readerTransliterationSize: Number.isFinite(settings.readerTransliterationSize)
       ? Math.min(18, Math.max(10, settings.readerTransliterationSize))

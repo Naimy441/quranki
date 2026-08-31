@@ -12,10 +12,10 @@ const GAP = 8;
 const SLOT = BUTTON + GAP;
 const SNAP = Easing.bezier(0.2, 0.85, 0.25, 1);
 export type AyahPlayback = 'idle' | 'loading' | 'playing' | 'paused';
-interface Props { open: boolean; onToggle: () => void; bookmarked: boolean; copied: boolean; playback: AyahPlayback; showTranslation: boolean; onSave: () => void; onCopy: () => void; onPlay: () => void; onTranslate: () => void; }
+interface Props { open: boolean; onToggle: () => void; bookmarked: boolean; copied: boolean; playback: AyahPlayback; showTranslation: boolean; showTranslationAction?: boolean; onSave: () => void; onCopy: () => void; onPlay: () => void; onTranslate: () => void; }
 
 /** Original horizontal slide-out menu: the trigger becomes an X in the same anchored position. */
-export function AyahActionMenu({ open, onToggle, bookmarked, copied, playback, showTranslation, onSave, onCopy, onPlay, onTranslate }: Props) {
+export function AyahActionMenu({ open, onToggle, bookmarked, copied, playback, showTranslation, showTranslationAction = true, onSave, onCopy, onPlay, onTranslate }: Props) {
   const theme = useTheme();
   const progress = useSharedValue(open ? 1 : 0);
   useEffect(() => { progress.value = withTiming(open ? 1 : 0, { duration: open ? 220 : 160, easing: SNAP }); }, [open, progress]);
@@ -23,7 +23,7 @@ export function AyahActionMenu({ open, onToggle, bookmarked, copied, playback, s
     { key: 'save', label: bookmarked ? 'Edit saved marks' : 'Save this ayah', icon: bookmarked ? 'bookmark' : 'bookmark-outline', color: bookmarked ? theme.primary : theme.textMuted, active: bookmarked, onPress: onSave },
     { key: 'copy', label: 'Copy ayah', icon: copied ? 'checkmark' : 'copy-outline', color: copied ? theme.primary : theme.textMuted, active: copied, onPress: onCopy },
     { key: 'play', label: playback === 'playing' ? 'Pause ayah recitation' : 'Play this ayah', icon: playback === 'playing' ? 'volume-high' : 'volume-medium-outline', color: playback !== 'idle' ? theme.primary : theme.textMuted, active: playback !== 'idle', loading: playback === 'loading', onPress: onPlay },
-    { key: 'translate', label: 'Toggle translation', icon: showTranslation ? 'language' : 'language-outline', color: showTranslation ? theme.primary : theme.textMuted, active: showTranslation, onPress: onTranslate },
+    ...(showTranslationAction ? [{ key: 'translate', label: 'Toggle translation', icon: (showTranslation ? 'language' : 'language-outline') as keyof typeof Ionicons.glyphMap, color: showTranslation ? theme.primary : theme.textMuted, active: showTranslation, onPress: onTranslate }] : []),
   ];
   const accented = bookmarked || copied || playback !== 'idle' || showTranslation;
   return <View style={styles.cluster} pointerEvents="box-none">

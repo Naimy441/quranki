@@ -11,6 +11,7 @@ import {
   type GradeName,
 } from '@/lib/fsrs';
 import { computeReachedLevel, getLevel, getWord, LAST_LEVEL_NUMBER, LEVELS, type ProgressMap, type WordProgress } from '@/lib/levels';
+import { getStreakReclaimOpportunity } from '@/lib/stats';
 import {
   clampWordsPerSession,
   DEFAULT_META,
@@ -31,6 +32,7 @@ interface ProgressState {
   settings: Settings;
   maxUnlockedLevel: number;
   reviewDates: string[];
+  streakGraceDates: string[];
   reviewCountDate: string;
   reviewsToday: number;
   newCardsToday: number;
@@ -74,13 +76,14 @@ export function newCardsCompletedToday(reviewCountDate: string, newCardsToday: n
 }
 
 function persistMeta(
-  state: Pick<ProgressState, 'maxUnlockedLevel' | 'reviewDates' | 'reviewCountDate' | 'reviewsToday' | 'newCardsToday'> & {
+  state: Pick<ProgressState, 'maxUnlockedLevel' | 'reviewDates' | 'streakGraceDates' | 'reviewCountDate' | 'reviewsToday' | 'newCardsToday'> & {
     onboardingCompleted?: boolean;
   },
 ): void {
   void saveMetaAsync({
     maxUnlockedLevel: state.maxUnlockedLevel,
     reviewDates: state.reviewDates,
+    streakGraceDates: state.streakGraceDates,
     reviewCountDate: state.reviewCountDate,
     reviewsToday: state.reviewsToday,
     newCardsToday: state.newCardsToday,
@@ -99,6 +102,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   settings: DEFAULT_SETTINGS,
   maxUnlockedLevel: DEFAULT_META.maxUnlockedLevel,
   reviewDates: DEFAULT_META.reviewDates,
+  streakGraceDates: DEFAULT_META.streakGraceDates,
   reviewCountDate: DEFAULT_META.reviewCountDate,
   reviewsToday: DEFAULT_META.reviewsToday,
   newCardsToday: DEFAULT_META.newCardsToday,
@@ -127,6 +131,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       settings,
       maxUnlockedLevel,
       reviewDates: meta.reviewDates,
+      streakGraceDates: meta.streakGraceDates,
       reviewCountDate,
       reviewsToday,
       newCardsToday,
@@ -136,6 +141,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       persistMeta({
         maxUnlockedLevel,
         reviewDates: meta.reviewDates,
+        streakGraceDates: meta.streakGraceDates,
         reviewCountDate,
         reviewsToday,
         newCardsToday,
@@ -161,6 +167,12 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const nextProgress: ProgressMap = { ...state.progress, [wordId]: nextWordProgress };
     const key = todayKey(now);
     const nextReviewDates = state.reviewDates.includes(key) ? state.reviewDates : [...state.reviewDates, key];
+    const reclaimableStreak = getStreakReclaimOpportunity(state.reviewDates, state.streakGraceDates, now);
+    const missedDay = todayKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+    const nextStreakGraceDates =
+      reclaimableStreak > 0 && !state.streakGraceDates.includes(missedDay)
+        ? [...state.streakGraceDates, missedDay]
+        : state.streakGraceDates;
     const nextMaxUnlockedLevel = computeReachedLevel(nextProgress);
     const countsAsDailyReview = existing !== undefined && card.state === State.Review;
     const isNewIntroduction = existing === undefined && getWord(wordId)?.kind !== 'grammar';
@@ -176,6 +188,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     set({
       progress: nextProgress,
       reviewDates: nextReviewDates,
+      streakGraceDates: nextStreakGraceDates,
       maxUnlockedLevel: nextMaxUnlockedLevel,
       reviewCountDate: key,
       reviewsToday,
@@ -186,6 +199,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     persistMeta({
       maxUnlockedLevel: nextMaxUnlockedLevel,
       reviewDates: nextReviewDates,
+      streakGraceDates: nextStreakGraceDates,
       reviewCountDate: key,
       reviewsToday,
       newCardsToday,
@@ -230,6 +244,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       progress: {},
       maxUnlockedLevel: 1,
       reviewDates: [],
+      streakGraceDates: [],
       reviewCountDate: '',
       reviewsToday: 0,
       newCardsToday: 0,
@@ -251,6 +266,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const nextProgress: ProgressMap = {};
     for (const level of LEVELS) {
       for (const word of level.words) {
+        if (word.kind === 'grammar') continue;
         const card = createNewCard(now);
         nextProgress[word.id] = {
           wordId: word.id,

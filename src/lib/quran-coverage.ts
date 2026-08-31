@@ -1,4 +1,5 @@
 import vocabCoverageData from '@/data/quran/vocab-coverage.json';
+import { HURUF_MUQATTAAT_WORD_COUNT } from '@/lib/huruf-muqattaat';
 
 interface VocabCoverage {
   /** Every word in the whole Qur'an, tagged or not - "the entire Qur'an" for this metric. */
@@ -10,7 +11,9 @@ interface VocabCoverage {
   occurrenceCounts: Record<string, number>;
 }
 
-const { totalWords: TOTAL_QURAN_WORDS, occurrenceCounts } = vocabCoverageData as VocabCoverage;
+const { totalWords, occurrenceCounts } = vocabCoverageData as VocabCoverage;
+/** Opening letters have no lexical meaning, so they are omitted from vocabulary coverage. */
+const TOTAL_QURAN_WORDS = totalWords - HURUF_MUQATTAAT_WORD_COUNT;
 
 export { TOTAL_QURAN_WORDS };
 

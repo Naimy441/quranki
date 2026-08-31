@@ -51,6 +51,7 @@ export default function LearnScreen() {
   const reviewCountDate = useProgressStore((state) => state.reviewCountDate);
   const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
   const reviewDates = useProgressStore((state) => state.reviewDates);
+  const streakGraceDates = useProgressStore((state) => state.streakGraceDates);
   const hydrated = useProgressStore((state) => state.hydrated);
 
   const now = new Date();
@@ -67,7 +68,7 @@ export default function LearnScreen() {
   const upcoming = getUpcomingLearning(progress, now);
   const newRemaining = Math.max(0, wordsPerSession - newCardsCompletedToday(reviewCountDate, newCardsToday, now));
   const mastered = totalMasteredWords(progress, now);
-  const streak = computeStreak(reviewDates, now);
+  const streak = computeStreak(reviewDates, streakGraceDates, now);
   const frontier = getIntroductionFrontier(progress);
   const sections = [
     { key: 'thematic', title: null as string | null, subtitle: null as string | null, data: rowsForStatuses(statuses.slice(0, THEMATIC_LEVEL_COUNT)) },

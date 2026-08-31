@@ -20,6 +20,8 @@ interface SurahPageProps {
   transliterationSize: number;
   hiddenVocabIds: Set<string>;
   knownWordIds: Set<string>;
+  recognizedVocabIds: Set<string>;
+  showAyahCoverage: boolean;
   onLongPressWord?: (word: ReaderWord) => void;
   onOpenMarks?: (ayah: number) => void;
   focusAyah?: number;
@@ -44,6 +46,8 @@ export function SurahPage({
   transliterationSize,
   hiddenVocabIds,
   knownWordIds,
+  recognizedVocabIds,
+  showAyahCoverage,
   onLongPressWord,
   onOpenMarks,
   focusAyah = 0,
@@ -111,6 +115,8 @@ export function SurahPage({
         transliterationSize={transliterationSize}
         hiddenVocabIds={hiddenVocabIds}
         knownWordIds={knownWordIds}
+        recognizedVocabIds={recognizedVocabIds}
+        showAyahCoverage={showAyahCoverage}
         highlighted={focusAyah === item.a}
         actionsOpen={openActionsAyah === item.a}
         onToggleActions={(ayah) => setOpenActionsAyah((current) => current === ayah ? 0 : ayah)}
@@ -118,7 +124,7 @@ export function SurahPage({
         onOpenMarks={onOpenMarks}
       />
     ),
-    [arabicSize, focusAyah, glossSize, hiddenVocabIds, knownWordIds, meta, onLongPressWord, onOpenMarks, openActionsAyah, showTranslation, showTransliteration, surahNumber, transliterationSize],
+    [arabicSize, focusAyah, glossSize, hiddenVocabIds, knownWordIds, meta, onLongPressWord, onOpenMarks, openActionsAyah, recognizedVocabIds, showAyahCoverage, showTranslation, showTransliteration, surahNumber, transliterationSize],
   );
 
   const onViewableItemsChanged = useCallback(

@@ -18,7 +18,9 @@ export interface KnownWordEntry {
 
 export type KnownWordsMap = Record<string, KnownWordEntry>;
 
-const CURATED_ID_RE = /^\d{2}-\d{3}$/;
+// The curriculum now extends past Level 99, so its ids may have either two or three level digits
+// (for example, `01-001` and `118-010`).
+const CURATED_ID_RE = /^\d{2,3}-\d{3}$/;
 
 /** Whether `id` is one of the curated study-word ids, as opposed to a generated "lem:..."
  *  corpus-lemma id for a word outside the curriculum. Used to decide whether marking/unmarking a
