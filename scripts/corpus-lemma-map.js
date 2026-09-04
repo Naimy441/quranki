@@ -17,9 +17,6 @@ const {
 const MORPHOLOGY_PATH = path.join(__dirname, 'data', 'quran-morphology.txt');
 const OVERRIDES_PATH = path.join(__dirname, 'data', 'vocab-lemma-overrides.json');
 
-/** Ayahs where the corpus fuses two mushaf words, shifting every later index. Never attach. */
-const KNOWN_MISALIGNED = new Set(['2:181', '8:6', '13:37', '37:130']);
-
 function parseMorphWordCounts() {
   const lines = fs.readFileSync(MORPHOLOGY_PATH, 'utf8').split('\n');
   const wordCountByAyah = new Map();
@@ -52,17 +49,13 @@ function verifyAlignment(ayahWordOrder) {
     if (morphCount === locations.length) aligned += 1;
     else mismatched.push({ ayahKey, reader: locations.length, morph: morphCount ?? 0 });
   }
-  const unexpected = mismatched.filter((row) => !KNOWN_MISALIGNED.has(row.ayahKey));
-  const missingKnown = [...KNOWN_MISALIGNED].filter((key) => !mismatched.some((row) => row.ayahKey === key));
   return {
     readerAyahs: ayahWordOrder.size,
     morphAyahs: wordCountByAyah.size,
     morphWords,
     aligned,
     mismatched,
-    unexpected,
-    missingKnown,
-    ok: unexpected.length === 0 && missingKnown.length === 0,
+    ok: mismatched.length === 0,
   };
 }
 
@@ -258,7 +251,6 @@ function attachMorphology(word, loc, stemByLocation) {
 }
 
 module.exports = {
-  KNOWN_MISALIGNED,
   verifyAlignment,
   buildMorphologyIndex,
   buildVocabLemmaMap,

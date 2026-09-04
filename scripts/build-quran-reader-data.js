@@ -83,6 +83,51 @@ const RAW_TEXT_FIXES = {
   '32:3:3': { from: '&gt;\u066e', to: '\u0649' },
 };
 
+/**
+ * The tajweed source splits these written forms into two display words, while the Quranic Arabic
+ * Corpus (and the word-by-word translation source) assigns each pair one word location. Keeping
+ * the reader on the corpus boundary makes `surah:ayah:word` a stable key everywhere: lemma data,
+ * morphology, word glosses, and transliteration all refer to the same word.
+ *
+ * Values are the first tajweed-source word position and the number of adjacent source words to
+ * render at that corpus position. The English and transliteration data already use corpus
+ * positions, so they deliberately stay at their output position when the Arabic runs are joined.
+ */
+const CORPUS_WORD_BOUNDARY_MERGES = {
+  '2:181': [{ position: 3, sourceWordCount: 2 }], // بَعْدَ + مَا
+  '8:6': [{ position: 4, sourceWordCount: 2 }], // بَعْدَ + مَا
+  '13:37': [{ position: 8, sourceWordCount: 2 }], // بَعْدَ + مَا
+  '37:130': [{ position: 3, sourceWordCount: 2 }], // إِلْ + يَاسِينَ
+};
+
+/** Make tajweed display-word boundaries match Quranic Arabic Corpus word locations. */
+function alignWordsToCorpus(ayahKey, words) {
+  const merges = CORPUS_WORD_BOUNDARY_MERGES[ayahKey];
+  if (!merges) return words;
+
+  const mergeByPosition = new Map(merges.map((merge) => [merge.position, merge]));
+  const aligned = [];
+  let sourcePosition = 1;
+
+  for (let corpusPosition = 1; sourcePosition <= words.length; corpusPosition += 1) {
+    const sourceWordCount = mergeByPosition.get(corpusPosition)?.sourceWordCount ?? 1;
+    const displayWords = words.slice(sourcePosition - 1, sourcePosition - 1 + sourceWordCount);
+    const annotationWord = words[corpusPosition - 1];
+    if (displayWords.length !== sourceWordCount || !annotationWord) {
+      throw new Error(`Invalid corpus word-boundary merge for ${ayahKey}:${corpusPosition}`);
+    }
+    aligned.push({
+      ...annotationWord,
+      p: corpusPosition,
+      // Keep the mushaf's visible space even though this is one corpus word location.
+      ar: displayWords.flatMap((word, index) => (index === 0 ? word.ar : [{ t: ' ' }, ...word.ar])),
+    });
+    sourcePosition += sourceWordCount;
+  }
+
+  return aligned;
+}
+
 function isAyahEndMarker(segments) {
   if (segments.length !== 1 || segments[0].c) return false;
   return ARABIC_INDIC_DIGITS.test(segments[0].t);
@@ -188,13 +233,15 @@ function main() {
       if (words.length === 0) {
         throw new Error(`No words found for ayah ${surahNumber}:${ayahNumber}`);
       }
-      const translation = parseAyahTranslation(ayahTranslations[`${surahNumber}:${ayahNumber}`]);
-      ayahs.push({ a: ayahNumber, w: words, tr: translation });
-
       const ayahKey = `${surahNumber}:${ayahNumber}`;
-      const locations = words.map((word) => `${ayahKey}:${word.p}`);
-      words.forEach((word, i) => {
-        surfaceByLocation.set(locations[i], word.ar.map((seg) => seg.t).join(''));
+      const alignedWords = alignWordsToCorpus(ayahKey, words);
+      const translation = parseAyahTranslation(ayahTranslations[ayahKey]);
+      ayahs.push({ a: ayahNumber, w: alignedWords, tr: translation });
+
+      const locations = alignedWords.map((word) => `${ayahKey}:${word.p}`);
+      alignedWords.forEach((word, i) => {
+        // Visible spaces inside a corpus word (the four merged cases above) are display-only.
+        surfaceByLocation.set(locations[i], word.ar.map((seg) => seg.t).join('').replace(/\s/g, ''));
       });
       ayahWordOrder.set(ayahKey, locations);
     }
@@ -220,16 +267,10 @@ function main() {
   const alignment = verifyAlignment(ayahWordOrder);
   console.log(
     `Corpus location check: ${alignment.aligned}/${alignment.readerAyahs} ayahs map 1:1 ` +
-      `(${alignment.mismatched.length} known word-count mismatches skipped: ` +
-      `${alignment.mismatched.map((row) => row.ayahKey).join(', ')}).`,
+      `(${alignment.mismatched.length} word-count mismatches).`,
   );
   if (!alignment.ok) {
-    if (alignment.unexpected.length) {
-      console.error('New corpus/reader location mismatches (refusing to attach morphology):', alignment.unexpected);
-    }
-    if (alignment.missingKnown.length) {
-      console.error('Expected mismatches missing:', alignment.missingKnown);
-    }
+    console.error('Corpus/reader location mismatches:', alignment.mismatched);
     throw new Error('Quranic Arabic Corpus locations do not match reader surah:ayah:word indexes.');
   }
 
