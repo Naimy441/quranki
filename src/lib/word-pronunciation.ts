@@ -1,47 +1,22 @@
-import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
+import { getWord } from '@/lib/levels';
+import { getVocabExample } from '@/lib/vocab-examples';
+import { playWordAudio, stopWordAudio } from '@/lib/word-audio';
 
-import { WORD_PRONUNCIATION_ASSETS } from '@/data/word-pronunciation-assets';
-
-const assets: Record<string, number> = WORD_PRONUNCIATION_ASSETS;
-
-let player: AudioPlayer | null = null;
-let audioModeReady = false;
-let onFinished: (() => void) | null = null;
-
-async function getPlayer(): Promise<AudioPlayer> {
-  if (!audioModeReady) {
-    await setAudioModeAsync({
-      playsInSilentMode: true,
-      shouldPlayInBackground: false,
-      interruptionMode: 'doNotMix',
-    });
-    audioModeReady = true;
-  }
-  if (!player) {
-    player = createAudioPlayer(null);
-    player.addListener('playbackStatusUpdate', (status) => {
-      if (!status.didJustFinish) return;
-      const callback = onFinished;
-      onFinished = null;
-      callback?.();
-    });
-  }
-  return player;
-}
-
-/** Plays the bundled human recording for a vocabulary word. */
+/** Plays the tagged Quran example for this vocab card. */
 export async function playWordPronunciation(id: string, finished?: () => void): Promise<boolean> {
-  const asset = assets[id];
-  if (!asset) return false;
-  const instance = await getPlayer();
-  onFinished = finished ?? null;
-  instance.replace(asset);
-  await instance.seekTo(0);
-  instance.play();
-  return true;
+  stopWordAudio();
+  const word = getWord(id);
+  const example = word ? getVocabExample(word) : undefined;
+  if (!example) {
+    finished?.();
+    return false;
+  }
+  return playWordAudio(example.s, example.a, example.p, {
+    onFinished: finished,
+    onFailed: finished,
+  });
 }
 
 export function stopWordPronunciation(): void {
-  onFinished = null;
-  player?.pause();
+  stopWordAudio();
 }

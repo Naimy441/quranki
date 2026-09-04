@@ -561,6 +561,23 @@ export async function playAyah(surahNumber: number, ayahNumber: number): Promise
   await loadCurrent(seq);
 }
 
+/** Pause without tearing down the session so a word clip can play over it. */
+export function pauseRecitation(): void {
+  if (!player) {
+    wantPlaying = false;
+    return;
+  }
+  wantPlaying = false;
+  try {
+    player.pause();
+  } catch {
+    // ignore
+  }
+  if (useRecitationStore.getState().playing) {
+    useRecitationStore.setState({ playing: false });
+  }
+}
+
 export function togglePlayPause(): void {
   const state = useRecitationStore.getState();
   if (!state.visible || !player) {

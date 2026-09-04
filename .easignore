@@ -47,9 +47,6 @@ example
 
 # --- extra files EAS Build does not need ---
 
-# Local pronunciation-recorder (source .webm); the app uses assets/audio/
-/tools
-
 # Data-prep / screenshot scripts; generated reader data is already in src/data/quran/
 /scripts
 

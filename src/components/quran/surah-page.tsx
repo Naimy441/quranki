@@ -9,7 +9,7 @@ import { SurahNameText } from '@/components/quran/surah-name-text';
 import { ThemedText } from '@/components/themed-text';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { getSurahAyahs, getSurahMeta } from '@/lib/quran-reader';
-import type { ReaderAyah, ReaderWord } from '@/lib/quran-reader-types';
+import type { ReaderAyah, ReaderWordRef } from '@/lib/quran-reader-types';
 import type { LemmaId } from '@/lib/quran-lemmas';
 import { useRecitationStore } from '@/store/recitation-store';
 
@@ -24,7 +24,7 @@ interface SurahPageProps {
   knownLemmaIds: Set<LemmaId>;
   recognizedLemmaIds: Set<LemmaId>;
   showAyahCoverage: boolean;
-  onLongPressWord?: (word: ReaderWord) => void;
+  onLongPressWord?: (ref: ReaderWordRef) => void;
   onOpenMarks?: (ayah: number) => void;
   focusAyah?: number;
   isActive?: boolean;

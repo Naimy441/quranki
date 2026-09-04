@@ -9,7 +9,9 @@ import { ArabicTextStyle, Radius, Spacing } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
 import { createNewCard, previewGrades } from '@/lib/fsrs';
 import { hapticSelection } from '@/lib/haptics';
+import { shapeQpcArabic } from '@/lib/arabic-display';
 import { CURRICULUM_LEMMA_COUNT, getCoverageThroughLevel, LAST_LEVEL_NUMBER, LEVELS, STAGES, THEMATIC_WORD_COUNT } from '@/lib/levels';
+import { getVocabExample } from '@/lib/vocab-examples';
 import { glossColor } from '@/lib/quran-colors';
 import { BISMILLAH_WORDS } from '@/lib/quran-reader';
 import type { ReaderWord } from '@/lib/quran-reader-types';
@@ -28,11 +30,16 @@ export function OnboardingFlashPreview({
 }) {
   const theme = useTheme();
   const previews = useMemo(() => previewGrades(createNewCard(), new Date()), []);
+  const example = getVocabExample(DEMO_WORD);
+  const spokenSurface = example ? shapeQpcArabic(example.w[example.p - 1] ?? '') : '';
+  const showSpoken = isSpeaking && spokenSurface.length > 0;
 
   return (
     <View style={styles.visualBlock} pointerEvents="box-none">
       <View style={[styles.flashCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <ThemedText style={[styles.flashArabic, ArabicTextStyle]}>{DEMO_WORD.arabic}</ThemedText>
+        <ThemedText style={[styles.flashArabic, ArabicTextStyle, showSpoken && { color: theme.primary }]}>
+          {showSpoken ? spokenSurface : DEMO_WORD.arabic}
+        </ThemedText>
         <Pressable
           onPress={onSpeak}
           hitSlop={12}

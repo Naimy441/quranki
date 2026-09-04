@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useLayoutEffect, useState } from 'react';
-import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from 'react-native-paper';
 
 import { ArabicText } from '@/components/arabic-text';
@@ -8,16 +8,18 @@ import { InlineMeta } from '@/components/inline-meta';
 import { ThemedText } from '@/components/themed-text';
 import { ArabicTextStyle, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { hapticSelection, hapticSuccess, hapticWarning } from '@/lib/haptics';
+import { hapticLight, hapticSelection, hapticSuccess, hapticWarning } from '@/lib/haptics';
 import type { Level } from '@/lib/levels';
 import { getRootEntry, posLabel } from '@/lib/quran-morphology';
 import { getQuranLemma, getWordLemmaIds } from '@/lib/quran-lemmas';
-import type { ReaderMorphSegment, ReaderWord } from '@/lib/quran-reader-types';
+import type { ReaderMorphSegment, ReaderWord, ReaderWordRef } from '@/lib/quran-reader-types';
+import { playWordAudio, stopWordAudio } from '@/lib/word-audio';
 import { formatCount } from '@/lib/stats';
+import { pauseRecitation } from '@/store/recitation-store';
 
 interface WordDetailSheetProps {
   /** The long-pressed word, or null when the sheet should be hidden. */
-  word: ReaderWord | null;
+  selection: ReaderWordRef | null;
   isKnown: boolean;
   /** Set when this word's translation is hidden because the user genuinely mastered it through
    *  flashcard review (rather than manually marking it "known" here) - the level it belongs to,
@@ -116,15 +118,23 @@ function displayMorphologyArabic(text: string): string {
   return text.replace(/\u06DF/g, '');
 }
 
-/** Small centered sheet opened by long-pressing a word in the Quran reader. Shows corpus
- *  lemma/root analysis when morphology is attached, and lets the user mark canonical lemma
- *  ids as known — hiding translations everywhere those lemmas appear. */
-export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMarkKnown, onForget }: WordDetailSheetProps) {
+type WordAudioStatus = 'idle' | 'loading' | 'playing' | 'error';
+
+/** Bottom sheet opened by long-pressing a word in the Quran reader. Shows corpus
+ *  lemma/root analysis, a speaker control for that word, and lets the user mark
+ *  canonical lemma ids as known — hiding translations everywhere those lemmas appear. */
+export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, onMarkKnown, onForget }: WordDetailSheetProps) {
   const theme = useTheme();
-  const [open, setOpen] = useState(false);
-  useLayoutEffect(() => {
-    setOpen(word !== null);
-  }, [word]);
+  const word = selection?.word ?? null;
+  const [audioStatus, setAudioStatus] = useState<WordAudioStatus>('idle');
+  const wordKey = selection ? `${selection.surah}:${selection.ayah}:${selection.word.p}` : '';
+
+  useEffect(() => {
+    stopWordAudio();
+    setAudioStatus('idle');
+    return () => stopWordAudio();
+  }, [wordKey]);
+
   const shown = { word, isKnown, masteredLevel };
   const arabic = shown.word?.ar.map((seg) => seg.t).join('') ?? '';
   const lemmaIds = getWordLemmaIds(shown.word);
@@ -137,10 +147,36 @@ export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMar
   const hasMorphology = morphology.length > 0;
 
   const closeThen = (work?: () => void) => {
-    setOpen(false);
-    requestAnimationFrame(() => {
-      onDismiss();
-      if (work) setTimeout(work, 0);
+    stopWordAudio();
+    onDismiss();
+    if (work) setTimeout(work, 0);
+  };
+
+  const replayWord = () => {
+    if (!selection) return;
+    hapticLight();
+    let settled = false;
+    setAudioStatus('loading');
+    pauseRecitation();
+    void playWordAudio(selection.surah, selection.ayah, selection.word.p, {
+      onFinished: () => {
+        if (settled) return;
+        settled = true;
+        setAudioStatus('idle');
+      },
+      onFailed: () => {
+        if (settled) return;
+        settled = true;
+        setAudioStatus('error');
+      },
+    }).then((started) => {
+      if (settled) return;
+      if (!started) {
+        settled = true;
+        setAudioStatus('error');
+        return;
+      }
+      setAudioStatus('playing');
     });
   };
 
@@ -171,7 +207,9 @@ export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMar
   };
 
   return (
-    <Modal visible={open} transparent animationType="none" onRequestClose={() => closeThen()}>
+    // "fade" (not "slide") to match the other reader sheets: RN's iOS "slide" transition
+    // briefly paints the modal host opaque black before the transparent backdrop shows.
+    <Modal visible={selection !== null} transparent animationType="fade" onRequestClose={() => closeThen()}>
       <Pressable style={styles.backdrop} onPress={() => closeThen()}>
         <Pressable style={[styles.sheet, { backgroundColor: theme.card }]} onPress={(e) => e.stopPropagation()}>
           <View style={styles.headerRow}>
@@ -181,7 +219,8 @@ export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMar
                 hapticSelection();
                 closeThen();
               }}
-              hitSlop={10}>
+              hitSlop={10}
+              accessibilityLabel="Close">
               <Ionicons name="close" size={20} color={theme.textMuted} />
             </Pressable>
           </View>
@@ -213,6 +252,31 @@ export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMar
                   })}
                 </View>
               </View>
+            ) : null}
+
+            <Pressable
+              onPress={replayWord}
+              hitSlop={8}
+              accessibilityLabel={audioStatus === 'playing' ? 'Playing this word' : 'Play this word'}
+              style={({ pressed }) => [
+                styles.voiceButton,
+                { backgroundColor: theme.backgroundElement },
+                pressed && styles.pressed,
+              ]}>
+              {audioStatus === 'loading' ? (
+                <ActivityIndicator size="small" color={theme.primary} />
+              ) : (
+                <Ionicons
+                  name={audioStatus === 'playing' ? 'volume-high' : 'volume-medium-outline'}
+                  size={22}
+                  color={audioStatus === 'error' ? theme.textMuted : theme.primary}
+                />
+              )}
+            </Pressable>
+            {audioStatus === 'error' ? (
+              <ThemedText type="small" themeColor="textMuted" style={styles.description}>
+                Couldn’t play this word. Check your connection and try again.
+              </ThemedText>
             ) : null}
 
             {lemmaEntries.length > 0 || rootEntry ? (
@@ -260,17 +324,16 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.four,
+    justifyContent: 'flex-end',
   },
   sheet: {
-    width: '100%',
-    maxWidth: 360,
-    maxHeight: '80%',
-    borderRadius: Radius.large,
+    borderTopLeftRadius: Radius.large,
+    borderTopRightRadius: Radius.large,
     padding: Spacing.four,
+    paddingBottom: Spacing.six,
     gap: Spacing.three,
+    maxHeight: '70%',
+    overflow: 'hidden',
     // Arabic in the sheet must not flip chrome (header, buttons) to RTL.
     direction: 'ltr',
   },
@@ -278,6 +341,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  voiceButton: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  pressed: {
+    opacity: 0.7,
   },
   scroll: {
     flexGrow: 0,

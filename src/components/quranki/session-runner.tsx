@@ -66,6 +66,11 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
   );
 
   const currentEntry = sessionQueue[index];
+  const currentWordId = currentEntry?.word.id;
+  useEffect(() => {
+    setIsSpeaking(false);
+    stopWordPronunciation();
+  }, [currentWordId]);
   const currentProgress = currentEntry ? progress[currentEntry.word.id] : undefined;
 
   const currentCard = useMemo(() => {
@@ -113,6 +118,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
 
   const handleGrade = (grade: GradeName) => {
     if (!currentEntry) return;
+    setIsSpeaking(false);
     hapticGrade(grade);
     stopRecitation();
     const nextCard = gradeWord(currentEntry.word.id, grade);

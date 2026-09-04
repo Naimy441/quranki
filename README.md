@@ -20,7 +20,7 @@ Quranki is a React Native (Expo) app with two parts:
 - **FSRS spaced repetition** — real scheduling algorithm (`ts-fsrs`), not a fixed interval list.
 - **47-level curriculum** — new vocabulary is introduced level by level; levels are recommended, not hard-gated, so review is never blocked.
 - **Configurable session size** — choose how many new words to study per session.
-- **Text-to-speech playback** for Arabic pronunciation, plus haptic feedback on grading.
+- **Word-by-word recitation** for vocabulary cards and the Quran reader, plus haptic feedback on grading.
 - **Full Quran reader** with Tajweed-colored Arabic (Uthmanic Hafs V18 font), word-by-word gloss, ayah translations, and expandable footnotes.
 - **Fluid swipe navigation** between surahs with adjacent-surah preloading.
 - **Adjustable font sizes** for Arabic and translation text, independently.

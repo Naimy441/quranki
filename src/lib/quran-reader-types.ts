@@ -37,6 +37,13 @@ export interface ReaderWord {
   m?: ReaderMorphSegment[];
 }
 
+/** A reader word plus the surah/ayah it was opened from. Needed for word-level audio. */
+export interface ReaderWordRef {
+  surah: number;
+  ayah: number;
+  word: ReaderWord;
+}
+
 /** A run of the full ayah translation: either plain text, or a footnote marker with its body. */
 export interface TranslationPart {
   t?: string;

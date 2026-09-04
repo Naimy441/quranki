@@ -24,7 +24,7 @@ import { getKnownLemmaIds } from '@/lib/known-words';
 import { getHiddenLemmaIds, getMasteredLemmaIds, getMasteredStudyWordForLemmas } from '@/lib/levels';
 import { getWordLemmaIds, hasEveryLemma } from '@/lib/quran-lemmas';
 import { getSurahMeta, SURAH_COUNT } from '@/lib/quran-reader';
-import type { ReaderWord } from '@/lib/quran-reader-types';
+import type { ReaderWordRef } from '@/lib/quran-reader-types';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 import { useQuranMarksStore } from '@/store/quran-marks-store';
@@ -87,7 +87,7 @@ export default function SurahReaderScreen() {
   const transliterationSize = useProgressStore((s) => s.settings.readerTransliterationSize);
   const updateSettings = useProgressStore((s) => s.updateSettings);
   const [settingsVisible, setSettingsVisible] = useState(false);
-  const [selectedWord, setSelectedWord] = useState<ReaderWord | null>(null);
+  const [selectedWord, setSelectedWord] = useState<ReaderWordRef | null>(null);
   const [markAyah, setMarkAyah] = useState<number | null>(null);
   const [jumpVisible, setJumpVisible] = useState(false);
   const noteOpenedSurah = useQuranMarksStore((s) => s.noteOpenedSurah);
@@ -342,11 +342,11 @@ export default function SurahReaderScreen() {
       />
 
       <WordDetailSheet
-        word={selectedWord}
-        isKnown={selectedWord !== null && hasEveryLemma(selectedWord, knownLemmaIds)}
+        selection={selectedWord}
+        isKnown={selectedWord !== null && hasEveryLemma(selectedWord.word, knownLemmaIds)}
         masteredLevel={
-          selectedWord && !hasEveryLemma(selectedWord, knownLemmaIds)
-            ? getMasteredStudyWordForLemmas(getWordLemmaIds(selectedWord), progress)?.level
+          selectedWord && !hasEveryLemma(selectedWord.word, knownLemmaIds)
+            ? getMasteredStudyWordForLemmas(getWordLemmaIds(selectedWord.word), progress)?.level
             : undefined
         }
         onDismiss={() => setSelectedWord(null)}

@@ -12,13 +12,13 @@ import { useTheme } from '@/hooks/use-theme';
 import { hapticLight, hapticSelection, hapticSuccess } from '@/lib/haptics';
 import { isHurufMuqattaatAyah } from '@/lib/huruf-muqattaat';
 import { buildAyahShareText } from '@/lib/quran-reader';
-import type { ReaderAyah, ReaderWord } from '@/lib/quran-reader-types';
+import type { ReaderAyah, ReaderWordRef } from '@/lib/quran-reader-types';
 import type { LemmaId } from '@/lib/quran-lemmas';
 import { getAyahUnderstanding } from '@/lib/quran-understanding';
 import { useQuranMarksStore } from '@/store/quran-marks-store';
 import { playAyah, useRecitationStore } from '@/store/recitation-store';
 
-interface AyahBlockProps { ayah: ReaderAyah; surahNumber: number; surahName: string; showTranslation: boolean; showTransliteration: boolean; arabicSize: number; glossSize: number; transliterationSize: number; hiddenLemmaIds: Set<LemmaId>; knownLemmaIds: Set<LemmaId>; recognizedLemmaIds: Set<LemmaId>; showAyahCoverage: boolean; highlighted?: boolean; actionsOpen?: boolean; onToggleActions?: (ayah: number) => void; onLongPressWord?: (word: ReaderWord) => void; onOpenMarks?: (ayah: number) => void; }
+interface AyahBlockProps { ayah: ReaderAyah; surahNumber: number; surahName: string; showTranslation: boolean; showTransliteration: boolean; arabicSize: number; glossSize: number; transliterationSize: number; hiddenLemmaIds: Set<LemmaId>; knownLemmaIds: Set<LemmaId>; recognizedLemmaIds: Set<LemmaId>; showAyahCoverage: boolean; highlighted?: boolean; actionsOpen?: boolean; onToggleActions?: (ayah: number) => void; onLongPressWord?: (ref: ReaderWordRef) => void; onOpenMarks?: (ayah: number) => void; }
 
 export const AyahBlock = memo(function AyahBlock({ ayah, surahNumber, surahName, showTranslation, showTransliteration, arabicSize, glossSize, transliterationSize, hiddenLemmaIds, knownLemmaIds, recognizedLemmaIds, showAyahCoverage, highlighted = false, actionsOpen = false, onToggleActions, onLongPressWord, onOpenMarks }: AyahBlockProps) {
   const theme = useTheme();
@@ -45,7 +45,7 @@ export const AyahBlock = memo(function AyahBlock({ ayah, surahNumber, surahName,
     <AyahNumberBadge number={ayah.a} understanding={showAyahCoverage && understanding.totalWords > 0 ? understanding.ratio : undefined} />
     {marks.length > 0 && <View style={styles.markIcons}>{marks.map((mark, index) => mark.kind === 'pin' ? <MaterialCommunityIcons key={`${mark.kind}-${index}`} name="pin" size={13} color={mark.color} /> : <Ionicons key={`${mark.kind}-${index}`} name="bookmark" size={11} color={mark.color} />)}</View>}
     <AyahActionMenu open={actionsOpen} onToggle={() => onToggleActions?.(ayah.a)} bookmarked={bookmarked} copied={copied} playback={playback} showTranslation={showFullTranslation} showTranslationAction={!isOpeningLetters} onSave={() => { onToggleActions?.(ayah.a); onOpenMarks?.(ayah.a); }} onCopy={copy} onPlay={() => { hapticLight(); void playAyah(surahNumber, ayah.a); }} onTranslate={() => { hapticSelection(); setShowFullTranslation((value) => !value); }} />
-    <View style={styles.row}>{ayah.w.map((word) => <WordCell key={word.p} word={word} showTranslation={showTranslation} hideMeaning={isOpeningLetters} showTransliteration={showTransliteration} arabicSize={arabicSize} glossSize={glossSize} transliterationSize={transliterationSize} hiddenLemmaIds={hiddenLemmaIds} knownLemmaIds={knownLemmaIds} onLongPressWord={onLongPressWord} />)}</View>
+    <View style={styles.row}>{ayah.w.map((word) => <WordCell key={word.p} word={word} showTranslation={showTranslation} hideMeaning={isOpeningLetters} showTransliteration={showTransliteration} arabicSize={arabicSize} glossSize={glossSize} transliterationSize={transliterationSize} hiddenLemmaIds={hiddenLemmaIds} knownLemmaIds={knownLemmaIds} onLongPressWord={onLongPressWord ? (pressed) => onLongPressWord({ surah: surahNumber, ayah: ayah.a, word: pressed }) : undefined} />)}</View>
     {showFullTranslation && <AyahTranslation parts={ayah.tr} fontSize={glossSize} />}
   </View>;
 });

@@ -4,7 +4,7 @@ import { WordCell } from '@/components/quran/word-cell';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { BISMILLAH_WORDS } from '@/lib/quran-reader';
-import type { ReaderWord } from '@/lib/quran-reader-types';
+import type { ReaderWordRef } from '@/lib/quran-reader-types';
 import type { LemmaId } from '@/lib/quran-lemmas';
 import { useRecitationStore } from '@/store/recitation-store';
 
@@ -17,7 +17,7 @@ interface BismillahHeaderProps {
   transliterationSize: number;
   hiddenLemmaIds: Set<LemmaId>;
   knownLemmaIds: Set<LemmaId>;
-  onLongPressWord?: (word: ReaderWord) => void;
+  onLongPressWord?: (ref: ReaderWordRef) => void;
 }
 
 /** Decorative Bismillah header shown before ayah 1 for every surah except Al-Fatihah and At-Tawbah. */
@@ -54,7 +54,9 @@ export function BismillahHeader({
           transliterationSize={transliterationSize}
           hiddenLemmaIds={hiddenLemmaIds}
           knownLemmaIds={knownLemmaIds}
-          onLongPressWord={onLongPressWord}
+          onLongPressWord={
+            onLongPressWord ? (pressed) => onLongPressWord({ surah: 1, ayah: 1, word: pressed }) : undefined
+          }
         />
       ))}
     </View>

@@ -8,7 +8,7 @@ import { VerseExample } from '@/components/quranki/verse-example';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { displayArabic } from '@/lib/arabic-display';
+import { displayArabic, shapeQpcArabic } from '@/lib/arabic-display';
 import type { Word } from '@/lib/levels';
 import { getVocabExample } from '@/lib/vocab-examples';
 
@@ -23,11 +23,15 @@ export function FlashCard({ word, revealed, onSpeak, isSpeaking }: FlashCardProp
   const theme = useTheme();
   const example = getVocabExample(word);
   if (word.kind === 'grammar') return <GrammarCard word={word} />;
+  const spokenSurface = example ? shapeQpcArabic(example.w[example.p - 1] ?? '') : '';
+  const showSpoken = isSpeaking && spokenSurface.length > 0;
 
   return (
     <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
       <View style={[styles.arabicSection, revealed && example ? styles.arabicSectionCompact : null]}>
-        <ArabicText style={styles.arabicText}>{displayArabic(word)}</ArabicText>
+        <ArabicText style={[styles.arabicText, showSpoken && { color: theme.primary }]}>
+          {showSpoken ? spokenSurface : displayArabic(word)}
+        </ArabicText>
         <Pressable
           onPress={onSpeak}
           hitSlop={12}
