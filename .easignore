@@ -1,0 +1,79 @@
+# Learn more: https://docs.expo.dev/build-reference/easignore/
+# If this file exists, EAS uses it instead of .gitignore. Keep those rules here.
+
+# --- copied from .gitignore ---
+node_modules/
+
+serviceAccountKey.json
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+example
+
+# generated native folders (EAS Prebuild recreates these)
+/ios
+/android
+
+# --- extra files EAS Build does not need ---
+
+# Local pronunciation-recorder (source .webm); the app uses assets/audio/
+/tools
+
+# Data-prep / screenshot scripts; generated reader data is already in src/data/quran/
+/scripts
+
+# App Store / Play Store listing images
+/assets/store
+
+# README logo only (app icons live under assets/images/icon*.png)
+/assets/images/Quranki.png
+
+# Source Quran datasets already compiled into src/data/quran/
+/src/data/qpc-hafs-tajweed.json
+/src/data/colored-english-wbw-translation.json
+/src/data/english-wbw-transliteration.json
+/src/data/en-sahih-international-with-footnote-tags.json
+/src/data/quran-metadata-surah-name.json
+/src/data/ayah-recitation-mahmoud-khalil-al-husary-mujawwad-hafs-956.json
+/src/data/quran-lemmas.json
+/src/data/quran-word-lemmas.json
+
+# Docs, editor, lint — not used by the native build
+*.md
+LICENSE
+/eslint.config.js
+/.vscode
+/.claude
+/docs
+/coverage

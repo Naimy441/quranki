@@ -50,6 +50,8 @@ Quranki is a React Native (Expo) app with two parts:
 
    ```bash
    npx expo start
+   npx expo run:ios
+   npx expo run:android
    ```
 
    From there, open the app in a [development build](https://docs.expo.dev/develop/development-builds/introduction/), an [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/), an [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/), or [Expo Go](https://expo.dev/go).
