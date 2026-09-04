@@ -20,8 +20,9 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticLight, hapticSelection } from '@/lib/haptics';
-import { getKnownWordIds } from '@/lib/known-words';
-import { getHiddenVocabIds, getLevelForWord, getMasteredVocabIds } from '@/lib/levels';
+import { getKnownLemmaIds } from '@/lib/known-words';
+import { getHiddenLemmaIds, getMasteredLemmaIds, getMasteredStudyWordForLemmas } from '@/lib/levels';
+import { getWordLemmaIds, hasEveryLemma } from '@/lib/quran-lemmas';
 import { getSurahMeta, SURAH_COUNT } from '@/lib/quran-reader';
 import type { ReaderWord } from '@/lib/quran-reader-types';
 import { useKnownWordsStore } from '@/store/known-words-store';
@@ -68,17 +69,16 @@ export default function SurahReaderScreen() {
   }
 
   const progress = useProgressStore((s) => s.progress);
-  const hiddenVocabIds = useMemo(() => getHiddenVocabIds(progress), [progress]);
-  const masteredVocabIds = useMemo(() => getMasteredVocabIds(progress), [progress]);
+  const hiddenLemmaIds = useMemo(() => getHiddenLemmaIds(progress), [progress]);
   const knownWords = useKnownWordsStore((s) => s.knownWords);
   const markKnown = useKnownWordsStore((s) => s.markKnown);
   const unmarkKnown = useKnownWordsStore((s) => s.unmarkKnown);
-  const knownWordIds = useMemo(() => getKnownWordIds(knownWords), [knownWords]);
-  const recognizedVocabIds = useMemo(() => {
-    const ids = getMasteredVocabIds(progress);
-    for (const id of knownWordIds) ids.add(id);
+  const knownLemmaIds = useMemo(() => getKnownLemmaIds(knownWords), [knownWords]);
+  const recognizedLemmaIds = useMemo(() => {
+    const ids = getMasteredLemmaIds(progress);
+    for (const id of knownLemmaIds) ids.add(id);
     return ids;
-  }, [knownWordIds, progress]);
+  }, [knownLemmaIds, progress]);
   const arabicSize = useProgressStore((s) => s.settings.readerArabicSize);
   const glossSize = useProgressStore((s) => s.settings.readerGlossSize);
   const showTranslation = useProgressStore((s) => s.settings.readerShowTranslation);
@@ -284,9 +284,9 @@ export default function SurahReaderScreen() {
                       arabicSize={arabicSize}
                       glossSize={glossSize}
                       transliterationSize={transliterationSize}
-                      hiddenVocabIds={hiddenVocabIds}
-                      knownWordIds={knownWordIds}
-                      recognizedVocabIds={recognizedVocabIds}
+                      hiddenLemmaIds={hiddenLemmaIds}
+                      knownLemmaIds={knownLemmaIds}
+                      recognizedLemmaIds={recognizedLemmaIds}
                       showAyahCoverage={showAyahCoverage}
                       onLongPressWord={setSelectedWord}
                       onOpenMarks={setMarkAyah}
@@ -343,20 +343,22 @@ export default function SurahReaderScreen() {
 
       <WordDetailSheet
         word={selectedWord}
-        isKnown={selectedWord?.v !== undefined && knownWordIds.has(selectedWord.v)}
+        isKnown={selectedWord !== null && hasEveryLemma(selectedWord, knownLemmaIds)}
         masteredLevel={
-          selectedWord?.v !== undefined && !knownWordIds.has(selectedWord.v) && masteredVocabIds.has(selectedWord.v)
-            ? getLevelForWord(selectedWord.v)
+          selectedWord && !hasEveryLemma(selectedWord, knownLemmaIds)
+            ? getMasteredStudyWordForLemmas(getWordLemmaIds(selectedWord), progress)?.level
             : undefined
         }
         onDismiss={() => setSelectedWord(null)}
         onMarkKnown={(word) => {
-          if (word.v === undefined) return;
-          markKnown(word.v, word.ar.map((seg) => seg.t).join(''));
+          const ids = getWordLemmaIds(word);
+          if (ids.length === 0) return;
+          markKnown(ids, word.ar.map((seg) => seg.t).join(''));
         }}
         onForget={(word) => {
-          if (word.v === undefined) return;
-          unmarkKnown(word.v);
+          const ids = getWordLemmaIds(word);
+          if (ids.length === 0) return;
+          unmarkKnown(ids);
         }}
       />
     </ThemedView>

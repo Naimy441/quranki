@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 
+import { InlineMeta } from '@/components/inline-meta';
 import { AyahBlock } from '@/components/quran/ayah-block';
 import { BismillahHeader } from '@/components/quran/bismillah-header';
 import { SurahNameText } from '@/components/quran/surah-name-text';
@@ -9,6 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { getSurahAyahs, getSurahMeta } from '@/lib/quran-reader';
 import type { ReaderAyah, ReaderWord } from '@/lib/quran-reader-types';
+import type { LemmaId } from '@/lib/quran-lemmas';
 import { useRecitationStore } from '@/store/recitation-store';
 
 interface SurahPageProps {
@@ -18,9 +20,9 @@ interface SurahPageProps {
   arabicSize: number;
   glossSize: number;
   transliterationSize: number;
-  hiddenVocabIds: Set<string>;
-  knownWordIds: Set<string>;
-  recognizedVocabIds: Set<string>;
+  hiddenLemmaIds: Set<LemmaId>;
+  knownLemmaIds: Set<LemmaId>;
+  recognizedLemmaIds: Set<LemmaId>;
   showAyahCoverage: boolean;
   onLongPressWord?: (word: ReaderWord) => void;
   onOpenMarks?: (ayah: number) => void;
@@ -44,9 +46,9 @@ export function SurahPage({
   arabicSize,
   glossSize,
   transliterationSize,
-  hiddenVocabIds,
-  knownWordIds,
-  recognizedVocabIds,
+  hiddenLemmaIds,
+  knownLemmaIds,
+  recognizedLemmaIds,
   showAyahCoverage,
   onLongPressWord,
   onOpenMarks,
@@ -113,9 +115,9 @@ export function SurahPage({
         arabicSize={arabicSize}
         glossSize={glossSize}
         transliterationSize={transliterationSize}
-        hiddenVocabIds={hiddenVocabIds}
-        knownWordIds={knownWordIds}
-        recognizedVocabIds={recognizedVocabIds}
+        hiddenLemmaIds={hiddenLemmaIds}
+        knownLemmaIds={knownLemmaIds}
+        recognizedLemmaIds={recognizedLemmaIds}
         showAyahCoverage={showAyahCoverage}
         highlighted={focusAyah === item.a}
         actionsOpen={openActionsAyah === item.a}
@@ -124,7 +126,7 @@ export function SurahPage({
         onOpenMarks={onOpenMarks}
       />
     ),
-    [arabicSize, focusAyah, glossSize, hiddenVocabIds, knownWordIds, meta, onLongPressWord, onOpenMarks, openActionsAyah, recognizedVocabIds, showAyahCoverage, showTranslation, showTransliteration, surahNumber, transliterationSize],
+    [arabicSize, focusAyah, glossSize, hiddenLemmaIds, knownLemmaIds, meta, onLongPressWord, onOpenMarks, openActionsAyah, recognizedLemmaIds, showAyahCoverage, showTranslation, showTransliteration, surahNumber, transliterationSize],
   );
 
   const onViewableItemsChanged = useCallback(
@@ -159,9 +161,14 @@ export function SurahPage({
             <View style={styles.englishInfo}>
               <ThemedText type="smallBold" style={styles.transliteration}>{meta.en}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.meaning}>{meta.nt}</ThemedText>
-              <ThemedText type="small" themeColor="textMuted" style={styles.metaLine}>
-                {`${meta.ac} ${meta.ac === 1 ? 'ayah' : 'ayahs'}  ·  ${meta.rp === 'meccan' ? 'Meccan' : 'Medinan'}`}
-              </ThemedText>
+              <InlineMeta
+                themeColor="textMuted"
+                items={[
+                  `${meta.ac} ${meta.ac === 1 ? 'ayah' : 'ayahs'}`,
+                  meta.rp === 'meccan' ? 'Meccan' : 'Medinan',
+                ]}
+                textStyle={styles.metaLine}
+              />
             </View>
             <View style={styles.arabicTitleWrap}>
               <SurahNameText surahNumber={surahNumber} style={styles.arabicTitle} />
@@ -175,8 +182,8 @@ export function SurahPage({
               arabicSize={arabicSize}
               glossSize={glossSize}
               transliterationSize={transliterationSize}
-              hiddenVocabIds={hiddenVocabIds}
-              knownWordIds={knownWordIds}
+              hiddenLemmaIds={hiddenLemmaIds}
+              knownLemmaIds={knownLemmaIds}
               onLongPressWord={onLongPressWord}
             />
           )}

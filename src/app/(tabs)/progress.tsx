@@ -1,5 +1,6 @@
 import { useIsFocused } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,9 +14,19 @@ import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/th
 import { useFocusedComputation } from '@/hooks/use-focused-computation';
 import { useFocusedProgressValue } from '@/hooks/use-focused-meter';
 import { useTheme } from '@/hooks/use-theme';
-import { getAllLevelStatuses, getMasteredVocabIds, LEVEL_COUNT, THEMATIC_LEVEL_COUNT, totalMasteredWords, WORD_COUNT, type LevelStatus } from '@/lib/levels';
-import { countMemorizedQuranWords, TOTAL_QURAN_WORDS } from '@/lib/quran-coverage';
-import { getQuranAyahUnderstandingSummary } from '@/lib/quran-understanding';
+import {
+  getIntroductionFrontier,
+  getLevelStatusesForStage,
+  getMasteredLemmaIds,
+  getStage,
+  getUnlockedStage,
+  isStageUnlocked,
+  STAGES,
+  type LevelStatus,
+} from '@/lib/levels';
+import { hapticSelection } from '@/lib/haptics';
+import { getKnownLemmaIds } from '@/lib/known-words';
+import { countMemorizedQuranWords, getQuranAyahUnderstandingSummary, TOTAL_QURAN_WORDS } from '@/lib/quran-coverage';
 import { computeStreak, formatCount } from '@/lib/stats';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
@@ -56,26 +67,31 @@ export default function ProgressScreen() {
   const reviewDates = useProgressStore((state) => state.reviewDates);
   const streakGraceDates = useProgressStore((state) => state.streakGraceDates);
   const knownWords = useKnownWordsStore((state) => state.knownWords);
+  const [selectedStageId, setSelectedStageId] = useState<number | null>(null);
 
-  const { statuses, mastered, streak, memorizedQuranWords, overallProgress, ayahUnderstanding } = useFocusedComputation(
-    () => {
+  const { unlockedStage, visibleStage, levelStatuses, masteredLemmas, reachedLevel, streak, memorizedQuranWords, overallProgress, ayahUnderstanding } =
+    useFocusedComputation(() => {
       const now = new Date();
-      const statuses = getAllLevelStatuses(progress, now);
-      const mastered = totalMasteredWords(progress, now);
+      const reachedLevel = Math.max(maxUnlockedLevel, getIntroductionFrontier(progress));
+      const unlockedStage = getUnlockedStage(reachedLevel);
+      const selectedStage = getStage(selectedStageId ?? unlockedStage.id) ?? STAGES[0];
+      const visibleStage = isStageUnlocked(selectedStage, reachedLevel) ? selectedStage : STAGES[0];
+      const ids = getMasteredLemmaIds(progress);
+      for (const id of getKnownLemmaIds(knownWords)) ids.add(id);
       const streak = computeStreak(reviewDates, streakGraceDates, now);
-      const ids = getMasteredVocabIds(progress);
-      for (const id of Object.keys(knownWords)) ids.add(id);
       const memorizedQuranWords = countMemorizedQuranWords(ids);
       return {
-        statuses,
-        mastered,
+        unlockedStage,
+        visibleStage,
+        reachedLevel,
+        masteredLemmas: ids.size,
+        levelStatuses: getLevelStatusesForStage(visibleStage, progress, now),
         streak,
         memorizedQuranWords,
         overallProgress: TOTAL_QURAN_WORDS === 0 ? 0 : memorizedQuranWords / TOTAL_QURAN_WORDS,
         ayahUnderstanding: getQuranAyahUnderstandingSummary(ids),
       };
-    },
-  );
+    });
 
   return (
     <ThemedView style={styles.flex} collapsable={false}>
@@ -86,9 +102,13 @@ export default function ProgressScreen() {
 
 
           <View style={styles.statsRow}>
-            <StatCard icon="checkmark-done" label="Words mastered" value={`${mastered}/${WORD_COUNT}`} />
+            <StatCard
+              icon="checkmark-done"
+              label="Words mastered"
+              value={formatCount(masteredLemmas)}
+            />
             <StatCard icon="flame" label="Day streak" value={String(streak)} />
-            <StatCard icon="albums" label="Level reached" value={`${maxUnlockedLevel}/${LEVEL_COUNT}`} />
+            <StatCard icon="layers" label="Level" value={String(reachedLevel)} />
           </View>
 
           <View style={[styles.overallCard, { backgroundColor: theme.backgroundElement }]}>
@@ -130,17 +150,38 @@ export default function ProgressScreen() {
             </ThemedText>
           </View>
 
-          <ThemedText type="smallBold" style={styles.sectionLabel}>
-            Levels
-          </ThemedText>
-          <View style={styles.grid}>
-            {statuses.slice(0, THEMATIC_LEVEL_COUNT).map((status) => (
-              <LevelCell key={status.level.id} status={status} theme={theme} enabled={focused} />
-            ))}
-            <View style={styles.gridDivider}>
-              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+          <View style={styles.stageRow}>
+            <ThemedText type="smallBold">{visibleStage.title}</ThemedText>
+            <View style={[styles.stagePicker, { backgroundColor: theme.card, borderColor: theme.border }]}>
+              {STAGES.map((stage) => {
+                const selected = visibleStage.id === stage.id;
+                const unlocked = isStageUnlocked(stage, reachedLevel);
+                return (
+                  <Pressable
+                    key={stage.id}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected, disabled: !unlocked }}
+                    accessibilityLabel={stage.title}
+                    disabled={!unlocked}
+                    onPress={() => {
+                      hapticSelection();
+                      setSelectedStageId(stage.id);
+                    }}
+                    style={[
+                      styles.stageChip,
+                      selected && { backgroundColor: theme.backgroundSelected },
+                      !unlocked && styles.stageLocked,
+                    ]}>
+                    <ThemedText type="smallBold" themeColor={selected ? 'primary' : unlocked ? 'text' : 'textMuted'}>
+                      {stage.id}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
             </View>
-            {statuses.slice(THEMATIC_LEVEL_COUNT).map((status) => (
+          </View>
+          <View style={styles.grid}>
+            {levelStatuses.map((status) => (
               <LevelCell key={status.level.id} status={status} theme={theme} enabled={focused} />
             ))}
           </View>
@@ -171,6 +212,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.two,
   },
+  stageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
+  },
+  stagePicker: {
+    flexDirection: 'row',
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    padding: 2,
+  },
+  stageChip: {
+    minWidth: 32,
+    height: 28,
+    paddingHorizontal: Spacing.two,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stageLocked: {
+    opacity: 0.4,
+  },
   overallCard: {
     borderRadius: Radius.large,
     padding: Spacing.three,
@@ -192,6 +256,9 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     marginTop: -Spacing.two,
+  },
+  stageBlock: {
+    gap: Spacing.three,
   },
   grid: {
     flexDirection: 'row',

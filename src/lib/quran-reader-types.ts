@@ -23,23 +23,11 @@ export interface ReaderWord {
   en: TextSegment[];
   /** Optional word-by-word Latin transliteration. */
   tl?: string;
-  /** Unified vocabulary id for this Quran word, if one could be resolved (see
-   *  scripts/build-quran-reader-data.js). Either:
-   *   - one of the curated src/data/quranic-words.json study word ids ("01-001"), matched by
-   *     lemma/root/surface text via the Quranic Arabic Corpus morphology data, or
-   *   - for a word outside the curriculum, a generated "lem:<lemma>" id (see
-   *     scripts/vocab-word-matcher.js's buildLemmaFallbackTags) shared by every occurrence of
-   *     that same corpus dictionary lemma.
-   *  Used to hide/reveal this word's translation once the user is supposed to know it (curated
-   *  ids in FSRS Review/Learning - see getHiddenVocabIds) or has manually marked it known (either
-   *  kind of id - see useKnownWordsStore), whichever comes first. */
-  v?: string;
-  /**
-   * Quranic Arabic Corpus dictionary lemma (light-normalized LEM tag), attached by location
-   * (`surah:ayah:word`) rather than by matching Tajweed text. Used for analysis and, later,
-   * lemma-based mastery. Absent on the handful of ayahs whose corpus word-count disagrees
-   * with the reader, and on stems the corpus left unlemmatized.
-   */
+  /** Canonical Quranic Arabic Corpus lemma id(s), merged by exact surah:ayah:word location.
+   * Most words have one id; the compact array form is used for the 486 multi-stem words. Opening
+   * letters intentionally have none because they have no lexical meaning. */
+  l?: number | number[];
+  /** Light-normalized QAC LEM tag for this location. Display and recognition use `l`, not this. */
   lm?: string;
   /** Corpus ROOT tag (vowel-stripped). Analysis only — never used to assign vocabulary ownership. */
   rt?: string;

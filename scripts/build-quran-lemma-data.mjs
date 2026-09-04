@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(scriptDir, "..");
 const sourcePath = process.argv[2] || "/private/tmp/quranic-corpus-morphology-0.4.txt";
-const outputDir = resolve(rootDir, "data");
+const outputDir = resolve(rootDir, "src", "data");
 
 // The disconnected opening letters (ḥurūf muqaṭṭaʿāt) are intentionally
 // omitted. QAC marks these 30 sequences with the INL (initial letters) tag.
@@ -81,16 +81,6 @@ const lemmas = [...lemmaStats.values()]
   .sort((a, b) => b.frequency - a.frequency || a.buckwalter.localeCompare(b.buckwalter))
   .map((lemma, index) => ({ id: index + 1, ...lemma }));
 const lemmaOccurrenceCount = lemmas.reduce((sum, lemma) => sum + lemma.frequency, 0);
-let cumulativeFrequency = 0;
-for (const lemma of lemmas) {
-  cumulativeFrequency += lemma.frequency;
-  lemma.cumulativeFrequency = cumulativeFrequency;
-  // Rounded to six decimals so the JSON stays compact while remaining useful
-  // for display and charting. The final entry is exactly 100.
-  lemma.cumulativePercentage = lemma.id === lemmas.length
-    ? 100
-    : Number(((cumulativeFrequency / lemmaOccurrenceCount) * 100).toFixed(6));
-}
 const lemmaIdByBuckwalter = new Map(lemmas.map((lemma) => [lemma.buckwalter, lemma.id]));
 
 const surahs = Array.from({ length: 114 }, (_, index) => ({ surah: index + 1, ayahs: [] }));
@@ -105,28 +95,35 @@ for (const record of [...words.values()].sort((a, b) => a.surah - b.surah || a.a
   }
   if (record.isOpeningLetter) continue;
   const lemmaIds = [...new Set(record.stems.map(({ lemma }) => lemmaIdByBuckwalter.get(lemma)))];
-  const surfaceBuckwalter = record.segments.map(({ form }) => form).join("");
-  verse.words.push({
-    position: record.word,
-    arabic: toArabic(surfaceBuckwalter),
-    buckwalter: surfaceBuckwalter,
-    lemmaId: lemmaIds[0],
-    lemmaIds,
-  });
+  verse.words.push({ position: record.word, lemmaIds });
 }
 
 const metadata = {
-  source: "Quranic Arabic Corpus morphology v0.4 (Kais Dukes), https://corpus.quran.com/download/",
-  generatedAt: new Date().toISOString(),
+  schemaVersion: 1,
+  sourceVersion: "Quranic Arabic Corpus morphology v0.4",
+  source: "https://corpus.quran.com/download/",
   lemmaCount: lemmas.length,
   wordCount: includedWords.length,
   excludedOpeningLetterWordCount: words.size - includedWords.length,
   lemmaOccurrenceCount,
-  notes: "The ḥurūf muqaṭṭaʿāt (disjoint opening letters) are excluded. Frequency counts stem-level lemma occurrences. A word with multiple stems can have multiple lemmaIds. qacLemma=false denotes a surface-form fallback where QAC does not supply LEM.",
+  surfaceFallbackLemmaCount: lemmas.filter((lemma) => !lemma.qacLemma).length,
 };
 
 await mkdir(outputDir, { recursive: true });
-await writeFile(resolve(outputDir, "quran-lemmas.json"), JSON.stringify({ metadata, lemmas }, null, 2) + "\n");
-await writeFile(resolve(outputDir, "quran-word-lemmas.json"), JSON.stringify({ metadata, surahs }, null, 2) + "\n");
+const runtimeLemmas = lemmas.map(({ id, arabic: lemmaArabic, frequency }) => ({
+  id,
+  arabic: lemmaArabic,
+  frequency,
+}));
+const wordMetadata = {
+  schemaVersion: metadata.schemaVersion,
+  sourceVersion: metadata.sourceVersion,
+  wordCount: metadata.wordCount,
+  excludedOpeningLetterWordCount: metadata.excludedOpeningLetterWordCount,
+};
+// These are generated build artifacts, not hand-edited source. Keep them minified so the
+// repository and Metro bundle do not pay for indentation or redundant source transliteration.
+await writeFile(resolve(outputDir, "quran-lemmas.json"), `${JSON.stringify({ metadata, lemmas: runtimeLemmas })}\n`);
+await writeFile(resolve(outputDir, "quran-word-lemmas.json"), `${JSON.stringify({ metadata: wordMetadata, surahs })}\n`);
 
 console.log(JSON.stringify({ ...metadata, surahCount: surahs.length }));

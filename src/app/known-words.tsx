@@ -10,11 +10,9 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { displayArabic } from '@/lib/arabic-display';
 import { hapticWarning } from '@/lib/haptics';
-import { isCuratedWordId } from '@/lib/known-words';
-import { getMasteredVocabIds, getWord } from '@/lib/levels';
-import { getWordOccurrenceCount } from '@/lib/quran-coverage';
+import { getMasteredLemmaIds } from '@/lib/levels';
+import { getQuranLemma, lemmaIdFromStorageKey, lemmaStorageKey, type LemmaId } from '@/lib/quran-lemmas';
 import { formatCount } from '@/lib/stats';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
@@ -33,16 +31,19 @@ export default function KnownWordsScreen() {
   const unmarkKnown = useKnownWordsStore((state) => state.unmarkKnown);
   const clearAllKnown = useKnownWordsStore((state) => state.clearAllKnown);
   const progress = useProgressStore((state) => state.progress);
-  const masteredWordIds = useMemo(() => getMasteredVocabIds(progress), [progress]);
+  const masteredLemmaIds = useMemo(() => getMasteredLemmaIds(progress), [progress]);
 
   const entries = useMemo(() => {
-    const ids = new Set([...masteredWordIds, ...Object.keys(knownWords)]);
+    const manualIds = Object.keys(knownWords)
+      .map(lemmaIdFromStorageKey)
+      .filter((id): id is LemmaId => id !== undefined);
+    const ids = new Set([...masteredLemmaIds, ...manualIds]);
     const rows = [...ids]
       .map((id) => {
-        const entry = knownWords[id];
-        const studyWord = isCuratedWordId(id) ? getWord(id) : undefined;
-        const arabic = studyWord ? displayArabic(studyWord) : entry?.sampleArabic ?? id;
-        const english = studyWord ? studyWord.english : `${formatCount(getWordOccurrenceCount(id))} occurrences`;
+        const entry = knownWords[lemmaStorageKey(id)];
+        const lemma = getQuranLemma(id);
+        const arabic = lemma?.arabic ?? entry?.sampleArabic ?? String(id);
+        const english = `${formatCount(lemma?.frequency ?? 0)} occurrences`;
         return { id, arabic, english, addedAt: entry?.addedAt ?? '', manuallyKnown: entry !== undefined };
       })
       .sort((a, b) => a.english.localeCompare(b.english, 'en', { sensitivity: 'base' }) || a.arabic.localeCompare(b.arabic));
@@ -52,7 +53,7 @@ export default function KnownWordsScreen() {
     return rows.filter(
       (row) => fold(row.arabic).includes(needle) || fold(row.english).includes(needle),
     );
-  }, [knownWords, masteredWordIds, query]);
+  }, [knownWords, masteredLemmaIds, query]);
   const knownCount = entries.length;
   const [renderLimit, setRenderLimit] = useState(INITIAL_RENDER_COUNT);
   const visibleEntries = entries.slice(0, renderLimit);
@@ -85,12 +86,12 @@ export default function KnownWordsScreen() {
     );
   };
 
-  const handleForget = (id: string) => {
+  const handleForget = (id: LemmaId) => {
     confirmAction(
       'Forget this word?',
       'Its translation will show again in the Qur’an reader.',
       'Forget',
-      () => unmarkKnown(id),
+      () => unmarkKnown([id]),
     );
   };
 

@@ -1,6 +1,8 @@
 import quranicWordsData from '@/data/quranic-words.json';
+import lemmaLevelCoverageData from '@/data/quran/lemma-level-coverage.json';
+import stageLevelsData from '@/data/quran/stage-levels.json';
 import { deserializeCard, isCardDue, isWordMastered, shouldHideInReader, State, type GradeName, type SerializedCard } from '@/lib/fsrs';
-import { getWordOccurrenceCount, TOTAL_QURAN_WORDS } from '@/lib/quran-coverage';
+import { QURAN_LEMMA_COUNT, TOTAL_QURAN_WORDS, type LemmaId } from '@/lib/quran-lemmas';
 
 export interface Word {
   id: string;
@@ -15,11 +17,19 @@ export interface Word {
   note?: string;
   variant?: string;
   forms?: string[];
+  /** How a fused card is built, shown on the flashcard (e.g. مِنْ + مَنْ). */
+  contractionOf?: string;
+  /** English of that makeup (e.g. from + who). */
+  contractionEnglish?: string;
   exampleOf?: string;
   /** Do not split this citation into per-word reader tags (avoids claiming الله, etc.). */
   phrase?: boolean;
   /** Prefer this ayah when picking a flashcard verse example. */
   exampleVerse?: { s: number; a: number };
+  /** Canonical QAC v0.4 lemma ids represented by this card. Generated once from the former
+   * occurrence matcher; reader words now use these ids directly. Affix and grammar cards have
+   * no lemma ids because they are not standalone lexical stems. */
+  lemmaIds?: LemmaId[];
 }
 
 export interface Level {
@@ -45,13 +55,23 @@ export interface WordProgress {
 export type ProgressMap = Record<string, WordProgress>;
 
 const data = quranicWordsData as { deck: string; levelCount: number; wordCount: number; levels: Level[] };
+const generated = stageLevelsData as {
+  metadata: {
+    stage1LastLevel: number;
+    stage2LastLevel: number;
+    stage3LastLevel: number;
+    stage4LastLevel: number;
+  };
+  levels: Level[];
+};
 
 export function isStudyWord(word: Word): boolean {
   return word.kind !== 'grammar';
 }
 
 export const DECK_NAME = data.deck;
-export const LEVELS: Level[] = data.levels;
+/** Curated cards first (original Stage 1, then existing Stage 2), then generated leftovers. */
+export const LEVELS: Level[] = [...data.levels, ...generated.levels];
 export const LEVEL_COUNT = LEVELS.length;
 export const LAST_LEVEL_NUMBER = LEVELS[LEVELS.length - 1]?.number ?? 0;
 /** Study words only - one-shot grammar intros are not vocabulary. */
@@ -59,18 +79,116 @@ export const WORD_COUNT = LEVELS.reduce(
   (sum, level) => sum + level.words.filter(isStudyWord).length,
   0,
 );
-/** Levels 1–47 are the original thematic curriculum; 48+ continue the same themes. */
-export const THEMATIC_LEVEL_COUNT = LEVELS.filter((level) => level.number <= 47).length;
-/** Study-word count in the thematic curriculum (levels 1–47). */
-export const THEMATIC_WORD_COUNT = LEVELS.slice(0, THEMATIC_LEVEL_COUNT).reduce(
+/** Complete canonical lemma catalogue. Stage breakpoints 547 / 1467 / 2879 / 4875 refer to these ids. */
+export const CURRICULUM_LEMMA_COUNT = QURAN_LEMMA_COUNT;
+
+export interface Stage {
+  id: number;
+  title: string;
+  subtitle: string;
+  firstLevel: number;
+  lastLevel: number;
+}
+
+export const STAGES: Stage[] = [
+  {
+    id: 1,
+    title: 'Stage 1',
+    subtitle: 'The original curated vocabulary',
+    firstLevel: 1,
+    lastLevel: generated.metadata.stage1LastLevel,
+  },
+  {
+    id: 2,
+    title: 'Stage 2',
+    subtitle: 'Five or more occurrences',
+    firstLevel: generated.metadata.stage1LastLevel + 1,
+    lastLevel: generated.metadata.stage2LastLevel,
+  },
+  {
+    id: 3,
+    title: 'Stage 3',
+    subtitle: 'Two to four occurrences',
+    firstLevel: generated.metadata.stage2LastLevel + 1,
+    lastLevel: generated.metadata.stage3LastLevel,
+  },
+  {
+    id: 4,
+    title: 'Stage 4',
+    subtitle: 'Once in the Quran',
+    firstLevel: generated.metadata.stage3LastLevel + 1,
+    lastLevel: generated.metadata.stage4LastLevel,
+  },
+];
+
+export const STAGE_COUNT = STAGES.length;
+
+/** Levels 1–47 are Stage 1, the original thematic curriculum. */
+export const THEMATIC_LEVEL_COUNT = STAGES[0].lastLevel;
+/** Study-word count in Stage 1 (levels 1–47). */
+export const THEMATIC_WORD_COUNT = LEVELS.filter((level) => level.number <= THEMATIC_LEVEL_COUNT).reduce(
   (sum, level) => sum + level.words.filter(isStudyWord).length,
   0,
 );
 
+export function getStage(stageId: number): Stage | undefined {
+  return STAGES.find((stage) => stage.id === stageId);
+}
+
+export function getStageForLevel(levelNumber: number): Stage {
+  return STAGES.find((stage) => levelNumber >= stage.firstLevel && levelNumber <= stage.lastLevel) ?? STAGES[0];
+}
+
+export function getLevelsForStage(stage: Stage): Level[] {
+  return LEVELS.filter((level) => level.number >= stage.firstLevel && level.number <= stage.lastLevel);
+}
+
+/** Later stages stay locked until the reached level enters them. Isolated words marked known
+ *  in the Quran reader do not unlock a later stage's level list. */
+export function isStageUnlocked(stage: Stage, reachedLevel: number): boolean {
+  return stage.id === 1 || reachedLevel >= stage.firstLevel;
+}
+
+export function getUnlockedStage(reachedLevel: number): Stage {
+  for (let i = STAGES.length - 1; i >= 0; i -= 1) {
+    if (isStageUnlocked(STAGES[i], reachedLevel)) return STAGES[i];
+  }
+  return STAGES[0];
+}
+
+export interface StageProgress {
+  stage: Stage;
+  mastered: number;
+  total: number;
+  introduced: number;
+}
+
+export function getStageProgress(stage: Stage, progressMap: ProgressMap, now: Date): StageProgress {
+  let mastered = 0;
+  let total = 0;
+  let introduced = 0;
+  for (const level of getLevelsForStage(stage)) {
+    for (const word of level.words) {
+      if (!isStudyWord(word)) continue;
+      total += 1;
+      const state = getWordState(word, progressMap, now);
+      if (state.isMastered) mastered += 1;
+      if (!state.isNew) introduced += 1;
+    }
+  }
+  return { stage, mastered, total, introduced };
+}
+
 const wordIndex = new Map<string, { word: Word; level: Level }>();
+const studyWordIdsByLemma = new Map<LemmaId, string[]>();
 for (const level of LEVELS) {
   for (const word of level.words) {
     wordIndex.set(word.id, { word, level });
+    for (const lemmaId of word.lemmaIds ?? []) {
+      const ids = studyWordIdsByLemma.get(lemmaId) ?? [];
+      ids.push(word.id);
+      studyWordIdsByLemma.set(lemmaId, ids);
+    }
   }
 }
 
@@ -80,17 +198,12 @@ export interface LevelCoverage {
   percent: number;
 }
 
+const levelCoverage = lemmaLevelCoverageData as { totalWords: number; levels: Record<string, number> };
 const coverageThroughLevel: LevelCoverage[] = [];
-{
-  let running = 0;
-  for (const level of LEVELS) {
-    for (const word of level.words) {
-      if (!isStudyWord(word)) continue;
-      running += getWordOccurrenceCount(word.id);
-    }
-    const percent = TOTAL_QURAN_WORDS === 0 ? 0 : Math.round((running / TOTAL_QURAN_WORDS) * 100);
-    coverageThroughLevel[level.number] = { quranWords: running, percent };
-  }
+for (const level of LEVELS) {
+  const quranWords = levelCoverage.levels[String(level.number)] ?? 0;
+  const percent = TOTAL_QURAN_WORDS === 0 ? 0 : Math.round((quranWords / TOTAL_QURAN_WORDS) * 100);
+  coverageThroughLevel[level.number] = { quranWords, percent };
 }
 
 /** Quran-text coverage the learner would have after mastering every word through `levelNumber`. */
@@ -114,6 +227,29 @@ export function getLevelForWord(wordId: string): Level | undefined {
   return wordIndex.get(wordId)?.level;
 }
 
+export function getStudyWordIdsForLemma(id: LemmaId): readonly string[] {
+  return studyWordIdsByLemma.get(id) ?? [];
+}
+
+export function getStudyWordIdsForLemmas(ids: readonly LemmaId[]): string[] {
+  const result = new Set<string>();
+  for (const id of ids) {
+    for (const wordId of getStudyWordIdsForLemma(id)) result.add(wordId);
+  }
+  return [...result];
+}
+
+export function getHiddenStudyWordIdForLemmas(
+  lemmaIds: readonly LemmaId[],
+  progressMap: ProgressMap,
+): string | undefined {
+  for (const wordId of getStudyWordIdsForLemmas(lemmaIds)) {
+    const progress = progressMap[wordId];
+    if (progress && shouldHideInReader(deserializeCard(progress.card))) return wordId;
+  }
+  return undefined;
+}
+
 export interface WordState {
   word: Word;
   progress: WordProgress | null;
@@ -122,29 +258,49 @@ export interface WordState {
   isMastered: boolean;
 }
 
-/** Study word ids whose translations should start hidden in the Quran reader: anything the
+/** Canonical lemma ids whose translations should start hidden in the Quran reader: anything the
  *  learner is supposed to know (Review or Learning), but not New or Relearning. Distinct from
- *  `getMasteredVocabIds`, which is the stricter Good/Easy graduation used for stats and unlocks. */
-export function getHiddenVocabIds(progressMap: ProgressMap): Set<string> {
-  const hidden = new Set<string>();
+ *  `getMasteredLemmaIds`, which is the stricter Good/Easy graduation used for stats and unlocks. */
+export function getHiddenLemmaIds(progressMap: ProgressMap): Set<LemmaId> {
+  const hidden = new Set<LemmaId>();
   for (const [wordId, progress] of Object.entries(progressMap)) {
-    if (getWord(wordId)?.kind === 'grammar') continue;
-    if (shouldHideInReader(deserializeCard(progress.card))) hidden.add(wordId);
+    const word = getWord(wordId);
+    if (!word || word.kind === 'grammar' || !shouldHideInReader(deserializeCard(progress.card))) continue;
+    for (const lemmaId of word.lemmaIds ?? []) hidden.add(lemmaId);
   }
   return hidden;
 }
 
-/** All mastered study word ids in one pass - used for stats and the word-detail sheet, not for
- *  hiding glosses in the reader (that's `getHiddenVocabIds`: Review/Learning rather than only
+/** All mastered canonical lemma ids in one pass - used for stats and the word-detail sheet, not
+ *  for hiding glosses in the reader (that's `getHiddenLemmaIds`: Review/Learning rather than only
  *  Good/Easy graduation). Computing this once per progress change is much cheaper than
  *  deserializing every card again for each of the thousands of words a surah can render. */
-export function getMasteredVocabIds(progressMap: ProgressMap): Set<string> {
-  const mastered = new Set<string>();
+export function getMasteredLemmaIds(progressMap: ProgressMap): Set<LemmaId> {
+  const mastered = new Set<LemmaId>();
   for (const [wordId, progress] of Object.entries(progressMap)) {
-    if (getWord(wordId)?.kind === 'grammar') continue;
-    if (isWordMastered(deserializeCard(progress.card), progress.lastGrade)) mastered.add(wordId);
+    const word = getWord(wordId);
+    if (!word || word.kind === 'grammar') continue;
+    if (isWordMastered(deserializeCard(progress.card), progress.lastGrade)) {
+      for (const lemmaId of word.lemmaIds ?? []) mastered.add(lemmaId);
+    }
   }
   return mastered;
+}
+
+export function getMasteredStudyWordForLemmas(
+  lemmaIds: readonly LemmaId[],
+  progressMap: ProgressMap,
+): { wordId: string; level: Level } | undefined {
+  for (const lemmaId of lemmaIds) {
+    for (const wordId of getStudyWordIdsForLemma(lemmaId)) {
+      const progress = progressMap[wordId];
+      const level = getLevelForWord(wordId);
+      if (progress && level && isWordMastered(deserializeCard(progress.card), progress.lastGrade)) {
+        return { wordId, level };
+      }
+    }
+  }
+  return undefined;
 }
 
 export function getWordState(word: Word, progressMap: ProgressMap, now: Date): WordState {
@@ -194,6 +350,10 @@ export function getAllLevelStatuses(progressMap: ProgressMap, now: Date): LevelS
   return LEVELS.map((level) => getLevelStatus(level, progressMap, now));
 }
 
+export function getLevelStatusesForStage(stage: Stage, progressMap: ProgressMap, now: Date): LevelStatus[] {
+  return getLevelsForStage(stage).map((level) => getLevelStatus(level, progressMap, now));
+}
+
 function isLevelFullyMastered(level: Level, progressMap: ProgressMap): boolean {
   const studyWords = level.words.filter(isStudyWord);
   return studyWords.every((word) => {
@@ -219,11 +379,12 @@ export function nextReachedLevel(progressMap: ProgressMap, currentMax: number): 
   return Math.max(currentMax, computeReachedLevel(progressMap));
 }
 
-/** The first level that still has an unseen word - where sequential new-card introduction is
- *  currently drawing from. LEVEL_COUNT if the whole deck has been introduced. */
+/** The first level that still has an unseen study word - where sequential new-card
+ *  introduction is currently drawing from. Grammar intros do not hold this back.
+ *  LAST_LEVEL_NUMBER if the whole deck has been introduced. */
 export function getIntroductionFrontier(progressMap: ProgressMap): number {
   for (const level of LEVELS) {
-    if (level.words.some((word) => !progressMap[word.id])) return level.number;
+    if (level.words.some((word) => isStudyWord(word) && !progressMap[word.id])) return level.number;
   }
   return LAST_LEVEL_NUMBER;
 }
@@ -287,8 +448,9 @@ export function getUpcomingLearning(progressMap: ProgressMap, now: Date): Upcomi
  * (oldest-due first, minus any already reviewed today), then up to `wordsPerSession` unseen
  * study words in curriculum order (level 1, then 2, …), minus any new cards already introduced
  * today. Grammar intros in that same stretch are included for free so they don't consume the
- * new-word quota. Levels never lock new cards - they are only the insertion order. Reviews
- * never consume the new-word quota.
+ * new-word quota. Stages hide later level lists until introduction reaches them, the same
+ * way a later level can be learned from the Quran reader before it is the current study
+ * level. Reviews never consume the new-word quota.
  *
  * The new-card cap is the default day's batch, not a hard stop: pass `ignoreNewCardCap` when
  * the learner explicitly starts another session after finishing today's.

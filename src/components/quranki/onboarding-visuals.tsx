@@ -9,14 +9,15 @@ import { ArabicTextStyle, Radius, Spacing } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
 import { createNewCard, previewGrades } from '@/lib/fsrs';
 import { hapticSelection } from '@/lib/haptics';
-import { getCoverageThroughLevel, LAST_LEVEL_NUMBER, LEVELS, THEMATIC_LEVEL_COUNT, THEMATIC_WORD_COUNT, WORD_COUNT } from '@/lib/levels';
+import { CURRICULUM_LEMMA_COUNT, getCoverageThroughLevel, LAST_LEVEL_NUMBER, LEVELS, STAGES, THEMATIC_WORD_COUNT } from '@/lib/levels';
 import { glossColor } from '@/lib/quran-colors';
 import { BISMILLAH_WORDS } from '@/lib/quran-reader';
 import type { ReaderWord } from '@/lib/quran-reader-types';
+import { getWordLemmaIds, lemmaPeekKey, type LemmaId } from '@/lib/quran-lemmas';
 import { formatCount } from '@/lib/stats';
 
 const DEMO_WORD = LEVELS[0].words[0];
-const HIDDEN_DEMO_IDS = new Set(BISMILLAH_WORDS.filter((word) => word.v).map((word) => word.v as string));
+const HIDDEN_DEMO_IDS = allLemmaIds(BISMILLAH_WORDS);
 
 export function OnboardingFlashPreview({
   onSpeak,
@@ -62,25 +63,26 @@ export function OnboardingAyahPreview({
 }) {
   const theme = useTheme();
   const [revealed, setRevealed] = useState<Set<string>>(() => new Set());
-  const hiddenIds = mode === 'shown' ? new Set<string>() : mode === 'hidden' ? HIDDEN_DEMO_IDS : allVocabIds(BISMILLAH_WORDS);
-  const inviteId = mode === 'tap' ? BISMILLAH_WORDS[0]?.v : undefined;
+  const hiddenIds = mode === 'shown' ? new Set<LemmaId>() : HIDDEN_DEMO_IDS;
+  const inviteId = mode === 'tap' ? lemmaPeekKey(getWordLemmaIds(BISMILLAH_WORDS[0])) : undefined;
 
   return (
     <View style={[styles.ayahCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
       <View style={styles.ayahRow}>
         {BISMILLAH_WORDS.map((word) => {
-          const id = word.v ?? String(word.p);
-          const isHidden = Boolean(word.v && hiddenIds.has(word.v) && !revealed.has(id));
-          const invited = mode === 'tap' && word.v === inviteId && isHidden;
+          const lemmaIds = getWordLemmaIds(word);
+          const id = lemmaPeekKey(lemmaIds);
+          const isHidden = lemmaIds.length > 0 && lemmaIds.every((lemmaId) => hiddenIds.has(lemmaId)) && !revealed.has(id);
+          const invited = mode === 'tap' && id === inviteId && isHidden;
           return (
             <PreviewWord
               key={word.p}
               word={word}
               hidden={isHidden}
               invited={invited}
-              tappable={mode === 'tap' && Boolean(word.v)}
+              tappable={mode === 'tap' && lemmaIds.length > 0}
               onReveal={() => {
-                if (!word.v) return;
+                if (lemmaIds.length === 0) return;
                 hapticSelection();
                 setRevealed((prev) => {
                   const next = new Set(prev);
@@ -97,10 +99,10 @@ export function OnboardingAyahPreview({
   );
 }
 
-function allVocabIds(words: ReaderWord[]): Set<string> {
-  const ids = new Set<string>();
+function allLemmaIds(words: ReaderWord[]): Set<LemmaId> {
+  const ids = new Set<LemmaId>();
   for (const word of words) {
-    if (word.v) ids.add(word.v);
+    for (const id of getWordLemmaIds(word)) ids.add(id);
   }
   return ids;
 }
@@ -151,7 +153,7 @@ function PreviewWord({
 
 export function OnboardingCoveragePreview() {
   const theme = useTheme();
-  const core = getCoverageThroughLevel(THEMATIC_LEVEL_COUNT);
+  const core = getCoverageThroughLevel(STAGES[0].lastLevel);
   const full = getCoverageThroughLevel(LAST_LEVEL_NUMBER);
 
   return (
@@ -169,7 +171,7 @@ export function OnboardingCoveragePreview() {
           {full.percent}%
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {formatCount(WORD_COUNT)} words
+          {formatCount(CURRICULUM_LEMMA_COUNT)} words
         </ThemedText>
       </View>
     </View>

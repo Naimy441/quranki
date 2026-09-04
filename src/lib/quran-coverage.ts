@@ -1,40 +1,76 @@
-import vocabCoverageData from '@/data/quran/vocab-coverage.json';
-import { HURUF_MUQATTAAT_WORD_COUNT } from '@/lib/huruf-muqattaat';
-
-interface VocabCoverage {
-  /** Every word in the whole Quran, tagged or not - "the entire Quran" for this metric. */
-  totalWords: number;
-  /** studyWordId -> how many times it actually occurs across the whole Quran. Generated at
-   *  build time by scripts/build-quran-reader-data.js (see vocab-word-matcher.js for how each
-   *  occurrence is matched to a study word). Ids the matcher never found in the text (e.g.
-   *  fill-in-the-blank template entries like "لَ+فعل+نَّ") are simply absent. */
-  occurrenceCounts: Record<string, number>;
-}
-
-const { totalWords, occurrenceCounts } = vocabCoverageData as VocabCoverage;
-/** Opening letters have no lexical meaning, so they are omitted from vocabulary coverage. */
-const TOTAL_QURAN_WORDS = totalWords - HURUF_MUQATTAAT_WORD_COUNT;
+import { CANONICAL_AYAHS } from '@/lib/quran-lemma-index';
+import { ayahLemmaUnderstanding, getQuranLemma, TOTAL_QURAN_WORDS, type LemmaId } from '@/lib/quran-lemmas';
+import { SURAH_COUNT } from '@/lib/quran-reader';
 
 export { TOTAL_QURAN_WORDS };
 
-/** How many of the Quran's actual words the user would now recognize, given a set of
- *  recognized vocabulary ids - i.e. real text coverage, not just "N of 547 vocab items". One
- *  mastered word like "the/that" can single-handedly cover thousands of on-screen occurrences,
- *  so this is a very different (and much more telling) number than the vocab-list mastery count.
- *  The caller decides what "recognized" means - the progress screen passes the union of FSRS-
- *  mastered study words and manually-marked-known words (see useKnownWordsStore), so a word
- *  outside the 547-word curriculum still counts once the user has marked it known, the same way
- *  it already does for hiding its translation in the reader. */
-export function countMemorizedQuranWords(recognizedVocabIds: Set<string>): number {
+export interface AyahUnderstandingHistogramBin {
+  min: number;
+  max: number;
+  label: string;
+  ayahCount: number;
+}
+
+export interface QuranAyahUnderstandingSummary {
+  average: number;
+  ayahCount: number;
+  histogram: AyahUnderstandingHistogramBin[];
+  /** Average ayah-understanding score for every surah, in Quran order. */
+  surahAverages: number[];
+}
+
+const HISTOGRAM_BIN_COUNT = 10;
+
+function createHistogram(counts: number[]): AyahUnderstandingHistogramBin[] {
+  return counts.map((ayahCount, index) => {
+    const min = index * 10;
+    const max = index === HISTOGRAM_BIN_COUNT - 1 ? 100 : min + 9;
+    return { min, max, label: `${min}–${max}%`, ayahCount };
+  });
+}
+
+/** Exact Quran-word coverage for a set of canonical lemmas. Multi-stem words count only when
+ * every lexical stem is recognized; opening letters are excluded from both numerator and total. */
+export function countMemorizedQuranWords(recognizedLemmaIds: Set<LemmaId>): number {
   let count = 0;
-  for (const id of recognizedVocabIds) {
-    count += occurrenceCounts[id] ?? 0;
+  for (const ayah of CANONICAL_AYAHS) {
+    count += ayahLemmaUnderstanding(ayah.words, recognizedLemmaIds).knownWords;
   }
   return count;
 }
 
-/** How many times a single vocabulary id (curated or "lem:...") occurs across the whole Quran -
- *  used to show "appears N times" when the user is deciding whether to mark a word known. */
-export function getWordOccurrenceCount(id: string): number {
-  return occurrenceCounts[id] ?? 0;
+/**
+ * The expected vocabulary understanding of a typical ayah. Unlike corpus-wide word coverage,
+ * this gives every ayah equal weight, regardless of how short or long it is.
+ */
+export function getQuranAyahUnderstandingSummary(recognizedLemmaIds: Set<LemmaId>): QuranAyahUnderstandingSummary {
+  let total = 0;
+  let ayahCount = 0;
+  const counts = Array.from({ length: HISTOGRAM_BIN_COUNT }, () => 0);
+  const surahTotals = Array.from({ length: SURAH_COUNT }, () => 0);
+  const surahCounts = Array.from({ length: SURAH_COUNT }, () => 0);
+
+  for (const ayah of CANONICAL_AYAHS) {
+    const { totalWords, ratio } = ayahLemmaUnderstanding(ayah.words, recognizedLemmaIds);
+    if (totalWords === 0) continue;
+    total += ratio;
+    surahTotals[ayah.surah - 1] += ratio;
+    surahCounts[ayah.surah - 1] += 1;
+    counts[Math.min(Math.floor(ratio * HISTOGRAM_BIN_COUNT), HISTOGRAM_BIN_COUNT - 1)] += 1;
+    ayahCount += 1;
+  }
+
+  return {
+    average: ayahCount === 0 ? 0 : total / ayahCount,
+    ayahCount,
+    histogram: createHistogram(counts),
+    surahAverages: surahTotals.map((surahTotal, index) => (
+      surahCounts[index] === 0 ? 0 : surahTotal / surahCounts[index]
+    )),
+  };
+}
+
+/** Exact stem frequency supplied by the generated canonical lemma catalogue. */
+export function getLemmaOccurrenceCount(id: LemmaId | undefined): number {
+  return getQuranLemma(id)?.frequency ?? 0;
 }

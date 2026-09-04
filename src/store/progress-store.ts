@@ -58,7 +58,9 @@ interface ProgressState {
   resetProgress: () => void;
   masterAllWords: () => void;
   autoMasterWord: (wordId: string) => void;
+  autoMasterWords: (wordIds: readonly string[]) => void;
   revertAutoMasteredWord: (wordId: string) => void;
+  revertAutoMasteredWords: (wordIds: readonly string[]) => void;
 }
 
 function todayKey(date: Date): string {
@@ -290,7 +292,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     persistMeta({ ...get(), maxUnlockedLevel: LAST_LEVEL_NUMBER });
   },
 
-  /** Called when a curated study word (one matching the 547-word id pattern) is marked "known"
+  /** Called when a study word is marked "known"
    *  in the Quran reader (see useKnownWordsStore) - fabricates the same kind of Review-state,
    *  due-in-30-days progress entry as `masterAllWords`, but for one word and tagged
    *  `autoMastered: true` so it can be safely undone later. Never overwrites *real* mastery
@@ -299,36 +301,53 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
    *  only advances if this mark completes a consecutive prefix of fully mastered levels; a
    *  single later word does not jump the learner ahead. */
   autoMasterWord: (wordId) => {
-    const state = get();
-    const existing = state.progress[wordId];
-    if (existing && !existing.autoMastered && isWordMastered(deserializeCard(existing.card), existing.lastGrade)) {
-      return;
-    }
+    get().autoMasterWords([wordId]);
+  },
 
+  autoMasterWords: (wordIds) => {
+    if (wordIds.length === 0) return;
+    const state = get();
+    let nextProgress: ProgressMap | undefined;
     const now = new Date();
     const due = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     const card = createNewCard(now);
-    const nextWordProgress: WordProgress = {
-      wordId,
-      card: serializeCard({
-        ...card,
-        state: State.Review,
-        due,
-        stability: 30,
-        difficulty: 5,
-        reps: 3,
-        scheduled_days: 30,
-        last_review: now,
-      }),
-      lastGrade: 'good',
-      reviewedAt: now.toISOString(),
-      autoMastered: true,
-    };
-
-    const nextProgress: ProgressMap = { ...state.progress, [wordId]: nextWordProgress };
+    const serialized = serializeCard({
+      ...card,
+      state: State.Review,
+      due,
+      stability: 30,
+      difficulty: 5,
+      reps: 3,
+      scheduled_days: 30,
+      last_review: now,
+    });
+    const reviewedAt = now.toISOString();
+    let nextPeeks = state.readerPeeks;
+    for (const wordId of wordIds) {
+      const existing = (nextProgress ?? state.progress)[wordId];
+      if (existing && !existing.autoMastered && isWordMastered(deserializeCard(existing.card), existing.lastGrade)) {
+        continue;
+      }
+      nextProgress ??= { ...state.progress };
+      nextProgress[wordId] = {
+        wordId,
+        card: serialized,
+        lastGrade: 'good',
+        reviewedAt,
+        autoMastered: true,
+      };
+      if (wordId in nextPeeks) {
+        if (nextPeeks === state.readerPeeks) {
+          const { [wordId]: _peek, ...rest } = nextPeeks;
+          nextPeeks = rest;
+        } else {
+          delete nextPeeks[wordId];
+        }
+      }
+    }
+    if (!nextProgress) return;
     const nextMaxUnlockedLevel = computeReachedLevel(nextProgress);
-    const { [wordId]: _peek, ...readerPeeks } = state.readerPeeks;
-    set({ progress: nextProgress, maxUnlockedLevel: nextMaxUnlockedLevel, readerPeeks });
+    set({ progress: nextProgress, maxUnlockedLevel: nextMaxUnlockedLevel, readerPeeks: nextPeeks });
     void saveProgressAsync(nextProgress);
     persistMeta({ ...state, maxUnlockedLevel: nextMaxUnlockedLevel });
   },
@@ -340,10 +359,19 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
    *  displayed level from the remaining consecutive mastered prefix, so forgetting the last
    *  word of a completed level can move the current level back. */
   revertAutoMasteredWord: (wordId) => {
+    get().revertAutoMasteredWords([wordId]);
+  },
+
+  revertAutoMasteredWords: (wordIds) => {
+    if (wordIds.length === 0) return;
     const state = get();
-    if (state.progress[wordId]?.autoMastered !== true) return;
-    const nextProgress = { ...state.progress };
-    delete nextProgress[wordId];
+    let nextProgress: ProgressMap | undefined;
+    for (const wordId of wordIds) {
+      if (state.progress[wordId]?.autoMastered !== true) continue;
+      nextProgress ??= { ...state.progress };
+      delete nextProgress[wordId];
+    }
+    if (!nextProgress) return;
     const nextMaxUnlockedLevel = computeReachedLevel(nextProgress);
     set({ progress: nextProgress, maxUnlockedLevel: nextMaxUnlockedLevel });
     void saveProgressAsync(nextProgress);

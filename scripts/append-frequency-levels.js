@@ -239,7 +239,7 @@ function packIntoLevels(items, startLevel, levelCount, title) {
     const number = startLevel + i;
     const slice = items.slice(offset, offset + sizes[i]);
     offset += sizes[i];
-    const numbered = levelCount > 1 ? `${title} · ${i + 1}` : title;
+    const numbered = levelCount > 1 ? `${title} ${i + 1}` : title;
     levels.push({
       number,
       id: String(number).padStart(2, '0'),

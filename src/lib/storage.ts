@@ -13,7 +13,8 @@ import { EMPTY_QURAN_MARKS, sanitizeQuranMarks, type QuranMarksData } from '@/li
 const PROGRESS_KEY = 'quranki:progress:v1';
 const SETTINGS_KEY = 'quranki:settings:v1';
 const META_KEY = 'quranki:meta:v1';
-const KNOWN_WORDS_KEY = 'quranki:known-words:v1';
+const KNOWN_WORDS_KEY = 'quranki:known-words:v2';
+const LEGACY_KNOWN_WORDS_KEY = 'quranki:known-words:v1';
 const QURAN_MARKS_KEY = 'quranki:quran-marks:v1';
 
 export interface Settings {
@@ -139,7 +140,7 @@ export function saveMetaAsync(meta: Meta): Promise<void> {
 }
 
 export async function loadKnownWordsAsync(): Promise<KnownWordsMap> {
-  const raw = await AsyncStorage.getItem(KNOWN_WORDS_KEY);
+  const raw = (await AsyncStorage.getItem(KNOWN_WORDS_KEY)) ?? (await AsyncStorage.getItem(LEGACY_KNOWN_WORDS_KEY));
   if (!raw) return {};
   try {
     return JSON.parse(raw) as KnownWordsMap;
@@ -167,5 +168,12 @@ export function saveQuranMarksAsync(data: QuranMarksData): Promise<void> {
 }
 
 export async function resetAllAsync(): Promise<void> {
-  await AsyncStorage.multiRemove([PROGRESS_KEY, SETTINGS_KEY, META_KEY, KNOWN_WORDS_KEY, QURAN_MARKS_KEY]);
+  await AsyncStorage.multiRemove([
+    PROGRESS_KEY,
+    SETTINGS_KEY,
+    META_KEY,
+    KNOWN_WORDS_KEY,
+    LEGACY_KNOWN_WORDS_KEY,
+    QURAN_MARKS_KEY,
+  ]);
 }

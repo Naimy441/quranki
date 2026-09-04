@@ -2,7 +2,8 @@
  * Corpus morphology helpers used at build time: location-alignment checks, lemma/root
  * occurrence indexes, and the vocabulary-card → corpus-lemma mapping.
  *
- * Does not change how ReaderWord.v is assigned (that's still vocab-word-matcher.js).
+ * Reader-word identity is the generated canonical lemma id; this file only attaches
+ * morphology and checks that corpus locations match the reader.
  */
 const fs = require('fs');
 const path = require('path');

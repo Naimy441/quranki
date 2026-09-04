@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { InlineMeta } from '@/components/inline-meta';
 import { ProgressRing } from '@/components/quranki/progress-ring';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
@@ -42,14 +43,17 @@ export function LevelCard({ status, isCurrent }: LevelCardProps) {
         <ThemedText type="smallBold" numberOfLines={2}>
           {level.title}
         </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {introduced === 0
-            ? `${totalCount} words - not yet introduced`
-            : `${masteredCount}/${totalCount} mastered`}
-        </ThemedText>
-        <ThemedText type="small" themeColor="textMuted">
-          {coverage.percent}% · {formatCount(coverage.quranWords)} words
-        </ThemedText>
+        {introduced === 0 ? (
+          <InlineMeta themeColor="textSecondary" items={[`${totalCount} words`, 'Not yet introduced']} />
+        ) : (
+          <ThemedText type="small" themeColor="textSecondary">
+            {masteredCount}/{totalCount} mastered
+          </ThemedText>
+        )}
+        <InlineMeta
+          themeColor="textMuted"
+          items={[`${coverage.percent}%`, `${formatCount(coverage.quranWords)} words`]}
+        />
       </View>
 
       {dueCount > 0 ? (

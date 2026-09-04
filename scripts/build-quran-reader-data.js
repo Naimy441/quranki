@@ -9,22 +9,26 @@
  *   - src/data/quran/bismillah.json    (the 4-word Bismillah, reused as a decorative header)
  *   - src/data/quran/loader.ts         (static per-surah require map, so Metro/Hermes only
  *                                        parses the surah JSON actually opened by the reader)
- *   - src/data/quran/vocab-coverage.json (study-id occurrence counts from the existing matcher)
- *   - src/data/quran/morphology-index.json (lemma/root counts from the corpus, by location)
- *   - src/data/quran/vocab-lemmas.json (study card → corpus lemma map; not yet used for hiding)
+ *   - src/data/quran/lemma-level-coverage.json (exact cumulative curriculum coverage)
+ *   - src/data/quran/morphology-index.json (root counts from the corpus)
+ *
+ * Canonical word identity comes from src/data/quran-word-lemmas.json. The older vocabulary
+ * matcher is retained only to choose representative flashcard examples; it no longer owns
+ * reader words, known-word state, hiding, or coverage.
  *
  * Re-run with `node scripts/build-quran-reader-data.js` if the source data files change.
  */
 const fs = require('fs');
 const path = require('path');
 
-const { buildVocabMatches, buildLemmaFallbackTags, loadMorphologyStems, collectAffixLocations, citationPhraseTokens, citationPhraseTokenizations, findPhraseRuns, findPartialExampleHits, collectStudyCores, collectVerbPersonLocations, INDEPENDENT_PRONOUN_BY_PERSON, normalizeLight } = require('./vocab-word-matcher');
-const { verifyAlignment, buildMorphologyIndex, buildVocabLemmaMap, attachMorphology } = require('./corpus-lemma-map');
+const { buildVocabMatches, loadMorphologyStems, collectAffixLocations, citationPhraseTokens, citationPhraseTokenizations, findPhraseRuns, findPartialExampleHits, collectStudyCores, collectVerbPersonLocations, INDEPENDENT_PRONOUN_BY_PERSON, normalizeLight, normalizeLightLoose } = require('./vocab-word-matcher');
+const { verifyAlignment, buildMorphologyIndex, attachMorphology } = require('./corpus-lemma-map');
 
 const ROOT = path.join(__dirname, '..');
 const DATA_DIR = path.join(ROOT, 'src', 'data');
 const OUT_DIR = path.join(DATA_DIR, 'quran');
 const SURAHS_OUT_DIR = path.join(OUT_DIR, 'surahs');
+const WORD_LEMMAS_PATH = path.join(DATA_DIR, 'quran-word-lemmas.json');
 
 const ARABIC_INDIC_DIGITS = /^[\u0660-\u0669]+$/;
 
@@ -178,6 +182,20 @@ function main() {
   const ayahTranslations = JSON.parse(
     fs.readFileSync(path.join(DATA_DIR, 'en-sahih-international-with-footnote-tags.json'), 'utf8'),
   );
+  const wordLemmaData = JSON.parse(fs.readFileSync(WORD_LEMMAS_PATH, 'utf8'));
+  const lemmaIdsByLocation = new Map();
+  for (const surah of wordLemmaData.surahs) {
+    for (const ayah of surah.ayahs) {
+      for (const word of ayah.words) {
+        const location = `${surah.surah}:${ayah.ayah}:${word.position}`;
+        if (lemmaIdsByLocation.has(location)) throw new Error(`Duplicate canonical lemma location: ${location}`);
+        if (!Array.isArray(word.lemmaIds) || word.lemmaIds.length === 0) {
+          throw new Error(`Missing canonical lemma id at ${location}`);
+        }
+        lemmaIdsByLocation.set(location, word.lemmaIds);
+      }
+    }
+  }
 
   fs.mkdirSync(SURAHS_OUT_DIR, { recursive: true });
 
@@ -277,32 +295,16 @@ function main() {
   console.log('Matching study words (src/data/quranic-words.json) against every Qur\'an word...');
   const vocabMatches = buildVocabMatches(surfaceByLocation, ayahWordOrder);
 
-  console.log('Grouping remaining words by corpus lemma (for user-marked "known words")...');
   const stemByLocation = loadMorphologyStems(ayahWordOrder);
-  const lemmaFallbackTags = buildLemmaFallbackTags(stemByLocation, vocabMatches);
-  const lemmaIdCount = new Set(lemmaFallbackTags.values()).size;
-  console.log(
-    `Grouped ${lemmaFallbackTags.size} otherwise-untagged words into ${lemmaIdCount} corpus-lemma ids ` +
-      "outside the curriculum.",
-  );
-
-  // The unified id space every ReaderWord.v draws from: curated study-word ids take priority
-  // (buildVocabMatches already resolved those with the deck's own citation forms), and every
-  // remaining word with a resolvable dictionary lemma gets a generated "lem:<lemma>" id instead
-  // of being left untagged - see buildLemmaFallbackTags's doc comment for why this doesn't
-  // fragment or collide with curated ids.
-  const unifiedTags = new Map(vocabMatches);
-  for (const [loc, id] of lemmaFallbackTags) unifiedTags.set(loc, id);
-
-  let taggedCount = 0;
+  let canonicalWordCount = 0;
   for (const [surahNumber, ayahs] of ayahsBySurah) {
     for (const ayah of ayahs) {
       for (const word of ayah.w) {
         const loc = `${surahNumber}:${ayah.a}:${word.p}`;
-        const vocabId = unifiedTags.get(loc);
-        if (vocabId) {
-          word.v = vocabId;
-          taggedCount += 1;
+        const lemmaIds = lemmaIdsByLocation.get(loc);
+        if (lemmaIds) {
+          word.l = lemmaIds.length === 1 ? lemmaIds[0] : lemmaIds;
+          canonicalWordCount += 1;
         }
         attachMorphology(word, loc, stemByLocation);
       }
@@ -310,59 +312,48 @@ function main() {
     const outPath = path.join(SURAHS_OUT_DIR, `${String(surahNumber).padStart(3, '0')}.json`);
     fs.writeFileSync(outPath, JSON.stringify(ayahs));
   }
-  console.log(`Tagged ${taggedCount} of ${surfaceByLocation.size} Quran words with a vocabulary id.`);
-
-  // How many times each vocab id (curated study word OR generated lemma id) actually occurs
-  // across the whole Quran - lets the app show "X of the Quran's Y words are ones you know"
-  // (real text coverage) rather than just "X of 547 vocab items mastered" (see
-  // src/lib/quran-coverage.ts), and lets the reader show "appears N times" when a user marks an
-  // arbitrary word as known.
-  const occurrenceCounts = {};
-  for (const vocabId of unifiedTags.values()) {
-    occurrenceCounts[vocabId] = (occurrenceCounts[vocabId] ?? 0) + 1;
+  if (canonicalWordCount !== wordLemmaData.metadata.wordCount) {
+    throw new Error(
+      `Merged ${canonicalWordCount} canonical words; expected ${wordLemmaData.metadata.wordCount}. ` +
+        'Regenerate quran-word-lemmas.json before rebuilding the reader.',
+    );
   }
-
-  // The 4 Bismillah words are also rendered a second way: BismillahHeader repeats the exact same
-  // 4 tagged words (see `bismillahWords` above) as a decorative header before ayah 1 of every
-  // surah with `bismillah_pre: true` (112 of the 114 - all but Al-Fatihah, where it already *is*
-  // ayah 1, and At-Tawbah, which has none). Marking one of those words "known" hides it in every
-  // one of those headers too, so its on-screen occurrence count should include them - otherwise
-  // e.g. "بِسْمِ" ("name", id 23-010) would show a misleadingly small 39 (just its real-ayah
-  // occurrences) despite visually appearing 151 times across the app.
-  const bismillahHeaderCount = surahIndex.filter((s) => s.b).length;
-  for (const word of bismillahWords ?? []) {
-    if (!word.v) continue;
-    occurrenceCounts[word.v] = (occurrenceCounts[word.v] ?? 0) + bismillahHeaderCount;
-  }
-
-  const vocabCoverage = { totalWords: surfaceByLocation.size, occurrenceCounts };
-  fs.writeFileSync(path.join(OUT_DIR, 'vocab-coverage.json'), JSON.stringify(vocabCoverage));
+  console.log(`Merged canonical lemma ids into ${canonicalWordCount} Quran words.`);
 
   const morphologyIndex = buildMorphologyIndex(stemByLocation);
-  fs.writeFileSync(path.join(OUT_DIR, 'morphology-index.json'), JSON.stringify(morphologyIndex));
-  console.log(
-    `Wrote morphology index (${Object.keys(morphologyIndex.lemmas).length} lemmas, ` +
-      `${Object.keys(morphologyIndex.roots).length} roots).`,
-  );
+  fs.writeFileSync(path.join(OUT_DIR, 'morphology-index.json'), JSON.stringify({ roots: morphologyIndex.roots }));
+  console.log(`Wrote morphology index (${Object.keys(morphologyIndex.roots).length} roots).`);
 
   const studyWords = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'quranic-words.json'), 'utf8'));
+  const generatedLevels = JSON.parse(fs.readFileSync(path.join(OUT_DIR, 'stage-levels.json'), 'utf8')).levels;
+  const allStudyLevels = [...studyWords.levels, ...generatedLevels];
   const studyById = new Map();
   const exampleOfById = new Map();
-  const studyWordList = [];
-  for (const level of studyWords.levels) {
+  for (const level of allStudyLevels) {
     for (const word of level.words) {
       studyById.set(word.id, word);
-      studyWordList.push(word);
       if (word.exampleOf) exampleOfById.set(word.id, word.exampleOf);
     }
   }
 
-  const { mapping: vocabLemmas, stats: lemmaMapStats } = buildVocabLemmaMap(studyWordList, morphologyIndex);
-  fs.writeFileSync(path.join(OUT_DIR, 'vocab-lemmas.json'), JSON.stringify(vocabLemmas));
-  console.log(
-    `Wrote vocab → lemma map for ${lemmaMapStats.withLemmas} of ${lemmaMapStats.studyCards} study cards ` +
-      `(unmapped cards still use ReaderWord.v).`,
+  const recognizedLemmaIds = new Set();
+  const canonicalWords = [...lemmaIdsByLocation.values()];
+  const levelCoverage = {};
+  for (const level of allStudyLevels) {
+    for (const word of level.words) {
+      if (word.kind === 'grammar') continue;
+      for (const lemmaId of word.lemmaIds ?? []) recognizedLemmaIds.add(lemmaId);
+    }
+    levelCoverage[level.number] = canonicalWords.reduce(
+      (count, lemmaIds) => count + (lemmaIds.every((id) => recognizedLemmaIds.has(id)) ? 1 : 0),
+      0,
+    );
+  }
+  fs.writeFileSync(
+    path.join(OUT_DIR, 'lemma-level-coverage.json'),
+    JSON.stringify({ totalWords: wordLemmaData.metadata.wordCount, levels: levelCoverage }),
   );
+
   const { suffixById, prefixById } = collectAffixLocations(studyById);
 
   const locationsByVocabId = new Map();
@@ -371,7 +362,7 @@ function main() {
     if (!locationsByVocabId.has(id)) locationsByVocabId.set(id, []);
     locationsByVocabId.get(id).push(loc);
   };
-  for (const [loc, id] of unifiedTags) addLoc(id, loc);
+  for (const [loc, id] of vocabMatches) addLoc(id, loc);
   for (const [id, locs] of suffixById) for (const loc of locs) addLoc(id, loc);
   for (const [id, locs] of prefixById) for (const loc of locs) addLoc(id, loc);
 
@@ -507,6 +498,20 @@ function main() {
           study,
         );
       }
+      // Cards like لِمَ / لِمَا have no lemma ids (must not steal ما) but pin an ayah.
+      if (!best) {
+        const ayahs = ayahsBySurah.get(preferred.s);
+        const ayah = ayahs ? ayahs.find((row) => row.a === preferred.a) : null;
+        const forms = [study.arabic, study.variant, ...(study.forms ?? [])]
+          .filter(Boolean)
+          .flatMap((form) => String(form).split(/[,\u060c]/))
+          .map((part) => normalizeLightLoose(part.trim()))
+          .filter(Boolean);
+        const match = ayah?.w.find((item) =>
+          forms.includes(normalizeLightLoose(item.ar.map((seg) => seg.t).join(''))),
+        );
+        if (ayah && match) best = { s: preferred.s, a: preferred.a, p: match.p, n: 1, ayah };
+      }
     }
     if (!best && phraseRuns.length > 0) {
       best = pickFromCandidates(phraseRuns.map((run) => fromRun(run, 50)), study);
@@ -566,7 +571,7 @@ export function loadSurahAyahs(surahNumber: number): ReaderAyah[] {
   fs.writeFileSync(path.join(OUT_DIR, 'loader.ts'), loaderSource);
 
   console.log(`Wrote ${surahIndex.length} surah files to ${SURAHS_OUT_DIR}`);
-  console.log('Wrote surah-index.json, bismillah.json, loader.ts, vocab-coverage.json, vocab-examples.json, morphology-index.json, vocab-lemmas.json');
+  console.log('Wrote surah-index.json, bismillah.json, loader.ts, lemma-level-coverage.json, vocab-examples.json, morphology-index.json');
 }
 
 main();

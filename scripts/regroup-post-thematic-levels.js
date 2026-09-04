@@ -1318,4 +1318,8 @@ function main() {
   console.log(`Wrote ${WORDS_PATH}`);
 }
 
-main();
+module.exports = { THEMES, classify, packEven, partTitles };
+
+if (require.main === module) {
+  main();
+}

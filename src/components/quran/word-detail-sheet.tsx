@@ -1,15 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useLayoutEffect, useState } from 'react';
 import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from 'react-native-paper';
 
 import { ArabicText } from '@/components/arabic-text';
+import { InlineMeta } from '@/components/inline-meta';
 import { ThemedText } from '@/components/themed-text';
 import { ArabicTextStyle, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticSelection, hapticSuccess, hapticWarning } from '@/lib/haptics';
 import type { Level } from '@/lib/levels';
-import { getWordOccurrenceCount } from '@/lib/quran-coverage';
-import { getLemmaEntry, getRootEntry, posLabel } from '@/lib/quran-morphology';
+import { getRootEntry, posLabel } from '@/lib/quran-morphology';
+import { getQuranLemma, getWordLemmaIds } from '@/lib/quran-lemmas';
 import type { ReaderMorphSegment, ReaderWord } from '@/lib/quran-reader-types';
 import { formatCount } from '@/lib/stats';
 
@@ -80,7 +82,11 @@ const FEATURE_LABELS: Record<string, string> = {
   'MOOD:JUS': 'jussive',
 };
 
-function morphologyLabel(segment: ReaderMorphSegment): string {
+function titleCase(value: string): string {
+  return value.replace(/(^|\s)([a-z])/g, (_, boundary: string, letter: string) => `${boundary}${letter.toUpperCase()}`);
+}
+
+function morphologyParts(segment: ReaderMorphSegment): string[] {
   const tags = segment.f;
   const first =
     tags.includes('FUT') ? 'future particle' :
@@ -89,8 +95,8 @@ function morphologyLabel(segment: ReaderMorphSegment): string {
     tags.map((tag) => FEATURE_LABELS[tag] ?? (tag.startsWith('VF:') ? `form ${tag.slice(3)}` : '')).find(Boolean) ??
     (segment.p === 'V' ? 'verb' : segment.p === 'N' ? 'noun' : 'particle');
   const form = tags.find((tag) => tag.startsWith('VF:'));
-  const label = form && !first.startsWith('form ') ? `${first} · form ${form.slice(3)}` : first;
-  return label.replace(/(^|[\s·])([a-z])/g, (_, boundary: string, letter: string) => `${boundary}${letter.toUpperCase()}`);
+  const parts = form && !first.startsWith('form ') ? [first, `form ${form.slice(3)}`] : [first];
+  return parts.map(titleCase);
 }
 
 function RootLetters({ root }: { root: string }) {
@@ -111,31 +117,39 @@ function displayMorphologyArabic(text: string): string {
 }
 
 /** Small centered sheet opened by long-pressing a word in the Quran reader. Shows corpus
- *  lemma/root analysis when morphology is attached, and lets the user mark a resolvable vocab
- *  id as known — hiding its translation everywhere that same word appears. */
+ *  lemma/root analysis when morphology is attached, and lets the user mark canonical lemma
+ *  ids as known — hiding translations everywhere those lemmas appear. */
 export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMarkKnown, onForget }: WordDetailSheetProps) {
   const theme = useTheme();
+  const [open, setOpen] = useState(false);
+  useLayoutEffect(() => {
+    setOpen(word !== null);
+  }, [word]);
   const shown = { word, isKnown, masteredLevel };
   const arabic = shown.word?.ar.map((seg) => seg.t).join('') ?? '';
-  const lemmaEntry = getLemmaEntry(shown.word?.lm);
-  const rootEntry = getRootEntry(shown.word?.rt ?? lemmaEntry?.root);
-  const pos = posLabel(shown.word?.ps ?? lemmaEntry?.pos);
-  const lemmaCount = lemmaEntry?.count ?? 0;
-  const rootArabic = shown.word?.rt ?? lemmaEntry?.root ?? '';
-  const vOccurrences = shown.word?.v ? getWordOccurrenceCount(shown.word.v) : 0;
-  const canMarkKnown = shown.word?.v !== undefined;
+  const lemmaIds = getWordLemmaIds(shown.word);
+  const lemmaEntries = lemmaIds.map((id) => getQuranLemma(id)).filter((lemma) => lemma !== undefined);
+  const rootEntry = getRootEntry(shown.word?.rt);
+  const pos = posLabel(shown.word?.ps);
+  const rootArabic = shown.word?.rt ?? '';
+  const canMarkKnown = lemmaIds.length > 0;
   const morphology = shown.word?.m ?? [];
   const hasMorphology = morphology.length > 0;
 
+  const closeThen = (work?: () => void) => {
+    setOpen(false);
+    requestAnimationFrame(() => {
+      onDismiss();
+      if (work) setTimeout(work, 0);
+    });
+  };
+
   const handlePress = () => {
     if (!shown.word || !canMarkKnown) return;
+    const target = shown.word;
     if (shown.isKnown) {
       hapticWarning();
-      const target = shown.word;
-      const forget = () => {
-        onForget(target);
-        onDismiss();
-      };
+      const forget = () => closeThen(() => onForget(target));
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined' && window.confirm('Forget this word?\nIts translation will show again in the Qur’an reader.')) {
           forget();
@@ -153,20 +167,19 @@ export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMar
       return;
     }
     hapticSuccess();
-    onMarkKnown(shown.word);
-    onDismiss();
+    closeThen(() => onMarkKnown(target));
   };
 
   return (
-    <Modal visible={word !== null} transparent animationType="fade" onRequestClose={onDismiss}>
-      <Pressable style={styles.backdrop} onPress={onDismiss}>
+    <Modal visible={open} transparent animationType="none" onRequestClose={() => closeThen()}>
+      <Pressable style={styles.backdrop} onPress={() => closeThen()}>
         <Pressable style={[styles.sheet, { backgroundColor: theme.card }]} onPress={(e) => e.stopPropagation()}>
           <View style={styles.headerRow}>
             <ThemedText type="smallBold">{pos ?? 'Word'}</ThemedText>
             <Pressable
               onPress={() => {
                 hapticSelection();
-                onDismiss();
+                closeThen();
               }}
               hitSlop={10}>
               <Ionicons name="close" size={20} color={theme.textMuted} />
@@ -194,9 +207,7 @@ export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMar
                     return (
                       <View key={`${segment.t}-${index}`} style={styles.morphologyKeyRow}>
                         <View style={[styles.morphologyDot, { backgroundColor: color }]} />
-                        <ThemedText type="small" style={[styles.morphKeyLabel, { color }]}>
-                          {morphologyLabel(segment)}
-                        </ThemedText>
+                        <InlineMeta items={morphologyParts(segment)} color={color} style={styles.morphKeyLabel} />
                       </View>
                     );
                   })}
@@ -204,15 +215,15 @@ export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMar
               </View>
             ) : null}
 
-            {lemmaEntry || rootEntry ? (
+            {lemmaEntries.length > 0 || rootEntry ? (
               <View style={styles.stats}>
-                {lemmaEntry ? (
-                  <View style={[styles.statRow, { borderColor: theme.border }]}>
+                {lemmaEntries.map((lemma) => (
+                  <View key={lemma.id} style={[styles.statRow, { borderColor: theme.border }]}>
                     <ThemedText type="small" themeColor="textMuted">Lemma</ThemedText>
-                    <ArabicText style={styles.statArabic}>{lemmaEntry.arabic}</ArabicText>
-                    <ThemedText type="smallBold">{lemmaCount === 1 ? 'once' : `${formatCount(lemmaCount)} times`}</ThemedText>
+                    <ArabicText style={styles.statArabic}>{lemma.arabic}</ArabicText>
+                    <ThemedText type="smallBold">{lemma.frequency === 1 ? 'once' : `${formatCount(lemma.frequency)} times`}</ThemedText>
                   </View>
-                ) : null}
+                ))}
                 {rootEntry ? (
                   <View style={[styles.statRow, { borderColor: theme.border }]}>
                     <ThemedText type="small" themeColor="textMuted">Root</ThemedText>
@@ -221,12 +232,6 @@ export function WordDetailSheet({ word, isKnown, masteredLevel, onDismiss, onMar
                   </View>
                 ) : null}
               </View>
-            ) : vOccurrences > 0 ? (
-              <ThemedText type="smallBold" themeColor="textSecondary" style={styles.occurrences}>
-                {vOccurrences === 1
-                  ? 'Appears once in the Qur\u2019an'
-                  : `Appears ${formatCount(vOccurrences)} times in the Qur\u2019an`}
-              </ThemedText>
             ) : null}
 
             {canMarkKnown ? (
@@ -313,6 +318,7 @@ const styles = StyleSheet.create({
   },
   stats: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.two,
   },
   statRow: {

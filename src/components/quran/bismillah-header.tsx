@@ -5,6 +5,7 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { BISMILLAH_WORDS } from '@/lib/quran-reader';
 import type { ReaderWord } from '@/lib/quran-reader-types';
+import type { LemmaId } from '@/lib/quran-lemmas';
 import { useRecitationStore } from '@/store/recitation-store';
 
 interface BismillahHeaderProps {
@@ -14,8 +15,8 @@ interface BismillahHeaderProps {
   arabicSize: number;
   glossSize: number;
   transliterationSize: number;
-  hiddenVocabIds: Set<string>;
-  knownWordIds: Set<string>;
+  hiddenLemmaIds: Set<LemmaId>;
+  knownLemmaIds: Set<LemmaId>;
   onLongPressWord?: (word: ReaderWord) => void;
 }
 
@@ -27,8 +28,8 @@ export function BismillahHeader({
   arabicSize,
   glossSize,
   transliterationSize,
-  hiddenVocabIds,
-  knownWordIds,
+  hiddenLemmaIds,
+  knownLemmaIds,
   onLongPressWord,
 }: BismillahHeaderProps) {
   const theme = useTheme();
@@ -51,8 +52,8 @@ export function BismillahHeader({
           arabicSize={arabicSize}
           glossSize={glossSize}
           transliterationSize={transliterationSize}
-          hiddenVocabIds={hiddenVocabIds}
-          knownWordIds={knownWordIds}
+          hiddenLemmaIds={hiddenLemmaIds}
+          knownLemmaIds={knownLemmaIds}
           onLongPressWord={onLongPressWord}
         />
       ))}

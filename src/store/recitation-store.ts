@@ -71,7 +71,7 @@ function lockScreenMetadata(state: RecitationState): { title: string; artist: st
   const chapter = meta?.en ?? 'Quranki';
   const verse = state.playingBismillah ? 'Bismillah' : `Ayah ${state.ayahNumber}`;
   return {
-    title: `${chapter} · ${verse}`,
+    title: `${chapter}: ${verse}`,
     artist: 'Mahmoud Khalil Al-Husary',
     albumTitle: 'Quranki',
   };

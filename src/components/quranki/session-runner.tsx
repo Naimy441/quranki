@@ -14,7 +14,7 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { createNewCard, deserializeCard, formatInterval, previewGrades, State, type GradeName } from '@/lib/fsrs';
 import { hapticHeavy, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
-import { getUpcomingLearning, isStudyWord, type SessionWord } from '@/lib/levels';
+import { getStageForLevel, getUpcomingLearning, isStudyWord, type SessionWord } from '@/lib/levels';
 import { playWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
 import { useProgressStore } from '@/store/progress-store';
 import { stopRecitation } from '@/store/recitation-store';
@@ -183,7 +183,9 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
                 style={[styles.unlockBanner, { backgroundColor: theme.primary }]}>
                 <Ionicons name="flag" size={18} color={theme.onPrimary} />
                 <ThemedText themeColor="onPrimary" type="smallBold">
-                  Now studying level {maxUnlockedLevel}
+                  {getStageForLevel(maxUnlockedLevel).id > getStageForLevel(initialMaxUnlockedLevel).id
+                    ? `Stage ${getStageForLevel(maxUnlockedLevel).id} unlocked`
+                    : `Now studying level ${maxUnlockedLevel}`}
                 </ThemedText>
               </Animated.View>
             )}

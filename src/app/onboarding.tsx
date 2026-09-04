@@ -18,12 +18,12 @@ import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
 import {
+    CURRICULUM_LEMMA_COUNT,
     getCoverageThroughLevel,
     LAST_LEVEL_NUMBER,
     LEVELS,
-    THEMATIC_LEVEL_COUNT,
+    STAGES,
     THEMATIC_WORD_COUNT,
-    WORD_COUNT,
 } from '@/lib/levels';
 import { formatCount } from '@/lib/stats';
 import { DEFAULT_SETTINGS } from '@/lib/storage';
@@ -40,12 +40,12 @@ const PACE_OPTIONS = [
 ];
 
 function coverageCopy(): { title: string; body: string } {
-  const core = getCoverageThroughLevel(THEMATIC_LEVEL_COUNT);
+  const core = getCoverageThroughLevel(STAGES[0].lastLevel);
   const full = getCoverageThroughLevel(LAST_LEVEL_NUMBER);
   const extra = full.percent - core.percent;
   return {
     title: 'A little goes far',
-    body: `The first ${formatCount(THEMATIC_WORD_COUNT)} words cover ${core.percent}% of the Quran. Going on to ${formatCount(WORD_COUNT)} adds another ${extra}% — ${full.percent}% in all.`,
+    body: `Stage 1’s ${formatCount(THEMATIC_WORD_COUNT)} words cover ${core.percent}% of the Quran. All ${formatCount(CURRICULUM_LEMMA_COUNT)} words add another ${extra}% — ${full.percent}% in all.`,
   };
 }
 

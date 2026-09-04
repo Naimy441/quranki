@@ -5,7 +5,7 @@ import { MeterBar } from '@/components/quranki/meter-bar';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { AyahUnderstandingHistogramBin } from '@/lib/quran-understanding';
+import type { AyahUnderstandingHistogramBin } from '@/lib/quran-coverage';
 
 interface AyahUnderstandingHistogramProps {
   bins: AyahUnderstandingHistogramBin[];

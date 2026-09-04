@@ -51,6 +51,16 @@ export function FlashCard({ word, revealed, onSpeak, isSpeaking }: FlashCardProp
           <ThemedText type="subtitle" style={styles.englishText}>
             {word.english}
           </ThemedText>
+          {word.contractionOf ? (
+            <View style={styles.composition}>
+              <ArabicText style={styles.compositionArabic}>{word.contractionOf}</ArabicText>
+              {word.contractionEnglish ? (
+                <ThemedText type="small" themeColor="textSecondary" style={styles.compositionEnglish}>
+                  {word.contractionEnglish}
+                </ThemedText>
+              ) : null}
+            </View>
+          ) : null}
           {word.note ? (
             <ThemedText type="small" themeColor="textSecondary" style={styles.note}>
               {word.note}
@@ -104,6 +114,18 @@ const styles = StyleSheet.create({
   englishText: {
     fontSize: 22,
     lineHeight: 30,
+    textAlign: 'center',
+  },
+  composition: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  compositionArabic: {
+    fontSize: 26,
+    lineHeight: 44,
+    textAlign: 'center',
+  },
+  compositionEnglish: {
     textAlign: 'center',
   },
   note: {

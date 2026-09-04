@@ -102,7 +102,7 @@ The Quran reader and word-hiding feature depend on generated data files. If you 
 node scripts/build-quran-reader-data.js
 ```
 
-This rebuilds `src/data/quran/surahs/*.json`, `src/data/quran/surah-index.json`, `src/data/quran/vocab-coverage.json`, `src/data/quran/morphology-index.json`, and `src/data/quran/vocab-lemmas.json`.
+This rebuilds `src/data/quran/surahs/*.json`, `src/data/quran/surah-index.json`, `src/data/quran/lemma-level-coverage.json`, `src/data/quran/morphology-index.json`, and `src/data/quran/vocab-examples.json`. Canonical lemma ids come from `src/data/quran-word-lemmas.json`.
 
 ## Scripts
 
