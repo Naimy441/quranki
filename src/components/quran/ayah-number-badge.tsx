@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ArabicTextStyle, Spacing } from '@/constants/theme';
@@ -9,8 +10,19 @@ function toArabicIndic(n: number): string {
   return String(n).replace(/\d/g, (d) => ARABIC_INDIC[Number(d)] ?? d);
 }
 
-/** Western ayah number, pinned to the top-left corner of each ayah block. */
-export function AyahNumberBadge({ number, understanding }: { number: number; understanding?: number }) {
+/** Western ayah number, pinned to the top-left corner of each ayah block. Marks sit in this
+ *  same row so they follow the number (and optional coverage %) instead of a fixed offset. */
+export function AyahNumberBadge({
+  number,
+  understanding,
+  children,
+  onNumberWidth,
+}: {
+  number: number;
+  understanding?: number;
+  children?: ReactNode;
+  onNumberWidth?: (width: number) => void;
+}) {
   const theme = useTheme();
   const percent = understanding === undefined ? undefined : Math.round(understanding * 100);
 
@@ -18,8 +30,9 @@ export function AyahNumberBadge({ number, understanding }: { number: number; und
     <View
       style={styles.corner}
       accessibilityLabel={percent === undefined ? `Ayah ${number}` : `Ayah ${number}, ${percent} percent vocabulary understood`}>
-      <Text style={[styles.cornerText, { color: theme.text }]}>{number}</Text>
+      <Text style={[styles.cornerText, { color: theme.text }]} onLayout={onNumberWidth ? (event) => onNumberWidth(event.nativeEvent.layout.width) : undefined}>{number}</Text>
       {percent !== undefined && <Text style={[styles.understanding, { color: theme.primary }]}>{percent}%</Text>}
+      {children}
     </View>
   );
 }
@@ -47,8 +60,8 @@ const styles = StyleSheet.create({
   corner: {
     position: 'absolute',
     top: Spacing.two,
-    left: Spacing.three,
-    height: 26,
+    left: Spacing.three - 3,
+    minHeight: 26,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
@@ -58,11 +71,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
+    includeFontPadding: false,
   },
   understanding: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
+    includeFontPadding: false,
   },
   marker: {
     alignItems: 'center',

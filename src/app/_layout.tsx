@@ -11,6 +11,7 @@ import { StreakGraceNotice } from '@/components/quranki/streak-grace-notice';
 import { createPaperTheme } from '@/constants/paper-theme';
 import { ArabicFont, Colors, SurahNameFont } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
+import '@/lib/practice-reminder';
 import { getStreakReclaimOpportunity } from '@/lib/stats';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';

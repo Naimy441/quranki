@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AyahUnderstandingHistogram } from '@/components/quranki/ayah-understanding-histogram';
 import { MeterBar } from '@/components/quranki/meter-bar';
 import { StatCard } from '@/components/quranki/stat-card';
+import { StudyTimeChart } from '@/components/quranki/study-time-chart';
 import { SurahUnderstandingChart } from '@/components/quranki/surah-understanding-chart';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -27,7 +28,7 @@ import {
 import { hapticSelection } from '@/lib/haptics';
 import { getKnownLemmaIds } from '@/lib/known-words';
 import { countMemorizedQuranWords, getQuranAyahUnderstandingSummary, TOTAL_QURAN_WORDS } from '@/lib/quran-coverage';
-import { computeStreak, formatCount } from '@/lib/stats';
+import { computeStreak, formatCount, formatStudyDuration, studyTimeWeek } from '@/lib/stats';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 
@@ -66,10 +67,12 @@ export default function ProgressScreen() {
   const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
   const reviewDates = useProgressStore((state) => state.reviewDates);
   const streakGraceDates = useProgressStore((state) => state.streakGraceDates);
+  const studyMsByDate = useProgressStore((state) => state.studyMsByDate);
   const knownWords = useKnownWordsStore((state) => state.knownWords);
   const [selectedStageId, setSelectedStageId] = useState<number | null>(null);
+  const [selectedStudyKey, setSelectedStudyKey] = useState<string | null>(null);
 
-  const { unlockedStage, visibleStage, levelStatuses, masteredLemmas, reachedLevel, streak, memorizedQuranWords, overallProgress, ayahUnderstanding } =
+  const { unlockedStage, visibleStage, levelStatuses, masteredLemmas, reachedLevel, streak, memorizedQuranWords, overallProgress, ayahUnderstanding, studyWeek } =
     useFocusedComputation(() => {
       const now = new Date();
       const reachedLevel = Math.max(maxUnlockedLevel, getIntroductionFrontier(progress));
@@ -90,8 +93,13 @@ export default function ProgressScreen() {
         memorizedQuranWords,
         overallProgress: TOTAL_QURAN_WORDS === 0 ? 0 : memorizedQuranWords / TOTAL_QURAN_WORDS,
         ayahUnderstanding: getQuranAyahUnderstandingSummary(ids),
+        studyWeek: studyTimeWeek(studyMsByDate, now),
       };
     });
+  const selectedStudyDay =
+    studyWeek.find((day) => day.key === selectedStudyKey) ??
+    studyWeek.find((day) => day.isToday) ??
+    studyWeek[studyWeek.length - 1];
 
   return (
     <ThemedView style={styles.flex} collapsable={false}>
@@ -139,6 +147,19 @@ export default function ProgressScreen() {
             <AyahUnderstandingHistogram bins={ayahUnderstanding.histogram} ayahCount={ayahUnderstanding.ayahCount} />
             <ThemedText type="small" themeColor="textSecondary">
               The share of vocabulary you know in a typical ayah
+            </ThemedText>
+          </View>
+
+          <View style={[styles.overallCard, { backgroundColor: theme.backgroundElement }]}>
+            <View style={styles.overallHeader}>
+              <ThemedText type="smallBold">Study time</ThemedText>
+              <ThemedText type="smallBold" themeColor="primary">
+                {formatStudyDuration(selectedStudyDay.ms)} {selectedStudyDay.caption}
+              </ThemedText>
+            </View>
+            <StudyTimeChart days={studyWeek} selectedKey={selectedStudyDay.key} onSelect={setSelectedStudyKey} />
+            <ThemedText type="small" themeColor="textSecondary">
+              Time spent memorizing words each day
             </ThemedText>
           </View>
 

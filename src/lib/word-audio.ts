@@ -176,11 +176,14 @@ export async function playWordAudio(
 
 export function stopWordAudio(): void {
   requestSeq += 1;
+  const finished = onFinished;
   onFinished = null;
   onFailed = null;
   try {
     player?.pause();
+    void player?.seekTo(0);
   } catch {
     // Player may already be torn down.
   }
+  finished?.();
 }

@@ -82,6 +82,7 @@ function readCachedMeta(surahNumber: number, ayahCount: number): GaplessSurahMet
   try {
     const parsed = JSON.parse(file.textSync()) as GaplessSurahMeta;
     if (!Array.isArray(parsed.ayahs) || parsed.ayahs.length !== ayahCount) return null;
+    if (!Array.isArray(parsed.words) || parsed.words.length !== ayahCount) return null;
     metaMemory.set(surahNumber, parsed);
     return parsed;
   } catch {

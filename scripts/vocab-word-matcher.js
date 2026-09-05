@@ -102,9 +102,10 @@ const FEATURE_SENSE = {
   // إلا under 08-010 is a different token and must still match.
   '08-010': (stem) => hasFeat(stem, 'NEG') || stem.lightLemma === normalizeLight('إِلَّا'),
   '12-007': (stem) => hasFeat(stem, 'COND'),
-  // Case forms "ذَا / ذِي" of the possessor. The corpus lemma "ذا" is the demonstrative umbrella
-  // (هذا / ذلك / أولئك); possessive inflections are lemma "ذُو".
-  '07-001': (stem) => stem.lightLemma === normalizeLight('ذُو'),
+  // ذُو / ذَات / أُولُو share corpus lemma ذُو. Split by gender and the أولو stem.
+  '07-001': (stem) => dhuFamily(stem) && !hasFeat(stem, 'FS') && !hasFeat(stem, 'FD') && !hasFeat(stem, 'FP') && !isUluPossessive(stem),
+  '07-002': (stem) => dhuFamily(stem) && (hasFeat(stem, 'FS') || hasFeat(stem, 'FD')),
+  '07-003': (stem) => dhuFamily(stem) && (isUluPossessive(stem) || hasFeat(stem, 'FP')),
   // All six demonstratives share corpus lemma ذا. Split by the prefix-stripped surface.
   '01-001': (stem) => demonstrativeKind(stem) === 'hadha',
   '01-002': (stem) => demonstrativeKind(stem) === 'hadhihi',
@@ -155,6 +156,15 @@ const PREP_PREFIX_BY_LEMMA = {
 
 function hasFeat(stem, tag) {
   return (stem?.feats ?? []).includes(tag);
+}
+
+function dhuFamily(stem) {
+  return stem.lightLemma === normalizeLight('ذُو');
+}
+
+/** أُولُو / أُولِي / أُولَات — plural "people of", not ذُو / ذَوِي. */
+function isUluPossessive(stem) {
+  return /اول/.test(normalizeArabic(stem.looseSurface || stem.lightSurface || ''));
 }
 
 /** True when two lemma strings are the same dictionary word after light
@@ -1341,7 +1351,10 @@ function suffixTextMatchesStudy(suffText, study) {
     .split(/[,\u060c]/);
   return citations.some((citation) => {
     const form = lettersOnly(citation);
-    return form && (suff === form || suff.endsWith(form) || form.endsWith(suff));
+    if (!form) return false;
+    // Dual verb endings are tagged 2D with a bare alif (فَأْتِيَا). That is not كُمَا,
+    // even though كما ends with ا. Require the corpus clitic to be the taught form.
+    return suff === form || (suff.length > form.length && suff.endsWith(form));
   });
 }
 

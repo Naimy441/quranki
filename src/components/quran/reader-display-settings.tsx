@@ -34,15 +34,15 @@ export function ReaderDisplaySettings({ arabicSize, onArabicSizeChange, glossSiz
     {showTransliteration ? <FontSizeSlider label="Transliteration" value={transliterationSize} range={TRANSLITERATION_SIZE_RANGE} onChange={onTransliterationSizeChange} /> : null}
     <View style={styles.toggleRow}>
       <ThemedText type="small">Show word-by-word translation</ThemedText>
-      <Switch value={showTranslation} onValueChange={(value) => { hapticToggle(value); onShowTranslationChange(value); }} color={theme.primary} />
+      <Switch value={showTranslation} onValueChange={(value) => { const next = value === true; hapticToggle(next); onShowTranslationChange(next); }} color={theme.primary} />
     </View>
     <View style={styles.toggleRow}>
       <ThemedText type="small">Show transliteration</ThemedText>
-      <Switch value={showTransliteration} onValueChange={(value) => { hapticToggle(value); onShowTransliterationChange(value); }} color={theme.primary} />
+      <Switch value={showTransliteration} onValueChange={(value) => { const next = value === true; hapticToggle(next); onShowTransliterationChange(next); }} color={theme.primary} />
     </View>
     <View style={styles.toggleRow}>
       <ThemedText type="small">Show ayah coverage %</ThemedText>
-      <Switch value={showAyahCoverage} onValueChange={(value) => { hapticToggle(value); onShowAyahCoverageChange(value); }} color={theme.primary} />
+      <Switch value={showAyahCoverage} onValueChange={(value) => { const next = value === true; hapticToggle(next); onShowAyahCoverageChange(next); }} color={theme.primary} />
     </View>
   </View>;
 }

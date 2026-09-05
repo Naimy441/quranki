@@ -33,16 +33,14 @@ export function BismillahHeader({
   onLongPressWord,
 }: BismillahHeaderProps) {
   const theme = useTheme();
-  const reciting = useRecitationStore(
-    (s) => s.visible && s.surahNumber === surahNumber && s.playingBismillah,
-  );
+  const reciting = useRecitationStore((s) => s.visible && s.surahNumber === surahNumber && s.playingBismillah);
+  const speakingWord = useRecitationStore((s) => (
+    s.visible && s.surahNumber === surahNumber && s.playingBismillah ? s.wordNumber : 0
+  ));
 
   return (
-    <View
-      style={[
-        styles.row,
-        reciting && { backgroundColor: theme.backgroundSelected, borderRadius: Radius.medium },
-      ]}>
+    <View style={styles.row}>
+      {reciting ? <View pointerEvents="none" style={[styles.wash, { backgroundColor: theme.backgroundSelected }]} /> : null}
       {BISMILLAH_WORDS.map((word) => (
         <WordCell
           key={word.p}
@@ -54,6 +52,7 @@ export function BismillahHeader({
           transliterationSize={transliterationSize}
           hiddenLemmaIds={hiddenLemmaIds}
           knownLemmaIds={knownLemmaIds}
+          speaking={speakingWord === word.p}
           onLongPressWord={
             onLongPressWord ? (pressed) => onLongPressWord({ surah: 1, ayah: 1, word: pressed }) : undefined
           }
@@ -72,5 +71,10 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.four,
     paddingBottom: Spacing.three,
     paddingHorizontal: Spacing.three,
+  },
+  wash: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: Radius.medium,
+    opacity: 0.4,
   },
 });

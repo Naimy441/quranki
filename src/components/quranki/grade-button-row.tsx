@@ -59,8 +59,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   interval: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 12,
-    fontWeight: '500',
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

@@ -51,8 +51,10 @@ export default function LevelDetailScreen() {
                 {level.title}
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Once mastered through here: {coverage.percent}% of the Quran ({formatCount(coverage.quranWords)}{' '}
-                words).
+                Once mastered through here, {coverage.percent}% of the Quran
+              </ThemedText>
+              <ThemedText type="small" themeColor="textMuted">
+                {formatCount(coverage.quranWords)} words
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
                 These words are introduced automatically, in this order, during study. Reviews of

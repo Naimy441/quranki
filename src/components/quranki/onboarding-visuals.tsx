@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 import { GradeButtonRow } from '@/components/quranki/grade-button-row';
@@ -11,7 +11,7 @@ import { createNewCard, previewGrades } from '@/lib/fsrs';
 import { hapticSelection } from '@/lib/haptics';
 import { shapeQpcArabic } from '@/lib/arabic-display';
 import { CURRICULUM_LEMMA_COUNT, getCoverageThroughLevel, LAST_LEVEL_NUMBER, LEVELS, STAGES, THEMATIC_WORD_COUNT } from '@/lib/levels';
-import { getVocabExample } from '@/lib/vocab-examples';
+import { exampleSurface, getVocabExample } from '@/lib/vocab-examples';
 import { glossColor } from '@/lib/quran-colors';
 import { BISMILLAH_WORDS } from '@/lib/quran-reader';
 import type { ReaderWord } from '@/lib/quran-reader-types';
@@ -20,6 +20,19 @@ import { formatCount } from '@/lib/stats';
 
 const DEMO_WORD = LEVELS[0].words[0];
 const HIDDEN_DEMO_IDS = allLemmaIds(BISMILLAH_WORDS);
+
+export function OnboardingWelcomePreview() {
+  const theme = useTheme();
+  return (
+    <View style={styles.welcomeWrap}>
+      <Image
+        source={require('@/assets/images/icon.png')}
+        style={[styles.welcomeIcon, { borderColor: theme.border }]}
+        accessibilityLabel="Quranki"
+      />
+    </View>
+  );
+}
 
 export function OnboardingFlashPreview({
   onSpeak,
@@ -31,7 +44,7 @@ export function OnboardingFlashPreview({
   const theme = useTheme();
   const previews = useMemo(() => previewGrades(createNewCard(), new Date()), []);
   const example = getVocabExample(DEMO_WORD);
-  const spokenSurface = example ? shapeQpcArabic(example.w[example.p - 1] ?? '') : '';
+  const spokenSurface = example ? shapeQpcArabic(exampleSurface(example)) : '';
   const showSpoken = isSpeaking && spokenSurface.length > 0;
 
   return (
@@ -209,6 +222,19 @@ export function OnboardingTapHint() {
 }
 
 const styles = StyleSheet.create({
+  welcomeWrap: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.three,
+  },
+  welcomeIcon: {
+    width: 112,
+    height: 112,
+    borderRadius: 26,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
   visualBlock: {
     width: '100%',
     gap: Spacing.three,

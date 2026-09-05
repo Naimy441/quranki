@@ -5,12 +5,14 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChoiceGrid } from '@/components/quranki/choice-grid';
+import { ReminderTimePicker } from '@/components/quranki/reminder-time-picker';
 import {
     OnboardingAyahPreview,
     OnboardingCoveragePreview,
     OnboardingFlashPreview,
     OnboardingIntentionPreview,
     OnboardingTapHint,
+    OnboardingWelcomePreview,
 } from '@/components/quranki/onboarding-visuals';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -26,6 +28,7 @@ import {
     THEMATIC_WORD_COUNT,
 } from '@/lib/levels';
 import { formatCount } from '@/lib/stats';
+import { DEFAULT_REMINDER_HOUR, DEFAULT_REMINDER_MINUTE, requestReminderPermission } from '@/lib/practice-reminder';
 import { DEFAULT_SETTINGS } from '@/lib/storage';
 import { playWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
 import { useProgressStore } from '@/store/progress-store';
@@ -42,33 +45,37 @@ const PACE_OPTIONS = [
 function coverageCopy(): { title: string; body: string } {
   const core = getCoverageThroughLevel(STAGES[0].lastLevel);
   const full = getCoverageThroughLevel(LAST_LEVEL_NUMBER);
-  const extra = full.percent - core.percent;
   return {
-    title: 'A little goes far',
-    body: `Stage 1’s ${formatCount(THEMATIC_WORD_COUNT)} words cover ${core.percent}% of the Quran. All ${formatCount(CURRICULUM_LEMMA_COUNT)} words add another ${extra}% — ${full.percent}% in all.`,
+    title: 'The first words go a long way',
+    body: `Stage 1 is ${formatCount(THEMATIC_WORD_COUNT)} words. That is about ${core.percent}% of what you read. All ${formatCount(CURRICULUM_LEMMA_COUNT)} words reach ${full.percent}%.`,
   };
 }
 
 const STEPS = [
   {
+    id: 'welcome',
+    title: 'Assalamu alaykum!',
+    body: 'Thank you for being here. Quranki helps you understand the Quran by learning its words, then reading them where they appear.',
+  },
+  {
     id: 'srs',
-    title: 'Learn Qur’anic Arabic',
-    body: 'Short reviews, spaced so each word comes back just as you start to forget it.',
+    title: 'A few words a day',
+    body: 'You will see a word, hear it, and say how well you know it. The ones that slip come back sooner.',
   },
   {
     id: 'quran',
-    title: 'Then read the Qur’an',
-    body: 'Practice with the real text. Every word you learn appears in its verse.',
+    title: 'Then open the Quran',
+    body: 'Every word you learn is waiting in the real text, in its own verse.',
   },
   {
     id: 'hidden',
-    title: 'Mastered words hide',
-    body: 'Once you know a word, its translation disappears from the page.',
+    title: 'Known words step aside',
+    body: 'Once a word is yours, its translation hides. The page starts to look like the mushaf.',
   },
   {
     id: 'tap',
-    title: 'Tap to peek',
-    body: 'Need a reminder? Tap a hidden word to see its meaning.',
+    title: 'Tap if you forget',
+    body: 'A hidden word still has its meaning when you need it.',
   },
   {
     id: 'coverage',
@@ -76,13 +83,18 @@ const STEPS = [
   },
   {
     id: 'intention',
-    title: 'Stay consistent',
-    body: 'A few words each day is enough. Purify your intention for the sake of Allah (swt).',
+    title: 'Take it day by day',
+    body: 'A little each day is enough. Keep your intention for the sake of Allah.',
   },
   {
     id: 'pace',
-    title: 'New words each day',
-    body: 'You can change this later in Settings.',
+    title: 'How many new words today?',
+    body: 'Start with what you can keep. You can change this later in Settings.',
+  },
+  {
+    id: 'reminder',
+    title: 'A daily reminder',
+    body: 'Pick a time and we will nudge you to practice a few words. You can change this later.',
   },
 ] as const;
 
@@ -93,7 +105,10 @@ export default function OnboardingScreen() {
   const completeOnboarding = useProgressStore((state) => state.completeOnboarding);
   const [index, setIndex] = useState(0);
   const [wordsPerDay, setWordsPerDay] = useState(String(DEFAULT_SETTINGS.wordsPerSession));
+  const [reminderHour, setReminderHour] = useState(DEFAULT_REMINDER_HOUR);
+  const [reminderMinute, setReminderMinute] = useState(DEFAULT_REMINDER_MINUTE);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [finishing, setFinishing] = useState(false);
 
   useEffect(() => () => {
     stopWordPronunciation();
@@ -110,11 +125,22 @@ export default function OnboardingScreen() {
       .catch(() => setIsSpeaking(false));
   };
 
+  const finish = async (remind: boolean) => {
+    if (finishing) return;
+    setFinishing(true);
+    hapticSuccess();
+    stopWordPronunciation();
+    const allowed = remind ? await requestReminderPermission() : false;
+    await completeOnboarding(Number(wordsPerDay), {
+      enabled: allowed,
+      hour: reminderHour,
+      minute: reminderMinute,
+    });
+  };
+
   const goNext = () => {
     if (isLast) {
-      hapticSuccess();
-      stopWordPronunciation();
-      completeOnboarding(Number(wordsPerDay));
+      void finish(true);
       return;
     }
     hapticMedium();
@@ -150,7 +176,7 @@ export default function OnboardingScreen() {
           </View>
 
           <Animated.View key={step.id} entering={FadeIn.duration(280)} style={styles.body}>
-            {step.id !== 'pace' && (
+            {step.id !== 'pace' && step.id !== 'reminder' && (
               <View style={styles.visual}>{renderVisual(step.id, { onSpeak: handleSpeak, isSpeaking })}</View>
             )}
             <View style={styles.copy}>
@@ -170,6 +196,16 @@ export default function OnboardingScreen() {
                     prominent
                   />
                 </View>
+              )}
+              {step.id === 'reminder' && (
+                <ReminderTimePicker
+                  hour={reminderHour}
+                  minute={reminderMinute}
+                  onChange={(hour, minute) => {
+                    setReminderHour(hour);
+                    setReminderMinute(minute);
+                  }}
+                />
               )}
             </View>
           </Animated.View>
@@ -191,16 +227,28 @@ export default function OnboardingScreen() {
             </View>
             <Pressable
               onPress={goNext}
+              disabled={finishing}
               accessibilityRole="button"
               style={({ pressed }) => [
                 styles.cta,
                 { backgroundColor: theme.primary },
-                pressed && styles.pressed,
+                (pressed || finishing) && styles.pressed,
               ]}>
               <ThemedText type="smallBold" themeColor="onPrimary" style={styles.ctaLabel}>
-                {isLast ? 'Get started' : 'Continue'}
+                {isLast ? 'Remind me daily' : 'Continue'}
               </ThemedText>
             </Pressable>
+            {isLast ? (
+              <Pressable
+                onPress={() => void finish(false)}
+                disabled={finishing}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.skip, (pressed || finishing) && styles.pressed]}>
+                <ThemedText type="smallBold" themeColor="textSecondary">
+                  Not now
+                </ThemedText>
+              </Pressable>
+            ) : null}
           </View>
         </View>
       </SafeAreaView>
@@ -213,6 +261,8 @@ function renderVisual(
   flash: { onSpeak: () => void; isSpeaking: boolean },
 ) {
   switch (id) {
+    case 'welcome':
+      return <OnboardingWelcomePreview />;
     case 'srs':
       return <OnboardingFlashPreview onSpeak={flash.onSpeak} isSpeaking={flash.isSpeaking} />;
     case 'quran':
@@ -231,6 +281,7 @@ function renderVisual(
     case 'intention':
       return <OnboardingIntentionPreview />;
     case 'pace':
+    case 'reminder':
       return null;
   }
 }
@@ -303,6 +354,11 @@ const styles = StyleSheet.create({
   ctaLabel: {
     fontSize: 17,
     lineHeight: 22,
+  },
+  skip: {
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pressed: {
     opacity: 0.85,

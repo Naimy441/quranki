@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
 
-import { InlineMeta } from '@/components/inline-meta';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -76,7 +75,14 @@ export function QuranJumpSheet({ visible, initialSurah, initialAyah = 1, onDismi
             <FlatList ref={surahRef} style={styles.surahWheel} contentContainerStyle={styles.wheelContent} nestedScrollEnabled data={SURAH_INDEX} keyExtractor={(item) => String(item.n)} getItemLayout={(_, index) => ({ length: ROW_HEIGHT, offset: ROW_HEIGHT * index, index })} renderItem={({ item }) => <WheelRow active={item.n === surah} label={`${item.n}. ${item.en}`} />} showsVerticalScrollIndicator={false} snapToInterval={ROW_HEIGHT} decelerationRate="fast" onMomentumScrollEnd={(event) => chooseSurah(event.nativeEvent.contentOffset.y)} />
             <FlatList ref={ayahRef} style={styles.ayahWheel} contentContainerStyle={styles.wheelContent} nestedScrollEnabled data={ayahs} keyExtractor={String} getItemLayout={(_, index) => ({ length: ROW_HEIGHT, offset: ROW_HEIGHT * index, index })} renderItem={({ item }) => <WheelRow centered active={item === ayah} label={String(item)} />} showsVerticalScrollIndicator={false} snapToInterval={ROW_HEIGHT} decelerationRate="fast" onMomentumScrollEnd={(event) => chooseAyah(event.nativeEvent.contentOffset.y)} />
           </View>
-          <Pressable onPress={() => { hapticSelection(); onJump(surah, ayah); }} style={({ pressed }) => [styles.go, { backgroundColor: theme.primary }, pressed && styles.pressed]}><InlineMeta type="smallBold" color="#FFFFFF" items={[`Go to ${SURAH_INDEX[surah - 1]?.en ?? ''}`, `Ayah ${ayah}`]} /></Pressable>
+          <Pressable onPress={() => { hapticSelection(); onJump(surah, ayah); }} style={({ pressed }) => [styles.go, { backgroundColor: theme.primary }, pressed && styles.pressed]}>
+            <ThemedText type="smallBold" themeColor="onPrimary">
+              Go to {SURAH_INDEX[surah - 1]?.en ?? ''}
+            </ThemedText>
+            <ThemedText type="small" themeColor="onPrimary" style={styles.goDetail}>
+              Ayah {ayah}
+            </ThemedText>
+          </Pressable>
         </View>
       </View>
     </Modal>
@@ -85,4 +91,4 @@ export function QuranJumpSheet({ visible, initialSurah, initialAyah = 1, onDismi
 
 function WheelRow({ label, active, centered = false }: { label: string; active: boolean; centered?: boolean }) { return <View style={[styles.wheelRow, centered && styles.centeredWheelRow]}><ThemedText type={active ? 'smallBold' : 'small'} themeColor={active ? 'text' : 'textMuted'} style={[styles.wheelText, centered && styles.centeredWheelText]} numberOfLines={1}>{label}</ThemedText></View>; }
 function WheelOverlay({ color }: { color: string }) { return <View pointerEvents="none" style={[styles.selection, { backgroundColor: color }]} />; }
-const styles = StyleSheet.create({ backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }, sheet: { borderTopLeftRadius: Radius.large, borderTopRightRadius: Radius.large, padding: Spacing.four, paddingBottom: Spacing.six, gap: Spacing.two }, header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, labels: { flexDirection: 'row', gap: Spacing.three, marginBottom: -Spacing.one }, surahLabel: { flex: 2, alignItems: 'flex-start' }, ayahLabel: { flex: 1, alignItems: 'flex-start' }, columnLabel: { alignSelf: 'flex-start', textAlign: 'left' }, wheels: { height: WHEEL_HEIGHT, flexDirection: 'row', gap: Spacing.three, position: 'relative', overflow: 'hidden' }, surahWheel: { flex: 2 }, ayahWheel: { flex: 1 }, wheelContent: { paddingVertical: ROW_HEIGHT * 2 }, wheelRow: { height: ROW_HEIGHT, justifyContent: 'center', alignItems: 'flex-start', paddingLeft: 0, paddingRight: Spacing.two }, centeredWheelRow: { alignItems: 'center', paddingHorizontal: 0 }, wheelText: { alignSelf: 'flex-start', textAlign: 'left' }, centeredWheelText: { alignSelf: 'center', textAlign: 'center' }, selection: { position: 'absolute', left: 0, right: 0, top: ROW_HEIGHT * 2, height: ROW_HEIGHT, borderRadius: Radius.medium }, go: { minHeight: 48, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.three }, pressed: { opacity: 0.75 } });
+const styles = StyleSheet.create({ backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }, sheet: { borderTopLeftRadius: Radius.large, borderTopRightRadius: Radius.large, padding: Spacing.four, paddingBottom: Spacing.six, gap: Spacing.two }, header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, labels: { flexDirection: 'row', gap: Spacing.three, marginBottom: -Spacing.one }, surahLabel: { flex: 2, alignItems: 'flex-start' }, ayahLabel: { flex: 1, alignItems: 'flex-start' }, columnLabel: { alignSelf: 'flex-start', textAlign: 'left' }, wheels: { height: WHEEL_HEIGHT, flexDirection: 'row', gap: Spacing.three, position: 'relative', overflow: 'hidden' }, surahWheel: { flex: 2 }, ayahWheel: { flex: 1 }, wheelContent: { paddingVertical: ROW_HEIGHT * 2 }, wheelRow: { height: ROW_HEIGHT, justifyContent: 'center', alignItems: 'flex-start', paddingLeft: 0, paddingRight: Spacing.two }, centeredWheelRow: { alignItems: 'center', paddingHorizontal: 0 }, wheelText: { alignSelf: 'flex-start', textAlign: 'left' }, centeredWheelText: { alignSelf: 'center', textAlign: 'center' }, selection: { position: 'absolute', left: 0, right: 0, top: ROW_HEIGHT * 2, height: ROW_HEIGHT, borderRadius: Radius.medium }, go: { minHeight: 52, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, gap: 2 }, goDetail: { opacity: 0.85 }, pressed: { opacity: 0.75 } });

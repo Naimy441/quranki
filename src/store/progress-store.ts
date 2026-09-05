@@ -11,7 +11,8 @@ import {
     type GradeName,
 } from '@/lib/fsrs';
 import { computeReachedLevel, getLevel, getWord, LAST_LEVEL_NUMBER, LEVELS, nextReachedLevel, type ProgressMap, type WordProgress } from '@/lib/levels';
-import { getStreakReclaimOpportunity } from '@/lib/stats';
+import { syncPracticeReminder } from '@/lib/practice-reminder';
+import { calendarDayKey, pruneStudyMsByDate, sanitizeStudyMsByDate, getStreakReclaimOpportunity } from '@/lib/stats';
 import {
     clampWordsPerSession,
     DEFAULT_META,
@@ -36,12 +37,16 @@ interface ProgressState {
   reviewCountDate: string;
   reviewsToday: number;
   newCardsToday: number;
+  /** Milliseconds in memorization sessions, keyed by local calendar day. */
+  studyMsByDate: Record<string, number>;
   onboardingCompleted: boolean;
   /** In-memory peek counts for the Quran reader (not persisted). A hidden word's first reveal
    *  is a free hint; the second reveal of that same vocab id lapses it. Cleared when the word
    *  is graded in a real review. */
   readerPeeks: Record<string, number>;
   hydrate: () => Promise<void>;
+  /** Adds elapsed memorization-session time to the current local calendar day. */
+  recordStudyMs: (ms: number) => void;
   /** Returns the resulting (post-grade) card so callers - see session-runner.tsx - can tell
    *  whether it graduated to the long-term Review state or is still Learning/Relearning (due
    *  again within minutes, per ts-fsrs's learning_steps/relearning_steps), the same distinction
@@ -53,10 +58,15 @@ interface ProgressState {
   /** Drops the in-memory peek count so a word can hide again (e.g. after marking it known). */
   clearReaderPeek: (wordId: string) => void;
   updateSettings: (partial: Partial<Settings>) => void;
-  completeOnboarding: (wordsPerSession: number) => void;
+  completeOnboarding: (
+    wordsPerSession: number,
+    reminder?: { enabled: boolean; hour: number; minute: number },
+  ) => Promise<void>;
   setOnboardingCompleted: (value: boolean) => void;
   resetProgress: () => void;
   masterAllWords: () => void;
+  /** Dev-only: fills the last week with sample session times so the study-time UI can be checked. */
+  seedDemoStudyTime: () => void;
   autoMasterWord: (wordId: string) => void;
   autoMasterWords: (wordIds: readonly string[]) => void;
   revertAutoMasteredWord: (wordId: string) => void;
@@ -65,6 +75,21 @@ interface ProgressState {
 
 function todayKey(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+/** Varied last-seven-days sample, oldest → today, in minutes. */
+const DEMO_STUDY_MINUTES = [9, 16, 0, 21, 13, 19, 12];
+
+function demoStudyMsByDate(now: Date = new Date()): Record<string, number> {
+  const studyMsByDate: Record<string, number> = {};
+  for (let i = 0; i < DEMO_STUDY_MINUTES.length; i += 1) {
+    const minutes = DEMO_STUDY_MINUTES[i];
+    if (minutes <= 0) continue;
+    const date = new Date(now);
+    date.setDate(date.getDate() - (DEMO_STUDY_MINUTES.length - 1 - i));
+    studyMsByDate[calendarDayKey(date)] = minutes * 60_000;
+  }
+  return studyMsByDate;
 }
 
 /** How many Review-state cards have already been graded today - used to leave only
@@ -80,6 +105,7 @@ export function newCardsCompletedToday(reviewCountDate: string, newCardsToday: n
 function persistMeta(
   state: Pick<ProgressState, 'maxUnlockedLevel' | 'reviewDates' | 'streakGraceDates' | 'reviewCountDate' | 'reviewsToday' | 'newCardsToday'> & {
     onboardingCompleted?: boolean;
+    studyMsByDate?: Record<string, number>;
   },
 ): void {
   void saveMetaAsync({
@@ -89,6 +115,7 @@ function persistMeta(
     reviewCountDate: state.reviewCountDate,
     reviewsToday: state.reviewsToday,
     newCardsToday: state.newCardsToday,
+    studyMsByDate: state.studyMsByDate ?? useProgressStore.getState().studyMsByDate,
     onboardingCompleted: state.onboardingCompleted ?? getOnboardingCompleted(),
   });
 }
@@ -108,6 +135,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   reviewCountDate: DEFAULT_META.reviewCountDate,
   reviewsToday: DEFAULT_META.reviewsToday,
   newCardsToday: DEFAULT_META.newCardsToday,
+  studyMsByDate: DEFAULT_META.studyMsByDate,
   onboardingCompleted: false,
   readerPeeks: {},
 
@@ -126,6 +154,9 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const reviewCountDate = reviewsToday > 0 || newCardsToday > 0 ? meta.reviewCountDate : todayKey(now);
     const onboardingCompleted =
       meta.onboardingCompleted ?? (Object.keys(progress).length > 0 || meta.reviewDates.length > 0);
+    const loadedStudyMs = sanitizeStudyMsByDate(meta.studyMsByDate, now);
+    const studyMsByDate =
+      __DEV__ && Object.keys(loadedStudyMs).length === 0 ? demoStudyMsByDate(now) : loadedStudyMs;
     set({
       hydrated: true,
       hydrating: false,
@@ -137,7 +168,15 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       reviewCountDate,
       reviewsToday,
       newCardsToday,
+      studyMsByDate,
       onboardingCompleted,
+    });
+    void syncPracticeReminder(settings, { requestPermission: false }).then((scheduled) => {
+      if (settings.reminderEnabled && !scheduled) {
+        const nextSettings = { ...useProgressStore.getState().settings, reminderEnabled: false };
+        useProgressStore.setState({ settings: nextSettings });
+        void saveSettingsAsync(nextSettings);
+      }
     });
     if (maxUnlockedLevel !== meta.maxUnlockedLevel || onboardingCompleted !== meta.onboardingCompleted) {
       persistMeta({
@@ -147,9 +186,23 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
         reviewCountDate,
         reviewsToday,
         newCardsToday,
+        studyMsByDate,
         onboardingCompleted,
       });
     }
+  },
+
+  recordStudyMs: (ms) => {
+    if (!Number.isFinite(ms) || ms <= 0) return;
+    const now = new Date();
+    const key = calendarDayKey(now);
+    const state = get();
+    const studyMsByDate = pruneStudyMsByDate({
+      ...state.studyMsByDate,
+      [key]: (state.studyMsByDate[key] ?? 0) + Math.round(ms),
+    }, now);
+    set({ studyMsByDate });
+    persistMeta({ ...state, studyMsByDate });
   },
 
   gradeWord: (wordId, grade) => {
@@ -223,13 +276,38 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
 
   updateSettings: (partial) => {
     const nextSettings = { ...get().settings, ...partial };
+    if ('readerShowTranslation' in partial) nextSettings.readerShowTranslation = partial.readerShowTranslation === true;
+    if ('readerShowAyahCoverage' in partial) nextSettings.readerShowAyahCoverage = partial.readerShowAyahCoverage === true;
+    if ('readerTransliteration' in partial) nextSettings.readerTransliteration = partial.readerTransliteration === true;
+    if ('reminderEnabled' in partial) nextSettings.reminderEnabled = partial.reminderEnabled === true;
     set({ settings: nextSettings });
     void saveSettingsAsync(nextSettings);
+    if ('reminderEnabled' in partial || 'reminderHour' in partial || 'reminderMinute' in partial) {
+      void syncPracticeReminder(nextSettings).then((scheduled) => {
+        if (nextSettings.reminderEnabled && !scheduled) {
+          const disabled = { ...get().settings, reminderEnabled: false };
+          set({ settings: disabled });
+          void saveSettingsAsync(disabled);
+        }
+      });
+    }
   },
 
-  completeOnboarding: (wordsPerSession) => {
+  completeOnboarding: async (wordsPerSession, reminder) => {
     const state = get();
-    const nextSettings = { ...state.settings, wordsPerSession: clampWordsPerSession(wordsPerSession) };
+    let nextSettings = {
+      ...state.settings,
+      wordsPerSession: clampWordsPerSession(wordsPerSession),
+      reminderEnabled: reminder?.enabled === true,
+      reminderHour: reminder?.hour ?? state.settings.reminderHour,
+      reminderMinute: reminder?.minute ?? state.settings.reminderMinute,
+    };
+    if (nextSettings.reminderEnabled) {
+      const scheduled = await syncPracticeReminder(nextSettings, { requestPermission: false });
+      if (!scheduled) nextSettings = { ...nextSettings, reminderEnabled: false };
+    } else {
+      void syncPracticeReminder(nextSettings, { requestPermission: false });
+    }
     set({ settings: nextSettings, onboardingCompleted: true });
     void saveSettingsAsync(nextSettings);
     persistMeta({ ...state, onboardingCompleted: true });
@@ -250,6 +328,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       reviewCountDate: '',
       reviewsToday: 0,
       newCardsToday: 0,
+      studyMsByDate: {},
       readerPeeks: {},
       settings: DEFAULT_SETTINGS,
       onboardingCompleted,
@@ -262,6 +341,12 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   /** Dev-only helper: instantly marks every word as mastered (Review state, last grade "good",
    *  due 30 days out) without playing through real reviews - lets the Quran reader's word-hiding
    *  feature be tested without grinding through the full curriculum. Not exposed in production. */
+  seedDemoStudyTime: () => {
+    const studyMsByDate = demoStudyMsByDate();
+    set({ studyMsByDate });
+    persistMeta({ ...get(), studyMsByDate });
+  },
+
   masterAllWords: () => {
     const now = new Date();
     const due = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -390,4 +475,13 @@ export function isLevelUnlocked(levelNumber: number, maxUnlockedLevel: number): 
 
 export function levelExists(levelNumber: number): boolean {
   return Boolean(getLevel(levelNumber));
+}
+
+if (__DEV__) {
+  const state = useProgressStore.getState();
+  if (state.hydrated) {
+    const studyMsByDate = demoStudyMsByDate();
+    useProgressStore.setState({ studyMsByDate });
+    persistMeta({ ...useProgressStore.getState(), studyMsByDate });
+  }
 }

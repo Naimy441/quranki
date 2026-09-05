@@ -6,6 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { DEFAULT_ACCENT, isAccentId, type AccentId } from '@/constants/theme';
+import { clampReminderHour, clampReminderMinute, DEFAULT_REMINDER_HOUR, DEFAULT_REMINDER_MINUTE } from '@/lib/practice-reminder';
 import type { KnownWordsMap } from '@/lib/known-words';
 import type { ProgressMap } from '@/lib/levels';
 import { EMPTY_QURAN_MARKS, sanitizeQuranMarks, type QuranMarksData } from '@/lib/quran-marks';
@@ -30,6 +31,12 @@ export interface Settings {
   /** Keep the Quran reader's optional transliteration enabled across sessions. */
   readerTransliteration: boolean;
   readerTransliterationSize: number;
+  /** Daily local reminder to open a practice session. */
+  reminderEnabled: boolean;
+  /** Local hour (0–23) for the practice reminder. */
+  reminderHour: number;
+  /** Local minute (0–59) for the practice reminder. */
+  reminderMinute: number;
 }
 
 /** Inclusive bounds for the Settings "new words per day" slider. */
@@ -55,6 +62,8 @@ export interface Meta {
    *  new-card batch at the Settings "new words per day" value so finishing a session does not
    *  immediately deal another. The learner can still start another session by hand. */
   newCardsToday: number;
+  /** Milliseconds spent in word-memorization sessions, keyed by local calendar day. */
+  studyMsByDate: Record<string, number>;
   /** True once the first-launch explainer has been finished. Absent on older installs - hydrate
    *  infers it from existing progress so an update doesn't replay onboarding for current users. */
   onboardingCompleted?: boolean;
@@ -70,6 +79,9 @@ export const DEFAULT_SETTINGS: Settings = {
   readerShowAyahCoverage: true,
   readerTransliteration: false,
   readerTransliterationSize: 13,
+  reminderEnabled: false,
+  reminderHour: DEFAULT_REMINDER_HOUR,
+  reminderMinute: DEFAULT_REMINDER_MINUTE,
 };
 
 export const DEFAULT_META: Meta = {
@@ -79,6 +91,7 @@ export const DEFAULT_META: Meta = {
   reviewCountDate: '',
   reviewsToday: 0,
   newCardsToday: 0,
+  studyMsByDate: {},
 };
 
 function safeParse<T>(raw: string | null, fallback: T): T {
@@ -104,9 +117,14 @@ export function saveProgressAsync(progress: ProgressMap): Promise<void> {
   return AsyncStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
 }
 
-export async function loadSettingsAsync(): Promise<Settings> {
-  const raw = await AsyncStorage.getItem(SETTINGS_KEY);
-  const settings = safeParse(raw, DEFAULT_SETTINGS);
+/** Defaults missing keys; never treats an explicit `false` as "unset". */
+function persistFlag(value: unknown, defaultValue: boolean): boolean {
+  if (value === true) return true;
+  if (value === false) return false;
+  return defaultValue;
+}
+
+function normalizeSettings(settings: Settings): Settings {
   return {
     ...settings,
     wordsPerSession: clampWordsPerSession(settings.wordsPerSession),
@@ -117,17 +135,30 @@ export async function loadSettingsAsync(): Promise<Settings> {
     readerGlossSize: Number.isFinite(settings.readerGlossSize)
       ? Math.min(19, Math.max(11, settings.readerGlossSize))
       : DEFAULT_SETTINGS.readerGlossSize,
-    readerShowTranslation: settings.readerShowTranslation !== false,
-    readerShowAyahCoverage: settings.readerShowAyahCoverage !== false,
-    readerTransliteration: Boolean(settings.readerTransliteration),
+    readerShowTranslation: persistFlag(settings.readerShowTranslation, DEFAULT_SETTINGS.readerShowTranslation),
+    readerShowAyahCoverage: persistFlag(settings.readerShowAyahCoverage, DEFAULT_SETTINGS.readerShowAyahCoverage),
+    readerTransliteration: persistFlag(settings.readerTransliteration, DEFAULT_SETTINGS.readerTransliteration),
     readerTransliterationSize: Number.isFinite(settings.readerTransliterationSize)
       ? Math.min(18, Math.max(10, settings.readerTransliterationSize))
       : DEFAULT_SETTINGS.readerTransliterationSize,
+    reminderEnabled: persistFlag(settings.reminderEnabled, DEFAULT_SETTINGS.reminderEnabled),
+    reminderHour: clampReminderHour(settings.reminderHour ?? DEFAULT_SETTINGS.reminderHour),
+    reminderMinute: clampReminderMinute(settings.reminderMinute ?? DEFAULT_SETTINGS.reminderMinute),
   };
 }
 
+export async function loadSettingsAsync(): Promise<Settings> {
+  const raw = await AsyncStorage.getItem(SETTINGS_KEY);
+  return normalizeSettings(safeParse(raw, DEFAULT_SETTINGS));
+}
+
+let settingsWriteChain: Promise<void> = Promise.resolve();
+
 export function saveSettingsAsync(settings: Settings): Promise<void> {
-  return AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  const payload = JSON.stringify(normalizeSettings(settings));
+  const write = settingsWriteChain.then(() => AsyncStorage.setItem(SETTINGS_KEY, payload));
+  settingsWriteChain = write.catch(() => undefined);
+  return write;
 }
 
 export async function loadMetaAsync(): Promise<Meta> {

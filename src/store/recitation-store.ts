@@ -2,7 +2,9 @@ import { createAudioPlayer, setAudioModeAsync, type AudioPlayer, type AudioStatu
 import { create } from 'zustand';
 
 import { getSurahMeta } from '@/lib/quran-reader';
-import { ayahAtTimeMs, BISMILLAH_AUDIO_END_SECONDS, BISMILLAH_AUDIO_START_SECONDS, type AyahTiming } from '@/lib/recitation';
+import { stopWordAudio } from '@/lib/word-audio';
+import { getGappedAyahWordTimings } from '@/lib/husary-word-timings';
+import { ayahAtTimeMs, BISMILLAH_AUDIO_END_SECONDS, BISMILLAH_AUDIO_START_SECONDS, wordAtTimeMs, type AyahTiming, type WordTiming } from '@/lib/recitation';
 import {
   getAyahPlaybackUri,
   getCachedAyahUri,
@@ -33,6 +35,9 @@ export interface RecitationState {
   positionSeconds: number;
   durationSeconds: number;
   timings: AyahTiming[];
+  wordTimings: WordTiming[];
+  /** 1-based word currently being recited; 0 when none. */
+  wordNumber: number;
   error: string | null;
   /** Bumps when playback seeks so the progress bar can resync. */
   progressEpoch: number;
@@ -52,6 +57,8 @@ const INITIAL_STATE: RecitationState = {
   positionSeconds: 0,
   durationSeconds: 0,
   timings: [],
+  wordTimings: [],
+  wordNumber: 0,
   error: null,
   progressEpoch: 0,
 };
@@ -116,7 +123,10 @@ let wantPlaying = false;
 let ignoreFinishUntil = 0;
 let finishHandled = false;
 let downloadAbort: AbortController | null = null;
+let gaplessWordTimings: WordTiming[][] = [];
 let suppressStatus = false;
+/** While set, status ticks cannot remap the ayah (or zero the first-word underline) mid-seek. */
+let pinnedAyah = 0;
 let pendingSeekSeconds: number | null = null;
 let seeking = false;
 let loadedUri: string | null = null;
@@ -151,7 +161,7 @@ async function ensurePlayer(): Promise<AudioPlayer> {
         throw abortError;
       }
       if (!player) {
-        player = createAudioPlayer(null, { updateInterval: 250, keepAudioSessionActive: true });
+        player = createAudioPlayer(null, { updateInterval: 80, keepAudioSessionActive: true });
         statusSub = player.addListener('playbackStatusUpdate', onPlaybackStatus);
       }
       return player;
@@ -164,11 +174,12 @@ function applyPendingSeek(instance: AudioPlayer): void {
   const seek = pendingSeekSeconds ?? 0;
   pendingSeekSeconds = null;
   seeking = true;
+  holdClock(seek);
   void instance.seekTo(seek).then(() => {
-    seeking = false;
     holdClock(seek);
     useRecitationStore.setState({ positionSeconds: seek });
     bumpProgressEpoch();
+    seeking = false;
     if (wantPlaying) instance.play();
   });
 }
@@ -214,7 +225,8 @@ function onPlaybackStatus(status: AudioStatus): void {
   }
 
   const duration = Number.isFinite(status.duration) && status.duration > 0 ? status.duration : 0;
-  let position = Number.isFinite(status.currentTime) ? Math.max(0, status.currentTime) : 0;
+  const rawPosition = Number.isFinite(status.currentTime) ? Math.max(0, status.currentTime) : 0;
+  let position = rawPosition;
   if (holdPositionSeconds != null && Date.now() < holdPositionUntil) {
     if (Math.abs(position - holdPositionSeconds) > 0.75) {
       position = holdPositionSeconds;
@@ -227,10 +239,25 @@ function onPlaybackStatus(status: AudioStatus): void {
   if (duration > 0) position = Math.min(position, duration);
 
   const state = useRecitationStore.getState();
-  const nextAyah =
+  const liveAyah =
     state.mode === 'surah' && !state.playingBismillah && state.timings.length
       ? ayahAtTimeMs(state.timings, position * 1000)
       : state.ayahNumber;
+  // Unpin only from the native clock. The held seek time is already inside the
+  // target ayah, and releasing on that made the highlight bounce back to ayah 1.
+  if (pinnedAyah > 0) {
+    const range = state.timings[pinnedAyah - 1];
+    const rawMs = rawPosition * 1000;
+    if (range && rawMs >= range[0] - 40 && rawMs <= range[1] + 80) pinnedAyah = 0;
+  }
+  const nextAyah = pinnedAyah > 0 ? pinnedAyah : liveAyah;
+  const words =
+    state.mode === 'surah' && !state.playingBismillah
+      ? (gaplessWordTimings[nextAyah - 1] ?? state.wordTimings)
+      : state.wordTimings;
+  // QUL ayah starts often precede the first word (2:2 is ~650ms). Keep that
+  // word underlined for the lead-in instead of clearing it and lighting it again.
+  const nextWord = wordAtTimeMs(words, position * 1000) || words[0]?.[0] || 0;
 
   useRecitationStore.setState({
     playing: status.playing,
@@ -238,12 +265,17 @@ function onPlaybackStatus(status: AudioStatus): void {
     positionSeconds: position,
     durationSeconds: duration,
     ayahNumber: nextAyah,
+    wordTimings: words,
+    wordNumber: nextWord,
     error: null,
   });
   if (nextAyah !== state.ayahNumber) activateLockScreen();
 }
 
 function beginSession(partial: Partial<RecitationState>): number {
+  stopWordAudio();
+  gaplessWordTimings = [];
+  pinnedAyah = 0;
   requestSeq += 1;
   wantPlaying = true;
   finishHandled = false;
@@ -274,6 +306,8 @@ async function loadAyahSource(seq: number): Promise<void> {
     error: null,
     positionSeconds: 0,
     durationSeconds: 0,
+    wordTimings: getGappedAyahWordTimings(surahNumber, ayahNumber),
+    wordNumber: 0,
   });
 
   try {
@@ -313,8 +347,10 @@ function prepareGaplessSurah(seq: number, surahNumber: number, ayahCount: number
       const metaPromise = getGaplessSurahMeta(surahNumber, ayahCount, downloadAbort?.signal)
         .then((meta) => {
           if (seq !== requestSeq) return;
+          gaplessWordTimings = meta.words;
           useRecitationStore.setState((state) => ({
             timings: meta.ayahs,
+            wordTimings: state.playingBismillah ? state.wordTimings : (meta.words[Math.max(1, state.ayahNumber) - 1] ?? []),
             downloadBytesTotal: state.downloadBytesTotal > 0 ? state.downloadBytesTotal : meta.size,
           }));
         })
@@ -336,11 +372,12 @@ function prepareGaplessSurah(seq: number, surahNumber: number, ayahCount: number
   })();
 }
 
-async function loadGaplessSource(seq: number): Promise<void> {
+async function loadGaplessSource(seq: number, options?: { fromAyah?: number }): Promise<void> {
   const { surahNumber, ayahCount } = useRecitationStore.getState();
   if (!surahNumber) return;
 
   suppressStatus = true;
+  pendingSeekSeconds = null;
   holdClock(0);
   useRecitationStore.setState({
     awaitingAudio: true,
@@ -355,8 +392,10 @@ async function loadGaplessSource(seq: number): Promise<void> {
       .then((meta) => {
         if (seq !== requestSeq) return meta;
         size = meta.size;
+        gaplessWordTimings = meta.words;
         useRecitationStore.setState((state) => ({
           timings: meta.ayahs,
+          wordTimings: state.playingBismillah ? state.wordTimings : (meta.words[Math.max(1, state.ayahNumber) - 1] ?? []),
           downloadBytesTotal: state.downloadBytesTotal > 0 ? state.downloadBytesTotal : meta.size,
         }));
         return meta;
@@ -389,7 +428,9 @@ async function loadGaplessSource(seq: number): Promise<void> {
     if (seq !== requestSeq) return;
 
     const latest = useRecitationStore.getState();
-    const fromMs = latest.timings[latest.ayahNumber - 1]?.[0] ?? 0;
+    const ayah = options?.fromAyah ?? latest.ayahNumber;
+    const fromMs = latest.timings[Math.max(1, ayah) - 1]?.[0] ?? 0;
+    const startSeconds = fromMs / 1000;
     ignoreFinishUntil = Date.now() + 800;
     finishHandled = false;
 
@@ -400,23 +441,25 @@ async function loadGaplessSource(seq: number): Promise<void> {
       pendingSeekSeconds = null;
       suppressStatus = false;
       seeking = true;
-      await instance.seekTo(fromMs / 1000);
+      await instance.seekTo(startSeconds);
       seeking = false;
       if (seq !== requestSeq) return;
-      holdClock(fromMs / 1000);
-      useRecitationStore.setState({ positionSeconds: fromMs / 1000 });
+      holdClock(startSeconds);
+      useRecitationStore.setState({ positionSeconds: startSeconds, ayahNumber: Math.max(1, ayah) });
       bumpProgressEpoch();
       if (wantPlaying) instance.play();
       activateLockScreen();
       return;
     }
 
-    pendingSeekSeconds = fromMs / 1000;
+    // Seeking to 0 after replace() restarts ayah 1 (the file already opens at the start).
+    pendingSeekSeconds = startSeconds > 0.08 ? startSeconds : null;
     instance.replace({ uri });
     loadedUri = uri;
     loadedKind = 'surah';
     loadedSurah = surahNumber;
     suppressStatus = false;
+    if (pendingSeekSeconds == null && wantPlaying) instance.play();
     bumpProgressEpoch();
     activateLockScreen();
   } catch (error) {
@@ -450,6 +493,8 @@ async function loadBismillah(seq: number): Promise<void> {
     error: null,
     positionSeconds: BISMILLAH_AUDIO_START_SECONDS,
     durationSeconds: 0,
+    wordTimings: getGappedAyahWordTimings(BISMILLAH_SURAH, BISMILLAH_AYAH),
+    wordNumber: 0,
   });
 
   try {
@@ -475,14 +520,23 @@ async function loadBismillah(seq: number): Promise<void> {
 
 async function startGaplessAfterBismillah(seq: number): Promise<void> {
   if (seq !== requestSeq) return;
+  suppressStatus = true;
+  pendingSeekSeconds = null;
+  try {
+    player?.pause();
+  } catch {
+    // Player may already be ending the Bismillah clip.
+  }
   useRecitationStore.setState({
     playingBismillah: false,
     ayahNumber: 1,
     awaitingAudio: true,
     positionSeconds: 0,
     durationSeconds: 0,
+    wordTimings: gaplessWordTimings[0] ?? [],
+    wordNumber: 0,
   });
-  await loadGaplessSource(seq);
+  await loadGaplessSource(seq, { fromAyah: 1 });
 }
 
 async function loadCurrent(seq: number): Promise<void> {
@@ -503,12 +557,22 @@ async function seekToAyah(ayahNumber: number): Promise<void> {
   if (!surahNumber || ayahNumber < 1 || ayahNumber > ayahCount) return;
   wantPlaying = true;
   finishHandled = false;
-  useRecitationStore.setState({ ayahNumber, playingBismillah: false, playing: false, awaitingAudio: true });
+  const words = mode === 'surah' ? (gaplessWordTimings[ayahNumber - 1] ?? []) : getGappedAyahWordTimings(surahNumber, ayahNumber);
+  pinnedAyah = ayahNumber;
+  useRecitationStore.setState({
+    ayahNumber,
+    playingBismillah: false,
+    playing: false,
+    awaitingAudio: true,
+    wordTimings: words,
+    wordNumber: words[0]?.[0] ?? 0,
+  });
 
   if (mode === 'surah') {
     const fromMs = timings[ayahNumber - 1]?.[0];
     if (fromMs == null) return;
     pendingSeekSeconds = fromMs / 1000;
+    holdClock(fromMs / 1000);
     if (player?.isLoaded) {
       applyPendingSeek(player);
       useRecitationStore.setState({ awaitingAudio: false });

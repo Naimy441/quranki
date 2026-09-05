@@ -17,11 +17,14 @@ export const BISMILLAH_AUDIO_START_SECONDS = 3.65;
 export const BISMILLAH_AUDIO_END_SECONDS = 8.65;
 
 export type AyahTiming = [fromMs: number, toMs: number];
+/** 1-based word index plus start/end in the current audio file's clock. */
+export type WordTiming = [word: number, fromMs: number, toMs: number];
 
 export interface GaplessSurahMeta {
   url: string;
   size: number;
   ayahs: AyahTiming[];
+  words: WordTiming[][];
 }
 
 export function recitationFileName(surahNumber: number, ayahNumber: number): string {
@@ -48,6 +51,25 @@ export function getGaplessSurahUrl(surahNumber: number): string {
 
 export function getGaplessSegmentsUrl(surahNumber: number, ayahCount: number): string {
   return `https://qul.tarteel.ai/api/v1/audio/surah_segments/${GAPLESS_RECITATION_ID}?surah=${surahNumber}&from=1&to=${ayahCount}&per_page=${ayahCount}`;
+}
+
+/** Last word whose start is at or before `timeMs` (1-based). `0` before the first stamp. */
+export function wordAtTimeMs(words: WordTiming[], timeMs: number): number {
+  if (!words.length) return 0;
+  let index = -1;
+  let lo = 0;
+  let hi = words.length - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (words[mid][1] <= timeMs) {
+      index = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  if (index < 0) return timeMs + 180 >= words[0][1] ? words[0][0] : 0;
+  return words[index][0];
 }
 
 /** Last ayah whose `time_from` is at or before `timeMs` (1-based). */
@@ -78,20 +100,27 @@ export function parseGaplessSegments(
   }
   const payload = data as {
     audio?: { url?: string; audio_size?: number };
-    segments?: Record<string, { time_from?: number; time_to?: number }>;
+    segments?: Record<string, { time_from?: number; time_to?: number; segments?: WordTiming[] }>;
   };
   const segments = payload.segments ?? {};
   const ayahs: AyahTiming[] = [];
+  const words: WordTiming[][] = [];
   for (let ayah = 1; ayah <= ayahCount; ayah++) {
     const row = segments[`${surahNumber}:${ayah}`];
     if (row?.time_from == null || row?.time_to == null) {
       throw new Error('Incomplete timestamps');
     }
     ayahs.push([Number(row.time_from), Number(row.time_to)]);
+    words.push(
+      (row.segments ?? [])
+        .filter((entry) => Array.isArray(entry) && entry.length >= 3)
+        .map((entry) => [Number(entry[0]), Number(entry[1]), Number(entry[2])]),
+    );
   }
   return {
     url: payload.audio?.url || getGaplessSurahUrl(surahNumber),
     size: Number(payload.audio?.audio_size) || 0,
     ayahs,
+    words,
   };
 }

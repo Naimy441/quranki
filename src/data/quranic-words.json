@@ -636,7 +636,7 @@
         },
         {
           "arabic": "أَيُّ، أَيِّ، أَيَّ",
-          "english": "which (ا)",
+          "english": "which",
           "id": "06-007",
           "lemmaIds": [
             75,
@@ -666,7 +666,7 @@
         },
         {
           "arabic": "مَاذَا",
-          "english": "what (م)",
+          "english": "what",
           "id": "06-010",
           "lemmaIds": [
             426
@@ -804,7 +804,7 @@
           "arabic": "مِمَّنْ",
           "contractionOf": "مِنْ + مَنْ",
           "contractionEnglish": "from + who",
-          "english": "than the one who, from those who (م)",
+          "english": "than the one who, from those who",
           "id": "07-012",
           "lemmaIds": [
             1
@@ -861,7 +861,7 @@
         },
         {
           "arabic": "ثُمَّ",
-          "english": "moreover (ث)",
+          "english": "moreover",
           "id": "08-006",
           "lemmaIds": [
             33
@@ -900,7 +900,7 @@
         },
         {
           "arabic": "إِنْ ... إِلَّا",
-          "english": "nothing...but (ا)",
+          "english": "nothing...but",
           "id": "08-010",
           "lemmaIds": [
             14
@@ -908,7 +908,7 @@
         },
         {
           "arabic": "مَا... إِلَّا",
-          "english": "nothing...but (م)",
+          "english": "nothing...but",
           "id": "08-011",
           "lemmaIds": [
             3
@@ -918,7 +918,7 @@
           "arabic": "أَلَّا",
           "contractionOf": "أَنْ + لَا",
           "contractionEnglish": "that + not",
-          "english": "that... not, so as not (ا)",
+          "english": "that... not, so as not",
           "id": "08-012",
           "lemmaIds": [
             16,
@@ -972,7 +972,7 @@
         },
         {
           "arabic": "كَمَا",
-          "english": "as, just as (ك)",
+          "english": "as, just as",
           "contractionOf": "كَ + مَا",
           "contractionEnglish": "like + what",
           "id": "09-004",
@@ -993,7 +993,7 @@
         },
         {
           "arabic": "مِمَّا",
-          "english": "out of what (م)",
+          "english": "out of what",
           "contractionOf": "مِنْ + مَا",
           "contractionEnglish": "from + what",
           "id": "09-006",
@@ -1162,7 +1162,7 @@
         },
         {
           "arabic": "مَعَ",
-          "english": "with (م)",
+          "english": "with",
           "id": "10-011",
           "lemmaIds": [
             71,
@@ -1224,7 +1224,7 @@
         },
         {
           "arabic": "لَقَدْ",
-          "english": "indeed (3 letters)",
+          "english": "indeed",
           "id": "11-005"
         },
         {
@@ -1251,7 +1251,7 @@
         },
         {
           "arabic": "أَمْ",
-          "english": "or? (م)",
+          "english": "or?",
           "id": "11-009",
           "lemmaIds": [
             85
@@ -1259,7 +1259,7 @@
         },
         {
           "arabic": "أَوْ",
-          "english": "or (و)",
+          "english": "or",
           "id": "11-010",
           "lemmaIds": [
             41
@@ -1354,7 +1354,7 @@
         },
         {
           "arabic": "إِنْ",
-          "english": "if (ا)",
+          "english": "if",
           "id": "12-007",
           "lemmaIds": [
             14,
@@ -1390,7 +1390,7 @@
         },
         {
           "arabic": "لَوْ",
-          "english": "if (ل)",
+          "english": "if",
           "id": "12-011",
           "lemmaIds": [
             59
@@ -4205,7 +4205,7 @@
         },
         {
           "arabic": "قَرَأَ",
-          "english": "to read, to recite (ق)",
+          "english": "to read, to recite",
           "id": "38-002",
           "lemmaIds": [
             615

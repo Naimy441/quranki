@@ -51,6 +51,13 @@
           "recordAudioAndroid": false,
           "enableBackgroundPlayback": true
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#1E8E5A",
+          "defaultChannel": "practice"
+        }
       ]
     ],
     "experiments": {

@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Button, ProgressBar } from 'react-native-paper';
-import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
+import { Button } from 'react-native-paper';
+import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withTiming, ZoomIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FlashCard } from '@/components/quranki/flash-card';
@@ -14,7 +14,9 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { createNewCard, deserializeCard, formatInterval, previewGrades, State, type GradeName } from '@/lib/fsrs';
 import { hapticHeavy, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
+import { useStudySessionClock } from '@/hooks/use-study-session-clock';
 import { getStageForLevel, getUpcomingLearning, isStudyWord, type SessionWord } from '@/lib/levels';
+import { formatStudyDuration } from '@/lib/stats';
 import { playWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
 import { useProgressStore } from '@/store/progress-store';
 import { stopRecitation } from '@/store/recitation-store';
@@ -33,11 +35,9 @@ interface SessionRunnerProps {
   queue: SessionWord[];
   /** Shown in the "all caught up" empty state when the queue is empty. */
   emptyMessage: string;
-  /** Show a small "Level N" pill on each card - useful when a session mixes levels. */
-  showLevelTag?: boolean;
 }
 
-export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: SessionRunnerProps) {
+export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
   const theme = useTheme();
   const progress = useProgressStore((state) => state.progress);
   const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
@@ -56,6 +56,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
   // of the frozen `queue` prop rather than the prop itself, letting handleGrade append a word
   // back onto the end for a second (or third...) pass this session.
   const [sessionQueue, setSessionQueue] = useState(() => queue);
+  const { sessionMs, markInteraction, flushNow } = useStudySessionClock(phase === 'review' && queue.length > 0);
 
   useEffect(
     () => () => {
@@ -86,6 +87,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
 
   const handleSpeak = async () => {
     if (!currentEntry) return;
+    markInteraction();
     hapticSelection();
     stopRecitation();
     stopWordPronunciation();
@@ -118,6 +120,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
 
   const handleGrade = (grade: GradeName) => {
     if (!currentEntry) return;
+    markInteraction();
     setIsSpeaking(false);
     hapticGrade(grade);
     stopRecitation();
@@ -140,6 +143,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
       setRevealed(false);
     } else {
       stopWordPronunciation();
+      flushNow();
       setPhase('summary');
     }
   };
@@ -164,7 +168,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
                 ? emptyMessage
                 : reviewedCount === 0
                   ? 'Grammar intro done.'
-                  : `You reviewed ${reviewedCount} ${reviewedCount === 1 ? 'word' : 'words'}.`}
+                  : `You reviewed ${reviewedCount} ${reviewedCount === 1 ? 'word' : 'words'}${sessionMs > 0 ? ` in ${formatStudyDuration(sessionMs)}` : ''}.`}
             </ThemedText>
             {reviewedCount > 0 ? <UpcomingReviewNote /> : null}
 
@@ -225,36 +229,35 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex}>
         <View style={styles.topBar}>
-          <Pressable
-            onPress={() => {
-              hapticLight();
-              handleClose();
-            }}
-            hitSlop={12}
-            style={styles.closeButton}>
-            <Ionicons name="close" size={24} color={theme.textSecondary} />
-          </Pressable>
-          <ProgressBar progress={studyProgress} color={theme.primary} style={styles.progressBar} />
+          <View style={styles.topBarSide}>
+            <Pressable
+              onPress={() => {
+                hapticLight();
+                handleClose();
+              }}
+              hitSlop={12}
+              style={styles.closeButton}>
+              <Ionicons name="close" size={24} color={theme.textSecondary} />
+            </Pressable>
+          </View>
           <ThemedText type="small" themeColor="textSecondary" style={styles.progressLabel}>
             {studyTotal === 0 ? '' : `${Math.max(studyPosition, 1)}/${studyTotal}`}
           </ThemedText>
+          <View style={[styles.topBarSide, styles.topBarSideEnd]}>
+            <ThemedText type="small" themeColor="textSecondary">
+              Level {currentEntry.levelNumber}
+            </ThemedText>
+          </View>
         </View>
+        <SessionProgressBar progress={studyProgress} color={theme.primary} trackColor={theme.backgroundElement} />
 
-        <ScrollView style={styles.content} contentContainerStyle={styles.contentInner} keyboardShouldPersistTaps="handled">
-          {showLevelTag && (
-            <View style={[styles.levelTag, { backgroundColor: theme.backgroundElement }]}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Level {currentEntry.levelNumber} -{' '}
-                {currentEntry.word.kind === 'grammar'
-                  ? currentEntry.word.english
-                  : currentEntry.reason === 'new'
-                    ? 'New word'
-                    : currentCard.state === State.Learning || currentCard.state === State.Relearning
-                      ? 'Learning'
-                      : 'Review'}
-              </ThemedText>
-            </View>
-          )}
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={[
+            styles.contentInner,
+            revealed || currentEntry.word.kind === 'grammar' ? styles.contentRevealed : styles.contentPrompt,
+          ]}
+          keyboardShouldPersistTaps="handled">
           <FlashCard
             word={currentEntry.word}
             revealed={revealed || currentEntry.word.kind === 'grammar'}
@@ -280,6 +283,7 @@ export function SessionRunner({ queue, emptyMessage, showLevelTag = false }: Ses
               style={styles.showAnswerButton}
               contentStyle={styles.showAnswerContent}
               onPress={() => {
+                markInteraction();
                 hapticLight();
                 setRevealed(true);
               }}>
@@ -297,40 +301,55 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.three,
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.two,
+    paddingBottom: Spacing.two,
+  },
+  topBarSide: {
+    width: 72,
+    justifyContent: 'center',
+  },
+  topBarSideEnd: {
+    alignItems: 'flex-end',
   },
   closeButton: {
     padding: Spacing.one,
-  },
-  progressBar: {
-    flex: 1,
-    height: 6,
-    borderRadius: Radius.pill,
+    marginLeft: -Spacing.one,
   },
   progressLabel: {
-    minWidth: 40,
-    textAlign: 'right',
+    flex: 1,
+    textAlign: 'center',
+  },
+  progressTrack: {
+    height: 6,
+    borderRadius: Radius.pill,
+    overflow: 'hidden',
+    marginHorizontal: Spacing.four,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: Radius.pill,
   },
   content: {
     flex: 1,
   },
   contentInner: {
     flexGrow: 1,
-    justifyContent: 'center',
     paddingHorizontal: Spacing.four,
     gap: Spacing.three,
     paddingVertical: Spacing.two,
   },
-  levelTag: {
-    alignSelf: 'center',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one,
-    borderRadius: Radius.pill,
+  contentPrompt: {
+    justifyContent: 'center',
+  },
+  contentRevealed: {
+    justifyContent: 'flex-start',
+    paddingTop: Spacing.three,
   },
   actions: {
-    padding: Spacing.four,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.two,
   },
   showAnswerButton: {
     borderRadius: Radius.medium,
@@ -394,6 +413,40 @@ const styles = StyleSheet.create({
     height: 52,
   },
 });
+
+function SessionProgressBar({
+  progress,
+  color,
+  trackColor,
+}: {
+  progress: number;
+  color: string;
+  trackColor: string;
+}) {
+  const fill = useSharedValue(progress);
+  const trackWidth = useSharedValue(0);
+
+  useEffect(() => {
+    fill.value = withTiming(Math.min(1, Math.max(0, progress)), {
+      duration: 380,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [progress, fill]);
+
+  const fillStyle = useAnimatedStyle(() => ({
+    width: trackWidth.value * fill.value,
+  }));
+
+  return (
+    <View
+      style={[styles.progressTrack, { backgroundColor: trackColor }]}
+      onLayout={(event) => {
+        trackWidth.value = event.nativeEvent.layout.width;
+      }}>
+      <Animated.View style={[styles.progressFill, { backgroundColor: color }, fillStyle]} />
+    </View>
+  );
+}
 
 function UpcomingReviewNote() {
   const upcoming = getUpcomingLearning(useProgressStore.getState().progress, new Date());

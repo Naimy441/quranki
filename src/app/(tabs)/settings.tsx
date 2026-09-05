@@ -2,16 +2,18 @@ import SliderControl from '@expo/ui/community/slider';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ReaderDisplaySettings } from '@/components/quran/reader-display-settings';
 import { ChoiceGrid } from '@/components/quranki/choice-grid';
+import { ReminderTimePicker } from '@/components/quranki/reminder-time-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ACCENTS, BottomTabInset, MaxContentWidth, Radius, Spacing, type AccentId } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
 import { hapticSelection } from '@/lib/haptics';
+import { formatReminderTime } from '@/lib/practice-reminder';
 import { clampWordsPerSession, WORDS_PER_SESSION_MAX, WORDS_PER_SESSION_MIN } from '@/lib/storage';
 import { useProgressStore } from '@/store/progress-store';
 
@@ -61,6 +63,7 @@ export default function SettingsScreen() {
   const updateSettings = useProgressStore((state) => state.updateSettings);
   const resetProgress = useProgressStore((state) => state.resetProgress);
   const masterAllWords = useProgressStore((state) => state.masterAllWords);
+  const seedDemoStudyTime = useProgressStore((state) => state.seedDemoStudyTime);
   const setOnboardingCompleted = useProgressStore((state) => state.setOnboardingCompleted);
   const [openingKnownWords, setOpeningKnownWords] = useState(false);
   const openingKnownWordsRef = useRef(false);
@@ -149,6 +152,30 @@ export default function SettingsScreen() {
             </View>
           </SettingsSection>
 
+          <SettingsSection
+            title="Notifications">
+            <View style={styles.reminderToggle}>
+              <ThemedText type="smallBold">Daily reminder</ThemedText>
+              <Switch
+                value={settings.reminderEnabled}
+                onValueChange={(reminderEnabled) => updateSettings({ reminderEnabled })}
+                trackColor={{ false: theme.border, true: theme.primary }}
+                thumbColor={theme.card}
+              />
+            </View>
+            {settings.reminderEnabled ? (
+              <ReminderTimePicker
+                hour={settings.reminderHour}
+                minute={settings.reminderMinute}
+                onChange={(reminderHour, reminderMinute) => updateSettings({ reminderHour, reminderMinute })}
+              />
+            ) : (
+              <ThemedText type="small" themeColor="textSecondary">
+                A simple nudge to open a few words.
+              </ThemedText>
+            )}
+          </SettingsSection>
+
           <SettingsSection title="Appearance">
             <ChoiceGrid
               options={THEME_OPTIONS}
@@ -188,6 +215,7 @@ export default function SettingsScreen() {
             />
             <ActionRow icon="refresh-outline" label="Reset progress" destructive onPress={handleReset} />
             {__DEV__ && <ActionRow icon="flask-outline" label="Master all words" onPress={masterAllWords} />}
+            {__DEV__ && <ActionRow icon="time-outline" label="Fill study time" onPress={seedDemoStudyTime} />}
             {__DEV__ && (
               <ActionRow
                 icon="sparkles-outline"
@@ -350,6 +378,12 @@ const styles = StyleSheet.create({
   slider: {
     width: '100%',
     height: 40,
+  },
+  reminderToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
   },
   sliderEnds: {
     flexDirection: 'row',

@@ -5,17 +5,16 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { InlineMeta } from '@/components/inline-meta';
 import { GrammarIntroRow } from '@/components/quranki/grammar-intro-row';
 import { LevelCard } from '@/components/quranki/level-card';
-import { StageCard } from '@/components/quranki/stage-card';
-import { StatCard } from '@/components/quranki/stat-card';
+import { StagePicker } from '@/components/quranki/stage-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatInterval } from '@/lib/fsrs';
 import { hapticMedium } from '@/lib/haptics';
+import { getKnownLemmaIds } from '@/lib/known-words';
 import {
   buildGlobalSessionQueue,
   getGrammarIntro,
@@ -32,8 +31,7 @@ import {
   type LevelStatus,
   type Word,
 } from '@/lib/levels';
-import { getKnownLemmaIds } from '@/lib/known-words';
-import { computeStreak, formatCount } from '@/lib/stats';
+import { computeStreak, formatCount, formatStudyDuration, studyTimeForDay } from '@/lib/stats';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { newCardsCompletedToday, reviewsCompletedToday, useProgressStore } from '@/store/progress-store';
 
@@ -51,6 +49,33 @@ function rowsForStatuses(statuses: LevelStatus[]): LearnRow[] {
   return rows;
 }
 
+/** Compact icon + value + label, used in the hero's stats footer (onPrimary background). */
+function HeroStat({
+  icon,
+  value,
+  label,
+  color,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  value: string;
+  label: string;
+  color: string;
+}) {
+  return (
+    <View style={styles.heroStat}>
+      <View style={styles.heroStatValueRow}>
+        <Ionicons name={icon} size={14} color={color} style={styles.heroStatIcon} />
+        <ThemedText themeColor="onPrimary" type="smallBold">
+          {value}
+        </ThemedText>
+      </View>
+      <ThemedText themeColor="onPrimary" type="small" style={styles.heroStatLabel}>
+        {label}
+      </ThemedText>
+    </View>
+  );
+}
+
 export default function LearnScreen() {
   const theme = useTheme();
   const progress = useProgressStore((state) => state.progress);
@@ -60,6 +85,7 @@ export default function LearnScreen() {
   const reviewCountDate = useProgressStore((state) => state.reviewCountDate);
   const reviewDates = useProgressStore((state) => state.reviewDates);
   const streakGraceDates = useProgressStore((state) => state.streakGraceDates);
+  const studyMsByDate = useProgressStore((state) => state.studyMsByDate);
   const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
   const hydrated = useProgressStore((state) => state.hydrated);
   const knownWords = useKnownWordsStore((state) => state.knownWords);
@@ -82,6 +108,7 @@ export default function LearnScreen() {
   const upcoming = getUpcomingLearning(progress, now);
   const newRemaining = Math.max(0, wordsPerSession - newCardsCompletedToday(reviewCountDate, newCardsToday, now));
   const streak = computeStreak(reviewDates, streakGraceDates, now);
+  const studyTodayMs = studyTimeForDay(studyMsByDate, now);
   const frontier = getIntroductionFrontier(progress);
   const reachedLevel = Math.max(maxUnlockedLevel, frontier);
   const unlockedStage = getUnlockedStage(reachedLevel);
@@ -91,10 +118,33 @@ export default function LearnScreen() {
   const selectedUnlocked = isStageUnlocked(selectedStage, reachedLevel);
   const visibleStage = selectedUnlocked ? selectedStage : STAGES[0];
   const rows = rowsForStatuses(getLevelStatusesForStage(visibleStage, progress, now));
+  const stageEntries = STAGES.map((stage) => ({
+    stage,
+    progress: getStageProgress(stage, progress, now),
+    unlocked: isStageUnlocked(stage, reachedLevel),
+  }));
 
   if (!hydrated) {
     return <ThemedView style={styles.flex} />;
   }
+
+  const heroHeadline = hasWorkToday
+    ? `${studyToday.length} ${studyToday.length === 1 ? 'word' : 'words'} to review`
+    : extraSession.length > 0
+      ? 'All done for today'
+      : 'All caught up';
+
+  const heroSubtitle = hasWorkToday
+    ? [dueCount > 0 ? `${dueCount} due` : null, newCount > 0 ? `${newCount} new` : null].filter(Boolean).join(' · ')
+    : extraSession.length > 0
+      ? 'Study ahead if you want more.'
+      : upcoming
+        ? `${upcoming.count} ${upcoming.count === 1 ? 'word' : 'words'} come back in ${formatInterval(upcoming.ms)}`
+        : newRemaining === 0
+          ? 'More new words unlock tomorrow.'
+          : 'Nothing due right now.';
+
+  const heroButtonLabel = hasWorkToday ? 'Start session' : extraStudy.length > 0 ? `Study ${extraStudy.length} more` : 'Study more';
 
   return (
     <ThemedView style={styles.flex} collapsable={false}>
@@ -107,45 +157,13 @@ export default function LearnScreen() {
           ListHeaderComponent={
             <View style={styles.header}>
               <View style={[styles.heroCard, { backgroundColor: theme.primary }]}>
-                <View style={styles.heroRow}>
-                  <View style={styles.heroIconWrap}>
-                    <View style={[styles.heroIconFill, { backgroundColor: theme.onPrimary }]} />
-                    <Ionicons
-                      name={hasWorkToday ? 'book-outline' : 'checkmark'}
-                      size={22}
-                      color={theme.onPrimary}
-                    />
-                  </View>
-                  <View style={styles.heroTextBlock}>
-                    <ThemedText themeColor="onPrimary" type="smallBold">
-                      {hasWorkToday
-                        ? "Today's review"
-                        : extraSession.length > 0
-                          ? 'Session done'
-                          : 'All caught up'}
-                    </ThemedText>
-                    {hasWorkToday ? (
-                      <InlineMeta
-                        themeColor="onPrimary"
-                        items={[
-                          dueCount > 0 ? `${dueCount} due` : null,
-                          newCount > 0 ? `${newCount} new` : null,
-                        ]}
-                        style={styles.heroBreakdown}
-                      />
-                    ) : (
-                      <ThemedText themeColor="onPrimary" type="small" style={styles.heroBreakdown}>
-                        {extraSession.length > 0
-                          ? 'Start another if you want.'
-                          : upcoming
-                            ? `${upcoming.count} ${upcoming.count === 1 ? 'word' : 'words'} come back in ${formatInterval(upcoming.ms)}`
-                            : newRemaining === 0
-                              ? 'More new words tomorrow.'
-                              : 'Nothing due right now.'}
-                      </ThemedText>
-                    )}
-                  </View>
-                </View>
+                <ThemedText themeColor="onPrimary" type="subtitle" style={styles.heroHeadline}>
+                  {heroHeadline}
+                </ThemedText>
+                <ThemedText themeColor="onPrimary" type="small" style={styles.heroSubtitle}>
+                  {heroSubtitle}
+                </ThemedText>
+
                 {hasWorkToday || canStart ? (
                   <Button
                     mode="contained"
@@ -157,41 +175,34 @@ export default function LearnScreen() {
                       hapticMedium();
                       router.push('/session/review');
                     }}>
-                    {hasWorkToday
-                      ? `Start ${studyToday.length} ${studyToday.length === 1 ? 'word' : 'words'}`
-                      : extraStudy.length > 0
-                        ? `Study ${extraStudy.length} more`
-                        : 'Study more'}
+                    {heroButtonLabel}
                   </Button>
                 ) : null}
-              </View>
 
-              <View style={styles.statsRow}>
-                <StatCard
-                  icon="checkmark-done"
-                  label="Mastered"
-                  value={formatCount(masteredLemmaIds.size)}
-                />
-                <StatCard icon="flame" label="Day streak" value={String(streak)} />
-                <StatCard icon="layers" label="Level" value={String(reachedLevel)} />
-              </View>
-
-              <View style={[styles.stageGroup, { backgroundColor: theme.card, borderColor: theme.border }]}>
-                {STAGES.map((stage) => (
-                  <StageCard
-                    key={stage.id}
-                    stage={stage}
-                    progress={getStageProgress(stage, progress, now)}
-                    unlocked={isStageUnlocked(stage, reachedLevel)}
-                    selected={visibleStage.id === stage.id}
-                    onPress={() => setSelectedStageId(stage.id)}
+                <View style={[styles.heroDivider, { backgroundColor: theme.onPrimary }]} />
+                <View style={styles.heroStatsRow}>
+                  <HeroStat
+                    icon="checkmark-done"
+                    value={formatCount(masteredLemmaIds.size)}
+                    label="Mastered"
+                    color={theme.onPrimary}
                   />
-                ))}
+                  <HeroStat icon="flame" value={String(streak)} label="Day streak" color={theme.onPrimary} />
+                  <HeroStat
+                    icon="time-outline"
+                    value={formatStudyDuration(studyTodayMs)}
+                    label="Today"
+                    color={theme.onPrimary}
+                  />
+                </View>
               </View>
 
-              <ThemedText type="smallBold" style={styles.levelsLabel}>
-                {visibleStage.title}
-              </ThemedText>
+              <StagePicker
+                entries={stageEntries}
+                selectedStageId={visibleStage.id}
+                wordsPerDay={wordsPerSession}
+                onSelect={setSelectedStageId}
+              />
             </View>
           }
           renderItem={({ item }) =>
@@ -227,59 +238,52 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: Spacing.three,
     paddingBottom: Spacing.two,
-    gap: Spacing.three,
+    gap: Spacing.four,
   },
   heroCard: {
-    gap: Spacing.three,
+    gap: Spacing.two,
     borderRadius: Radius.large,
     padding: Spacing.four,
     marginTop: Spacing.one,
   },
-  heroRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
+  heroHeadline: {
+    fontSize: 24,
+    lineHeight: 30,
   },
-  heroIconWrap: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroIconFill: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    borderRadius: Radius.pill,
-    opacity: 0.2,
-  },
-  heroTextBlock: {
-    flex: 1,
-    gap: 2,
-  },
-  heroBreakdown: {
+  heroSubtitle: {
     opacity: 0.9,
   },
   heroButton: {
     borderRadius: Radius.medium,
     alignSelf: 'stretch',
+    marginTop: Spacing.two,
   },
   heroButtonContent: {
     height: 44,
   },
-  statsRow: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-  },
-  stageGroup: {
-    borderRadius: Radius.large,
-    borderWidth: 1,
-    padding: Spacing.one,
-  },
-  levelsLabel: {
+  heroDivider: {
+    height: StyleSheet.hairlineWidth,
+    opacity: 0.25,
     marginTop: Spacing.two,
+  },
+  heroStatsRow: {
+    flexDirection: 'row',
+    paddingTop: Spacing.three,
+  },
+  heroStat: {
+    flex: 1,
+    gap: 2,
+  },
+  heroStatValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+  },
+  heroStatIcon: {
+    opacity: 0.9,
+  },
+  heroStatLabel: {
+    opacity: 0.75,
   },
   cardWrap: {
     marginBottom: Spacing.two,

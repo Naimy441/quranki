@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 
-import { InlineMeta } from '@/components/inline-meta';
 import { AyahBlock } from '@/components/quran/ayah-block';
 import { BismillahHeader } from '@/components/quran/bismillah-header';
 import { SurahNameText } from '@/components/quran/surah-name-text';
@@ -65,6 +64,14 @@ export function SurahPage({
   const [contentReady, setContentReady] = useState(initialFocusAyah === 0);
   const didFocus = useRef(false);
   const [openActionsAyah, setOpenActionsAyah] = useState(0);
+  const [scrollEpoch, setScrollEpoch] = useState(0);
+  const lastScrollBump = useRef(0);
+  const bumpScrollEpoch = useCallback(() => {
+    const now = Date.now();
+    if (now - lastScrollBump.current < 48) return;
+    lastScrollBump.current = now;
+    setScrollEpoch((value) => value + 1);
+  }, []);
   const onVisibleAyahRef = useRef(onVisibleAyah);
   const recitationAyah = useRecitationStore((s) =>
     s.visible && s.surahNumber === surahNumber ? s.ayahNumber : 0,
@@ -124,9 +131,10 @@ export function SurahPage({
         onToggleActions={(ayah) => setOpenActionsAyah((current) => current === ayah ? 0 : ayah)}
         onLongPressWord={onLongPressWord}
         onOpenMarks={onOpenMarks}
+        scrollEpoch={scrollEpoch}
       />
     ),
-    [arabicSize, focusAyah, glossSize, hiddenLemmaIds, knownLemmaIds, meta, onLongPressWord, onOpenMarks, openActionsAyah, recognizedLemmaIds, showAyahCoverage, showTranslation, showTransliteration, surahNumber, transliterationSize],
+    [arabicSize, focusAyah, glossSize, hiddenLemmaIds, knownLemmaIds, meta, onLongPressWord, onOpenMarks, openActionsAyah, recognizedLemmaIds, scrollEpoch, showAyahCoverage, showTranslation, showTransliteration, surahNumber, transliterationSize],
   );
 
   const onViewableItemsChanged = useCallback(
@@ -161,14 +169,12 @@ export function SurahPage({
             <View style={styles.englishInfo}>
               <ThemedText type="smallBold" style={styles.transliteration}>{meta.en}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.meaning}>{meta.nt}</ThemedText>
-              <InlineMeta
-                themeColor="textMuted"
-                items={[
-                  `${meta.ac} ${meta.ac === 1 ? 'ayah' : 'ayahs'}`,
-                  meta.rp === 'meccan' ? 'Meccan' : 'Medinan',
-                ]}
-                textStyle={styles.metaLine}
-              />
+              <ThemedText type="small" themeColor="textMuted" style={styles.metaLine}>
+                {`${meta.ac} ${meta.ac === 1 ? 'ayah' : 'ayahs'}`}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textMuted" style={styles.metaLine}>
+                {meta.rp === 'meccan' ? 'Meccan' : 'Medinan'}
+              </ThemedText>
             </View>
             <View style={styles.arabicTitleWrap}>
               <SurahNameText surahNumber={surahNumber} style={styles.arabicTitle} />
@@ -190,6 +196,10 @@ export function SurahPage({
         </View>
       }
       onViewableItemsChanged={onViewableItemsChanged}
+      onScroll={bumpScrollEpoch}
+      onScrollEndDrag={() => setScrollEpoch((value) => value + 1)}
+      onMomentumScrollEnd={() => setScrollEpoch((value) => value + 1)}
+      scrollEventThrottle={16}
       onScrollBeginDrag={() => setOpenActionsAyah(0)}
       viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
       drawDistance={900}

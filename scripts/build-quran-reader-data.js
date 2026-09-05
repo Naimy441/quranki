@@ -21,7 +21,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const { buildVocabMatches, loadMorphologyStems, collectAffixLocations, citationPhraseTokens, citationPhraseTokenizations, findPhraseRuns, findPartialExampleHits, collectStudyCores, collectVerbPersonLocations, INDEPENDENT_PRONOUN_BY_PERSON, normalizeLight, normalizeLightLoose } = require('./vocab-word-matcher');
+const { buildVocabMatches, loadMorphologyStems, collectAffixLocations } = require('./vocab-word-matcher');
+const { buildVocabExampleMap } = require('./pick-vocab-examples');
 const { verifyAlignment, buildMorphologyIndex, attachMorphology } = require('./corpus-lemma-map');
 
 const ROOT = path.join(__dirname, '..');
@@ -366,173 +367,15 @@ function main() {
   for (const [id, locs] of suffixById) for (const loc of locs) addLoc(id, loc);
   for (const [id, locs] of prefixById) for (const loc of locs) addLoc(id, loc);
 
-  function ayahPlainTranslation(ayah) {
-    return ayah.tr.map((part) => (part.t !== undefined ? part.t : '')).join('').replace(/\s+/g, ' ').trim();
-  }
-
-  function scoreExample(surahNumber, wordCount, bonus = 0) {
-    let score = wordCount;
-    if (wordCount < 3) score += 40;
-    if (wordCount > 14) score += (wordCount - 14) * 4;
-    if (surahNumber === 1) score -= 10;
-    if (surahNumber >= 78) score -= 4;
-    return score - bonus;
-  }
-
-  function surfaceFitBonus(study, loc, ayah) {
-    const [, , p] = loc.split(':').map(Number);
-    const word = ayah.w.find((item) => item.p === p);
-    if (!word) return 0;
-    const surface = word.ar.map((seg) => seg.t).join('');
-    const citation = citationPhraseTokens(study.arabic ?? '')[0] ?? study.arabic;
-    const stem = stemByLocation.get(loc);
-    const lightSurface = stem?.lightSurface ?? normalizeLight(surface);
-    const lightCitation = normalizeLight(citation);
-    if (lightSurface === lightCitation) return 12;
-    if (lightSurface.endsWith(lightCitation) && lightSurface.length - lightCitation.length <= 2) return 4;
-    return 0;
-  }
-
-  function packExample(s, a, p, n, ayah, hits) {
-    const idx = ayah.w.findIndex((word) => word.p === p);
-    if (idx < 0) return null;
-    const toIndex = (wordP) => {
-      const found = ayah.w.findIndex((word) => word.p === wordP);
-      return found >= 0 ? found + 1 : wordP;
-    };
-    const example = {
-      s,
-      a,
-      p: idx + 1,
-      w: ayah.w.map((word) => word.ar.map((seg) => seg.t).join('')),
-      tr: ayahPlainTranslation(ayah).slice(0, 180),
-    };
-    const hitIndexes = (hits ?? []).map(toIndex).filter((pos, i, arr) => arr.indexOf(pos) === i);
-    if (hitIndexes.length > 1) example.hits = hitIndexes;
-    else if (n > 1) example.n = n;
-    return example;
-  }
-
-  function pickFromCandidates(candidates, study) {
-    let best = null;
-    let bestScore = Infinity;
-    for (const candidate of candidates) {
-      const { s, a, p, n, ayah, bonus, hits } = candidate;
-      if (!ayah || !ayah.w.some((word) => word.p === p)) continue;
-      const loc = `${s}:${a}:${p}`;
-      const score = scoreExample(s, ayah.w.length, bonus + surfaceFitBonus(study, loc, ayah));
-      if (score < bestScore) {
-        bestScore = score;
-        best = { s, a, p, n, ayah, hits };
-      }
-    }
-    return best;
-  }
-
-  const studyCores = collectStudyCores(studyById);
-  const personByIndependentId = Object.fromEntries(
-    Object.entries(INDEPENDENT_PRONOUN_BY_PERSON).map(([person, id]) => [id, person]),
-  );
-  const vocabExamples = {};
-  for (const [id, study] of studyById) {
-    if (study.kind === 'grammar') continue;
-    const locations = [...(locationsByVocabId.get(id) ?? [])];
-    const person = personByIndependentId[id];
-    if (person && locations.length === 0 && study.exampleVerse) {
-      locations.push(...collectVerbPersonLocations(stemByLocation, person, study.arabic));
-    }
-    const phraseRuns = [];
-    for (const tokens of citationPhraseTokenizations(study)) {
-      phraseRuns.push(...findPhraseRuns(tokens, ayahWordOrder, surfaceByLocation, stemByLocation));
-    }
-    const preferred = study.exampleVerse;
-
-    const fromRun = (run, bonus) => {
-      const [s, a, p] = run.loc.split(':').map(Number);
-      const ayahs = ayahsBySurah.get(s);
-      const ayah = ayahs ? ayahs.find((row) => row.a === a) : null;
-      return { s, a, p, n: run.n, ayah, bonus, hits: run.hits };
-    };
-    const fromLoc = (loc, bonus, n = 1) => {
-      const [s, a, p] = loc.split(':').map(Number);
-      const ayahs = ayahsBySurah.get(s);
-      const ayah = ayahs ? ayahs.find((row) => row.a === a) : null;
-      return { s, a, p, n, ayah, bonus };
-    };
-
-    const hitsInAyah = (s, a) => {
-      const prefix = `${s}:${a}:`;
-      const positions = new Set();
-      for (const loc of locations) {
-        if (loc.startsWith(prefix)) positions.add(Number(loc.split(':')[2]));
-      }
-      for (const run of phraseRuns) {
-        if (!run.loc.startsWith(prefix)) continue;
-        const start = Number(run.loc.split(':')[2]);
-        for (let i = 0; i < run.n; i += 1) positions.add(start + i);
-        for (const hit of run.hits ?? []) positions.add(hit);
-      }
-      const inAyah = findPartialExampleHits(
-        study,
-        studyCores,
-        ayahWordOrder,
-        surfaceByLocation,
-        stemByLocation,
-        prefix,
-      );
-      for (const run of inAyah) {
-        positions.add(Number(run.loc.split(':')[2]));
-        for (const hit of run.hits ?? []) positions.add(hit);
-      }
-      return [...positions].sort((x, y) => x - y);
-    };
-
-    let best = null;
-    if (preferred) {
-      const inAyah = (item) => item.s === preferred.s && item.a === preferred.a;
-      best = pickFromCandidates(phraseRuns.map((run) => fromRun(run, 80)).filter(inAyah), study);
-      if (!best) {
-        const locPrefix = `${preferred.s}:${preferred.a}:`;
-        best = pickFromCandidates(
-          locations.filter((loc) => loc.startsWith(locPrefix)).map((loc) => fromLoc(loc, 80)),
-          study,
-        );
-      }
-      // Cards like لِمَ / لِمَا have no lemma ids (must not steal ما) but pin an ayah.
-      if (!best) {
-        const ayahs = ayahsBySurah.get(preferred.s);
-        const ayah = ayahs ? ayahs.find((row) => row.a === preferred.a) : null;
-        const forms = [study.arabic, study.variant, ...(study.forms ?? [])]
-          .filter(Boolean)
-          .flatMap((form) => String(form).split(/[,\u060c]/))
-          .map((part) => normalizeLightLoose(part.trim()))
-          .filter(Boolean);
-        const match = ayah?.w.find((item) =>
-          forms.includes(normalizeLightLoose(item.ar.map((seg) => seg.t).join(''))),
-        );
-        if (ayah && match) best = { s: preferred.s, a: preferred.a, p: match.p, n: 1, ayah };
-      }
-    }
-    if (!best && phraseRuns.length > 0) {
-      best = pickFromCandidates(phraseRuns.map((run) => fromRun(run, 50)), study);
-    }
-    if (!best) {
-      best = pickFromCandidates(locations.map((loc) => fromLoc(loc, 0)), study);
-    }
-    if (!best) {
-      const partial = findPartialExampleHits(study, studyCores, ayahWordOrder, surfaceByLocation, stemByLocation);
-      best = pickFromCandidates(partial.map((run) => fromRun(run, 15)), study);
-    }
-    if (best) {
-      const extraHits = hitsInAyah(best.s, best.a);
-      const hits = extraHits.length > 1 ? extraHits : best.hits;
-      const packed = packExample(best.s, best.a, best.p, best.n, best.ayah, hits);
-      if (packed) vocabExamples[id] = packed;
-    }
-  }
-  for (const [id, ofId] of exampleOfById) {
-    if (!vocabExamples[id] && vocabExamples[ofId]) vocabExamples[id] = vocabExamples[ofId];
-  }
+  const vocabExamples = buildVocabExampleMap({
+    studyById,
+    exampleOfById,
+    locationsByVocabId,
+    ayahsBySurah,
+    ayahWordOrder,
+    surfaceByLocation,
+    stemByLocation,
+  });
   fs.writeFileSync(path.join(OUT_DIR, 'vocab-examples.json'), JSON.stringify(vocabExamples));
   console.log(`Wrote verse examples for ${Object.keys(vocabExamples).length} study words.`);
 

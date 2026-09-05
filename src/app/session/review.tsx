@@ -26,7 +26,6 @@ export default function DailyReviewScreen() {
     <SessionRunner
       queue={queue}
       emptyMessage="You're all caught up. If you just learned new words, they come back in about 10 minutes."
-      showLevelTag
     />
   );
 }

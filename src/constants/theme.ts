@@ -229,10 +229,10 @@ export function resolveThemeColors(scheme: 'light' | 'dark', accentId: unknown):
 
 /** Colors for the four FSRS grading actions, consistent across themes. */
 export const GradeColors = {
-  again: { light: '#E5484D', dark: '#F1666B' },
-  hard: { light: '#DE8A2E', dark: '#F0A64B' },
-  good: { light: '#1E8E5A', dark: '#34C77E' },
-  easy: { light: '#2E7FC7', dark: '#5AA6E0' },
+  again: { light: '#C1121F', dark: '#E23A44' },
+  hard: { light: '#F77F00', dark: '#FF9520' },
+  good: { light: '#146B38', dark: '#2FA66A' },
+  easy: { light: '#3568A0', dark: '#4A6F9A' },
 } as const;
 
 export const Fonts = Platform.select({

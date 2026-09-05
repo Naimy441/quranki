@@ -87,6 +87,27 @@ export function shapeQpcArabic(text: string): string {
   return text.replace(/\u06EB/g, '\u06EC');
 }
 
+const IQLAB_MEEM = '\u06E2';
+const TANWEEN_TO_VOWEL: Record<string, string> = {
+  '\u064B': '\u064E',
+  '\u064C': '\u064F',
+  '\u064D': '\u0650',
+};
+
+/**
+ * Morphology text from the Quranic Arabic Corpus writes iqlab as tanween plus the small high
+ * meem (U+06E2). Uthmanic Hafs draws that mark on a single vowel; tanween + meem stacks the
+ * two and the meem sits slightly wrong (e.g. Al-An'am 6:140:6 سَفَهًۢا). U+06DF is an
+ * Uthmanic pause mark, not part of the word.
+ */
+export function displayMorphologyArabic(text: string): string {
+  return shapeQpcArabic(
+    text
+      .replace(/\u06DF/g, '')
+      .replace(/([\u064B\u064C\u064D])\u06E2/g, (_, tanween: string) => `${TANWEEN_TO_VOWEL[tanween] ?? tanween}${IQLAB_MEEM}`),
+  );
+}
+
 const SKIP_EXTRA = new Set(['\u0627', '\u0621']);
 
 function findFlexibleWindow(surface: LetterSpan[], needle: LetterSpan[]): { start: number; end: number } | null {
@@ -142,7 +163,7 @@ export function highlightAffix(surface: string, word: Word): HighlightParts {
         }
       }
     }
-    return { before: '', hit: surface, after: '' };
+    return { before: surface, hit: '', after: '' };
   }
 
   let best: HighlightParts | null = null;

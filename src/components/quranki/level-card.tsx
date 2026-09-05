@@ -2,14 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { InlineMeta } from '@/components/inline-meta';
 import { ProgressRing } from '@/components/quranki/progress-ring';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticSelection } from '@/lib/haptics';
-import { getCoverageThroughLevel, type LevelStatus } from '@/lib/levels';
-import { formatCount } from '@/lib/stats';
+import type { LevelStatus } from '@/lib/levels';
 
 interface LevelCardProps {
   status: LevelStatus;
@@ -22,7 +20,6 @@ export function LevelCard({ status, isCurrent }: LevelCardProps) {
   const { level, masteredCount, totalCount, dueCount, newCount } = status;
   const progress = totalCount === 0 ? 0 : masteredCount / totalCount;
   const introduced = totalCount - newCount;
-  const coverage = getCoverageThroughLevel(level.number);
 
   return (
     <Pressable
@@ -43,17 +40,9 @@ export function LevelCard({ status, isCurrent }: LevelCardProps) {
         <ThemedText type="smallBold" numberOfLines={2}>
           {level.title}
         </ThemedText>
-        {introduced === 0 ? (
-          <InlineMeta themeColor="textSecondary" items={[`${totalCount} words`, 'Not yet introduced']} />
-        ) : (
-          <ThemedText type="small" themeColor="textSecondary">
-            {masteredCount}/{totalCount} mastered
-          </ThemedText>
-        )}
-        <InlineMeta
-          themeColor="textMuted"
-          items={[`${coverage.percent}%`, `${formatCount(coverage.quranWords)} words`]}
-        />
+        <ThemedText type="small" themeColor="textSecondary">
+          {introduced === 0 ? `${totalCount} words · not started` : `${masteredCount} of ${totalCount} mastered`}
+        </ThemedText>
       </View>
 
       {dueCount > 0 ? (

@@ -3,8 +3,9 @@ import { studyForms } from '@/lib/arabic-display';
 import type { Word } from '@/lib/levels';
 import { getWordLemmaIds } from '@/lib/quran-lemmas';
 import { getSurahAyahs } from '@/lib/quran-reader';
+import type { ReaderWord } from '@/lib/quran-reader-types';
 
-export interface VocabExample {
+export interface VocabExampleRef {
   s: number;
   a: number;
   p: number;
@@ -12,11 +13,17 @@ export interface VocabExample {
   n?: number;
   /** Highlight these 1-based word positions (non-contiguous pattern cards). */
   hits?: number[];
-  w: string[];
-  tr: string;
 }
 
-const examples = vocabExamplesData as Record<string, VocabExample>;
+export interface VocabExample extends VocabExampleRef {
+  w: string[];
+  tr: string;
+  words?: ReaderWord[];
+}
+
+type StoredExample = VocabExampleRef & { w?: string[]; tr?: string };
+
+const examples = vocabExamplesData as Record<string, StoredExample | StoredExample[]>;
 
 /** Keep vowels so لِمَ does not collide with لَم; drop shadda/recitation marks so لِّمَا matches لِمَا. */
 function foldExampleSurface(text: string): string {
@@ -24,6 +31,39 @@ function foldExampleSurface(text: string): string {
     .normalize('NFC')
     .replace(/[\u0640\u0651\u06D6-\u06ED]/g, '')
     .replace(/\u0671/g, '\u0627');
+}
+
+function ayahPlainTranslation(ayah: { tr: { t?: string }[] }): string {
+  return ayah.tr
+    .map((part) => (part.t !== undefined ? part.t : ''))
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function storedList(raw: StoredExample | StoredExample[] | undefined): StoredExample[] {
+  if (!raw) return [];
+  return Array.isArray(raw) ? raw : [raw];
+}
+
+function hydrateExample(ref: StoredExample): VocabExample | undefined {
+  const ayah = getSurahAyahs(ref.s).find((item) => item.a === ref.a);
+  if (ayah) {
+    return {
+      s: ref.s,
+      a: ref.a,
+      p: ref.p,
+      n: ref.n,
+      hits: ref.hits,
+      w: ayah.w.map((item) => item.ar.map((seg) => seg.t).join('')),
+      tr: ayahPlainTranslation(ayah),
+      words: ayah.w,
+    };
+  }
+  if (ref.w && ref.tr) {
+    return { s: ref.s, a: ref.a, p: ref.p, n: ref.n, hits: ref.hits, w: ref.w, tr: ref.tr };
+  }
+  return undefined;
 }
 
 function exampleFromVerse(word: Word): VocabExample | undefined {
@@ -44,15 +84,28 @@ function exampleFromVerse(word: Word): VocabExample | undefined {
     a: verse.a,
     p: hit.p,
     w: ayah.w.map((item) => item.ar.map((seg) => seg.t).join('')),
-    tr: ayah.tr
-      .map((part) => (part.t !== undefined ? part.t : ''))
-      .join('')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 180),
+    tr: ayahPlainTranslation(ayah),
+    words: ayah.w,
   };
 }
 
+export function exampleSurface(example: VocabExample): string {
+  return example.w[example.p - 1] ?? '';
+}
+
+export function getVocabExamples(word: Word): VocabExample[] {
+  const stored = storedList(examples[word.id]).map(hydrateExample).filter((item): item is VocabExample => !!item);
+  if (stored.length > 0) return stored;
+  if (word.exampleOf) {
+    const inherited = storedList(examples[word.exampleOf])
+      .map(hydrateExample)
+      .filter((item): item is VocabExample => !!item);
+    if (inherited.length > 0) return inherited;
+  }
+  const fromVerse = exampleFromVerse(word);
+  return fromVerse ? [fromVerse] : [];
+}
+
 export function getVocabExample(word: Word): VocabExample | undefined {
-  return examples[word.id] ?? (word.exampleOf ? examples[word.exampleOf] : undefined) ?? exampleFromVerse(word);
+  return getVocabExamples(word)[0];
 }

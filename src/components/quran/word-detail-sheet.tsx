@@ -4,10 +4,10 @@ import { ActivityIndicator, Alert, Modal, Platform, Pressable, ScrollView, Style
 import { Button } from 'react-native-paper';
 
 import { ArabicText } from '@/components/arabic-text';
-import { InlineMeta } from '@/components/inline-meta';
 import { ThemedText } from '@/components/themed-text';
 import { ArabicTextStyle, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { displayMorphologyArabic } from '@/lib/arabic-display';
 import { hapticLight, hapticSelection, hapticSuccess, hapticWarning } from '@/lib/haptics';
 import type { Level } from '@/lib/levels';
 import { getRootEntry, posLabel } from '@/lib/quran-morphology';
@@ -111,11 +111,6 @@ function RootLetters({ root }: { root: string }) {
       ))}
     </View>
   );
-}
-
-/** U+06DF is an Uthmanic orthography marker, not part of the word's morphology. */
-function displayMorphologyArabic(text: string): string {
-  return text.replace(/\u06DF/g, '');
 }
 
 type WordAudioStatus = 'idle' | 'loading' | 'playing' | 'error';
@@ -246,7 +241,13 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
                     return (
                       <View key={`${segment.t}-${index}`} style={styles.morphologyKeyRow}>
                         <View style={[styles.morphologyDot, { backgroundColor: color }]} />
-                        <InlineMeta items={morphologyParts(segment)} color={color} style={styles.morphKeyLabel} />
+                        <View style={styles.morphTags}>
+                          {morphologyParts(segment).map((part) => (
+                            <ThemedText key={part} type="small" style={[styles.morphTag, { color }]}>
+                              {part}
+                            </ThemedText>
+                          ))}
+                        </View>
                       </View>
                     );
                   })}
@@ -301,9 +302,9 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
             {canMarkKnown ? (
               <ThemedText type="small" themeColor="textSecondary" style={styles.description}>
                 {shown.masteredLevel
-                  ? `You\u2019ve already mastered this word in Level ${shown.masteredLevel.number} (${shown.masteredLevel.title}) - that\u2019s why its translation is hidden.`
+                  ? `You\u2019ve already mastered this word in Level ${shown.masteredLevel.number} (${shown.masteredLevel.title}). That\u2019s why its translation is hidden.`
                   : shown.isKnown
-                    ? 'Marked as known - its translation is hidden everywhere this word appears in the Qur\u2019an.'
+                    ? 'Marked as known. Its translation is hidden everywhere this word appears in the Qur\u2019an.'
                     : 'Marking it known hides its translation everywhere it appears.'}
               </ThemedText>
             ) : null}
@@ -387,8 +388,15 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: Radius.pill,
   },
-  morphKeyLabel: {
+  morphTags: {
     flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: Spacing.three,
+    rowGap: 2,
+  },
+  morphTag: {
+    fontWeight: '500',
   },
   stats: {
     flexDirection: 'row',

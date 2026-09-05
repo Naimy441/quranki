@@ -1,16 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ArabicText } from '@/components/arabic-text';
 import { GrammarCard } from '@/components/quranki/grammar-card';
-import { VerseExample } from '@/components/quranki/verse-example';
+import { VerseExamplePager } from '@/components/quranki/verse-example';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { displayArabic, shapeQpcArabic } from '@/lib/arabic-display';
 import type { Word } from '@/lib/levels';
-import { getVocabExample } from '@/lib/vocab-examples';
+import { exampleSurface, getVocabExamples } from '@/lib/vocab-examples';
 
 interface FlashCardProps {
   word: Word;
@@ -21,37 +22,38 @@ interface FlashCardProps {
 
 export function FlashCard({ word, revealed, onSpeak, isSpeaking }: FlashCardProps) {
   const theme = useTheme();
-  const example = getVocabExample(word);
+  const examples = useMemo(() => getVocabExamples(word), [word.id]);
   if (word.kind === 'grammar') return <GrammarCard word={word} />;
-  const spokenSurface = example ? shapeQpcArabic(example.w[example.p - 1] ?? '') : '';
+  const spokenSurface = examples[0] ? shapeQpcArabic(exampleSurface(examples[0])) : '';
   const showSpoken = isSpeaking && spokenSurface.length > 0;
 
   return (
-    <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-      <View style={[styles.arabicSection, revealed && example ? styles.arabicSectionCompact : null]}>
-        <ArabicText style={[styles.arabicText, showSpoken && { color: theme.primary }]}>
+    <View style={styles.wrap}>
+      <View style={[styles.prompt, revealed && styles.promptRevealed]}>
+        <ArabicText style={[styles.arabicText, revealed && styles.arabicTextRevealed, showSpoken && { color: theme.primary }]}>
           {showSpoken ? spokenSurface : displayArabic(word)}
         </ArabicText>
         <Pressable
           onPress={onSpeak}
           hitSlop={12}
+          accessibilityLabel="Play pronunciation"
           style={({ pressed }) => [
             styles.speakerButton,
+            revealed && styles.speakerButtonBeside,
             { backgroundColor: theme.backgroundElement },
             pressed && styles.pressed,
           ]}>
           <Ionicons
             name={isSpeaking ? 'volume-high' : 'volume-medium-outline'}
-            size={20}
+            size={revealed ? 18 : 20}
             color={theme.primary}
           />
         </Pressable>
       </View>
 
-      {revealed && (
-        <Animated.View
-          entering={FadeInDown.duration(280)}
-          style={[styles.answerSection, { borderTopColor: theme.border }]}>
+      {revealed ? (
+        <Animated.View entering={FadeInDown.duration(280)} style={styles.answer}>
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
           <ThemedText type="subtitle" style={styles.englishText}>
             {word.english}
           </ThemedText>
@@ -70,34 +72,40 @@ export function FlashCard({ word, revealed, onSpeak, isSpeaking }: FlashCardProp
               {word.note}
             </ThemedText>
           ) : null}
-          {example ? <VerseExample word={word} example={example} /> : null}
+          {examples.length > 0 ? <VerseExamplePager word={word} examples={examples} /> : null}
         </Animated.View>
-      )}
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: Radius.large,
-    borderWidth: 1,
-    overflow: 'hidden',
+  wrap: {
+    width: '100%',
+    alignItems: 'center',
   },
-  arabicSection: {
-    minHeight: 220,
+  prompt: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: Spacing.five,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.three,
     gap: Spacing.four,
   },
-  arabicSectionCompact: {
-    minHeight: 140,
-    paddingVertical: Spacing.four,
+  promptRevealed: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: Spacing.two,
+    gap: Spacing.three,
   },
   arabicText: {
-    fontSize: 52,
-    lineHeight: 96,
+    fontSize: 56,
+    lineHeight: 100,
     textAlign: 'center',
+  },
+  arabicTextRevealed: {
+    fontSize: 48,
+    lineHeight: 84,
   },
   speakerButton: {
     width: 44,
@@ -106,14 +114,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  speakerButtonBeside: {
+    width: 36,
+    height: 36,
+  },
   pressed: {
     opacity: 0.7,
   },
-  answerSection: {
-    borderTopWidth: 1,
-    padding: Spacing.four,
+  answer: {
+    width: '100%',
     alignItems: 'center',
     gap: Spacing.three,
+    paddingBottom: Spacing.two,
+  },
+  divider: {
+    alignSelf: 'stretch',
+    height: StyleSheet.hairlineWidth,
   },
   englishText: {
     fontSize: 22,

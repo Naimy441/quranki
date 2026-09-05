@@ -1,14 +1,13 @@
-import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ArabicText } from '@/components/arabic-text';
-import { VerseExample } from '@/components/quranki/verse-example';
+import { VerseExamplePager } from '@/components/quranki/verse-example';
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { displayArabic } from '@/lib/arabic-display';
 import type { Word } from '@/lib/levels';
-import { getVocabExample } from '@/lib/vocab-examples';
+import { getVocabExamples } from '@/lib/vocab-examples';
 
 interface GrammarCardProps {
   word: Word;
@@ -60,67 +59,49 @@ function LessonNote({ text, color }: { text: string; color: string }) {
 
 export function GrammarCard({ word }: GrammarCardProps) {
   const theme = useTheme();
-  const example = getVocabExample(word);
+  const examples = getVocabExamples(word);
 
   return (
-    <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-      <View style={[styles.kicker, { backgroundColor: theme.backgroundSelected }]}>
-        <Ionicons name="sparkles-outline" size={16} color={theme.text} />
-        <ThemedText type="smallBold">
-          A pattern to notice
-        </ThemedText>
-      </View>
-
-      <View style={styles.body}>
+    <View style={styles.wrap}>
+      <View style={styles.prompt}>
         <ArabicText style={styles.arabic}>{displayArabic(word)}</ArabicText>
-        <ThemedText type="subtitle" style={styles.title}>
-          {word.english}
-        </ThemedText>
-        {word.note ? <LessonNote text={word.note} color={theme.text} /> : null}
-
-        {example ? (
-          <View style={[styles.exampleBox, { backgroundColor: theme.backgroundElement }]}>
-            <ThemedText type="smallBold" themeColor="textMuted" style={styles.exampleLabel}>
-              In the Quran
-            </ThemedText>
-            <VerseExample word={word} example={example} />
-          </View>
-        ) : null}
       </View>
+      <View style={[styles.divider, { backgroundColor: theme.border }]} />
+      <ThemedText type="subtitle" style={styles.title}>
+        {word.english}
+      </ThemedText>
+      {word.note ? <LessonNote text={word.note} color={theme.text} /> : null}
+      {examples.length > 0 ? <VerseExamplePager word={word} examples={examples} /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: Radius.large,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  kicker: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.two,
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-  },
-  body: {
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    paddingBottom: Spacing.four,
+  wrap: {
+    width: '100%',
     alignItems: 'center',
     gap: Spacing.three,
+    paddingBottom: Spacing.two,
+  },
+  prompt: {
+    alignItems: 'center',
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.one,
   },
   arabic: {
-    fontSize: 44,
-    lineHeight: 80,
+    fontSize: 48,
+    lineHeight: 84,
     textAlign: 'center',
     writingDirection: 'ltr',
   },
+  divider: {
+    alignSelf: 'stretch',
+    height: StyleSheet.hairlineWidth,
+  },
   title: {
-    fontSize: 24,
-    lineHeight: 32,
+    fontSize: 22,
+    lineHeight: 30,
     textAlign: 'center',
   },
   note: {
@@ -133,18 +114,7 @@ const styles = StyleSheet.create({
     writingDirection: 'ltr',
   },
   noteArabic: {
-    fontSize: 22,
-    lineHeight: 32,
-  },
-  exampleBox: {
-    width: '100%',
-    marginTop: Spacing.one,
-    padding: Spacing.three,
-    borderRadius: Radius.medium,
-    gap: Spacing.two,
-  },
-  exampleLabel: {
-    textAlign: 'center',
-    letterSpacing: 0.3,
+    fontSize: 19,
+    lineHeight: 26,
   },
 });
