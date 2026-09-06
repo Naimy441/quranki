@@ -1,6 +1,6 @@
-import quranicWordsData from '@/data/quranic-words.json';
 import lemmaLevelCoverageData from '@/data/quran/lemma-level-coverage.json';
 import stageLevelsData from '@/data/quran/stage-levels.json';
+import quranicWordsData from '@/data/quranic-words.json';
 import { deserializeCard, isCardDue, isWordMastered, shouldHideInReader, State, type GradeName, type SerializedCard } from '@/lib/fsrs';
 import { QURAN_LEMMA_COUNT, TOTAL_QURAN_WORDS, type LemmaId } from '@/lib/quran-lemmas';
 
@@ -364,7 +364,7 @@ function isLevelFullyMastered(level: Level, progressMap: ProgressMap): boolean {
 
 /** The learner's current level: the first level that is not yet fully mastered, after a
  *  consecutive prefix of completed levels. Isolated words (including ones marked known in the
- *  Quran reader) do not skip ahead — only finishing every study word in level 1, then 2, and
+ *  Quran reader) do not skip ahead - only finishing every study word in level 1, then 2, and
  *  so on, advances this. Display-only; levels are not a gate on new cards. */
 export function computeReachedLevel(progressMap: ProgressMap): number {
   for (const level of LEVELS) {

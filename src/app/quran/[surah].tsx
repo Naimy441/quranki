@@ -4,15 +4,15 @@
    React state. */
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, AppState, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AyahMarkSheet } from '@/components/quran/ayah-mark-sheet';
+import { PlayOptionsSheet } from '@/components/quran/play-options-sheet';
 import { QuranJumpSheet } from '@/components/quran/quran-jump-sheet';
-import { ReaderSettingsSheet } from '@/components/quran/reader-settings-sheet';
 import { RecitationPlayer } from '@/components/quran/recitation-player';
 import { SurahPage } from '@/components/quran/surah-page';
 import { WordDetailSheet } from '@/components/quran/word-detail-sheet';
@@ -28,7 +28,13 @@ import type { ReaderWordRef } from '@/lib/quran-reader-types';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 import { useQuranMarksStore } from '@/store/quran-marks-store';
-import { stopRecitation, toggleSurahPlayback, useRecitationStore } from '@/store/recitation-store';
+import {
+  playSurah,
+  setAutoScrollSuspended,
+  stopRecitation,
+  toggleSurahPlayback,
+  useRecitationStore,
+} from '@/store/recitation-store';
 
 const ACTIVE_INITIAL_BATCH = 12;
 // The neighboring surahs a swipe away only need a handful of ayahs pre-rendered so they already
@@ -54,7 +60,7 @@ export default function SurahReaderScreen() {
   // side by side; swiping just slides between them and then shifts which three are mounted,
   // rather than navigating to a whole new screen.
   const [active, setActive] = useState(() => Number(surah));
-  // Header title tracks the chapter the swipe has committed to, immediately — `active` only
+  // Header title tracks the chapter the swipe has committed to, immediately - `active` only
   // updates after the page animation so the strip doesn't remount mid-slide. A custom
   // `headerTitle` also skips the native stack's title-slide interpolation.
   const [headerSurah, setHeaderSurah] = useState(() => Number(surah));
@@ -85,18 +91,24 @@ export default function SurahReaderScreen() {
   const showAyahCoverage = useProgressStore((s) => s.settings.readerShowAyahCoverage);
   const showTransliteration = useProgressStore((s) => s.settings.readerTransliteration);
   const transliterationSize = useProgressStore((s) => s.settings.readerTransliterationSize);
-  const updateSettings = useProgressStore((s) => s.updateSettings);
-  const [settingsVisible, setSettingsVisible] = useState(false);
   const [selectedWord, setSelectedWord] = useState<ReaderWordRef | null>(null);
   const [markAyah, setMarkAyah] = useState<number | null>(null);
   const [jumpVisible, setJumpVisible] = useState(false);
+  const [playOptionsVisible, setPlayOptionsVisible] = useState(false);
+  // Bumped only on a genuinely fresh play-button press (not when reopening after a reciter-picker
+  // round trip below) - keyed onto `PlayOptionsSheet` to force a fresh range selection then, while
+  // leaving the in-progress range alone when the reader just went to switch reciters.
+  const [playOptionsOpenId, setPlayOptionsOpenId] = useState(0);
+  const returningToPlayOptionsRef = useRef(false);
   const noteOpenedSurah = useQuranMarksStore((s) => s.noteOpenedSurah);
   const setLastRead = useQuranMarksStore((s) => s.setLastRead);
   const hasSaved = useQuranMarksStore((s) => s.pinPlacements.length > 0 || s.bookmarks.length > 0);
   const playerVisible = useRecitationStore((s) => s.visible);
   const recitationSurah = useRecitationStore((s) => s.surahNumber);
+  const recitationAyahNumber = useRecitationStore((s) => s.ayahNumber);
   const recitationPlaying = useRecitationStore((s) => s.playing);
   const recitationAwaiting = useRecitationStore((s) => s.awaitingAudio);
+  const recitationFinished = useRecitationStore((s) => s.rangeFinished);
 
   const meta = getSurahMeta(active);
   const headerMeta = getSurahMeta(headerSurah) ?? meta;
@@ -105,11 +117,25 @@ export default function SurahReaderScreen() {
     Number.isFinite(requestedAyah) && requestedAyah >= 1 && meta
       ? Math.min(meta.ac, Math.round(requestedAyah))
       : 0;
-  const thisSurahPlaying = playerVisible && recitationSurah === active && recitationPlaying;
-  const thisSurahLoading = playerVisible && recitationSurah === active && recitationAwaiting && !recitationPlaying;
+  const hasSessionForActiveSurah = playerVisible && recitationSurah === active;
+  const thisSurahPlaying = hasSessionForActiveSurah && recitationPlaying;
+  const thisSurahLoading = hasSessionForActiveSurah && recitationAwaiting && !recitationPlaying;
+  // The session ran all the way to the end of its chosen range - the header button re-opens the
+  // picker rather than silently replaying the same range (the bottom player bar's own play
+  // button still just replays it; see the header `onPress` below vs `togglePlayPause`).
+  const thisSurahFinished = hasSessionForActiveSurah && recitationFinished;
 
   useFocusEffect(
     useCallback(() => {
+      // Coming back from `/reciter-picker` after tapping "Reciter" inside `PlayOptionsSheet`
+      // (see its `onPressReciter` below) - reopen that sheet. The reciter list can't be embedded
+      // inline in it: wrapping a sheet's content in a `Pressable` (needed to swallow backdrop
+      // taps) also swallows a nested scrollable's drag before it becomes the touch responder, so
+      // it's a real pushed screen instead.
+      if (returningToPlayOptionsRef.current) {
+        returningToPlayOptionsRef.current = false;
+        setPlayOptionsVisible(true);
+      }
       return () => {
         // Backgrounding the app blurs this screen on some platforms; keep recitation going.
         const appState = AppState.currentState;
@@ -157,6 +183,21 @@ export default function SurahReaderScreen() {
     const next = active + direction;
     setActive(next);
     router.setParams({ surah: String(next), ayah: '' });
+  };
+
+  // Player bar title tap: jump straight back to whatever's currently being recited, even if the
+  // reader has swiped to a different chapter or scrolled away from it - mirrors `QuranJumpSheet`'s
+  // `onJump` below, plus clearing `autoScrollSuspended` so the reciter's position starts driving
+  // the scroll again.
+  const jumpToRecitation = () => {
+    if (!playerVisible || recitationSurah == null) return;
+    hapticSelection();
+    const jumpAyah = recitationAyahNumber > 0 ? recitationAyahNumber : 1;
+    setAutoScrollSuspended(false);
+    setHeaderSurah(recitationSurah);
+    setActive(recitationSurah);
+    setLastRead(recitationSurah, jumpAyah);
+    router.setParams({ surah: String(recitationSurah), ayah: String(jumpAyah) });
   };
 
   const swipeGesture = Gesture.Pan()
@@ -225,7 +266,16 @@ export default function SurahReaderScreen() {
               <Pressable
                 onPress={() => {
                   hapticLight();
-                  toggleSurahPlayback(active);
+                  // A session already exists for this surah and hasn't finished (playing, paused
+                  // mid-way, or loading) - just toggle it, same as before. Otherwise (no session
+                  // yet, or the previous one played through to the end of its range) let the
+                  // reader pick a fresh range and reciter instead of always resuming/replaying.
+                  if (hasSessionForActiveSurah && !thisSurahFinished) {
+                    toggleSurahPlayback(active);
+                  } else {
+                    setPlayOptionsOpenId((id) => id + 1);
+                    setPlayOptionsVisible(true);
+                  }
                 }}
                 hitSlop={10}
                 accessibilityLabel={thisSurahPlaying ? 'Pause recitation' : 'Play surah recitation'}
@@ -256,10 +306,10 @@ export default function SurahReaderScreen() {
               <Pressable
                 onPress={() => {
                   hapticLight();
-                  setSettingsVisible(true);
+                  router.push('/reader-settings');
                 }}
                 hitSlop={10}
-                accessibilityLabel="Reader settings"
+                accessibilityLabel="Settings"
                 style={styles.headerButton}>
                 <Ionicons name="settings-outline" size={22} color={theme.text} />
               </Pressable>
@@ -305,27 +355,26 @@ export default function SurahReaderScreen() {
             </Animated.View>
           </GestureDetector>
         </View>
-        {playerVisible && <RecitationPlayer />}
+        {playerVisible && <RecitationPlayer onPressTitle={jumpToRecitation} />}
       </SafeAreaView>
 
-      <ReaderSettingsSheet
-        visible={settingsVisible}
-        onDismiss={() => setSettingsVisible(false)}
-        arabicSize={arabicSize}
-        onArabicSizeChange={(value) => updateSettings({ readerArabicSize: value })}
-        glossSize={glossSize}
-        onGlossSizeChange={(value) => updateSettings({ readerGlossSize: value })}
-        showTranslation={showTranslation}
-        onShowTranslationChange={(value) => updateSettings({ readerShowTranslation: value })}
-        showAyahCoverage={showAyahCoverage}
-        onShowAyahCoverageChange={(value) => updateSettings({ readerShowAyahCoverage: value })}
-        showTransliteration={showTransliteration}
-        onShowTransliterationChange={(value) => updateSettings({ readerTransliteration: value })}
-        transliterationSize={transliterationSize}
-        onTransliterationSizeChange={(value) => updateSettings({ readerTransliterationSize: value })}
-      />
-
       <AyahMarkSheet surah={active} ayah={markAyah} onDismiss={() => setMarkAyah(null)} />
+
+      <PlayOptionsSheet
+        key={playOptionsOpenId}
+        visible={playOptionsVisible}
+        surahNumber={active}
+        onDismiss={() => setPlayOptionsVisible(false)}
+        onPressReciter={() => {
+          setPlayOptionsVisible(false);
+          returningToPlayOptionsRef.current = true;
+          router.push('/reciter-picker');
+        }}
+        onPlay={(fromAyah, toAyah) => {
+          setPlayOptionsVisible(false);
+          void playSurah(active, fromAyah, toAyah);
+        }}
+      />
 
       <QuranJumpSheet
         visible={jumpVisible}

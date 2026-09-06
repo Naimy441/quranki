@@ -215,9 +215,9 @@ function pickGloss(lemma, variantMap, isVerb) {
     else clusters.set(key, { text: cleaned, count });
   }
   const ranked = [...clusters.values()].sort((a, b) => b.count - a.count || a.text.length - b.text.length);
-  let text = ranked[0]?.text ?? '—';
-  if (isVerb && text !== '—' && !/^to /i.test(text) && !/\s/.test(text)) text = `to ${text}`;
-  if (text !== '—') {
+  let text = ranked[0]?.text ?? '-';
+  if (isVerb && text !== '-' && !/^to /i.test(text) && !/\s/.test(text)) text = `to ${text}`;
+  if (text !== '-') {
     text = text.charAt(0).toLowerCase() + text.slice(1);
     text = text.replace(/^to ([A-Z])/, (_, letter) => `to ${letter.toLowerCase()}`);
   }
@@ -383,7 +383,7 @@ function ensureInitialFatha(text) {
 }
 
 function polishGloss(text) {
-  if (!text || text === '—') return text;
+  if (!text || text === '-') return text;
   return text.replace(/\bto ([A-Za-z]+)/g, (_, word) => `to ${word.toLowerCase()}`);
 }
 
@@ -642,7 +642,7 @@ function main() {
     const fromReader = pickGloss(item.lemma, glosses.get(item.id) ?? new Map(), verbLemmas.has(item.lemma));
     item.english = polishGloss(
       GLOSS_OVERRIDES[item.lemma] ??
-        (fromReader !== '—' ? fromReader : null) ??
+        (fromReader !== '-' ? fromReader : null) ??
         previousEnglish.get(item.lemma) ??
         previousEnglish.get(item.arabic) ??
         fromReader,

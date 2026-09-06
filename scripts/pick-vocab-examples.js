@@ -20,7 +20,7 @@ const {
 const MAX_EXAMPLES = 3;
 const MAX_EXAMPLES_MULTI = 4;
 
-/** Card is itself about a heavier topic — do not steer its examples away from that. */
+/** Card is itself about a heavier topic - do not steer its examples away from that. */
 const TOPIC_IS_WEIGHT =
   /\b(punish|hell|hellfire|torment|fire|criminal|disbeliev|curse|cursed|wrath|kill|slain|death|die|dead|sin|evil|satan|devil|hypocrit|idol|penalty|recompense|account|warn|anger|astray|wrongdoer|oppress|chastis|adulter|fornicat|flog|crucif)\b/i;
 

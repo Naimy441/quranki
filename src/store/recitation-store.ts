@@ -1,22 +1,18 @@
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer, type AudioStatus } from 'expo-audio';
+import type { DownloadProgress } from 'expo-file-system';
 import { create } from 'zustand';
 
 import { getSurahMeta } from '@/lib/quran-reader';
+import { wordAtTimeMs, type WordTiming } from '@/lib/recitation';
+import { getReciterAyahPlaybackUri, isAbortError } from '@/lib/recitation-cache';
+import { downloadReciterDataset, getAyahEntry } from '@/lib/reciter-dataset';
+import { DEFAULT_RECITER_KEY, findReciterOption, type ReciterOption } from '@/lib/reciters';
 import { stopWordAudio } from '@/lib/word-audio';
-import { getGappedAyahWordTimings } from '@/lib/husary-word-timings';
-import { ayahAtTimeMs, BISMILLAH_AUDIO_END_SECONDS, BISMILLAH_AUDIO_START_SECONDS, wordAtTimeMs, type AyahTiming, type WordTiming } from '@/lib/recitation';
-import {
-  getAyahPlaybackUri,
-  getCachedAyahUri,
-  getCachedGaplessUri,
-  getGaplessPlaybackUri,
-  getGaplessSurahMeta,
-  isAbortError,
-} from '@/lib/recitation-cache';
+import { useProgressStore } from '@/store/progress-store';
 
 export type RecitationMode = 'surah' | 'ayah';
 
-/** Fatihah 1:1 — reused as the opening Bismillah for every surah that has a header (`meta.b`). */
+/** Fatihah 1:1 - reused as the opening Bismillah for every surah that has a header (`meta.b`). */
 const BISMILLAH_SURAH = 1;
 const BISMILLAH_AYAH = 1;
 
@@ -32,15 +28,29 @@ export interface RecitationState {
   awaitingAudio: boolean;
   downloadBytesWritten: number;
   downloadBytesTotal: number;
+  /** Position/duration of whatever's currently loaded (the Bismillah clip, or one ayah's clip -
+   *  every clip is its own file, so these are always relative to that one file, not a surah). */
   positionSeconds: number;
   durationSeconds: number;
-  timings: AyahTiming[];
   wordTimings: WordTiming[];
   /** 1-based word currently being recited; 0 when none. */
   wordNumber: number;
   error: string | null;
   /** Bumps when playback seeks so the progress bar can resync. */
   progressEpoch: number;
+  /** True once the reader has scrolled away from the ayah currently being recited (the user
+   *  dragged the list manually) - while set, `SurahPage` stops yanking the view back on every
+   *  ayah change. Cleared automatically at the start of a new playback session, when the reader
+   *  scrolls back to the playing ayah on their own, or when the player bar's title is tapped. */
+  autoScrollSuspended: boolean;
+  /** Inclusive ayah range for the current `'surah'` session, chosen via `PlayOptionsSheet`
+   *  (default: the whole surah, 1..ayahCount). Skip/replay controls are bounded by this instead
+   *  of `ayahCount`. */
+  rangeStartAyah: number;
+  rangeEndAyah: number;
+  /** Set once playback has played through to `rangeEndAyah` - lets `togglePlayPause` know
+   *  pressing play again should restart the chosen range instead of resuming a finished clip. */
+  rangeFinished: boolean;
 }
 
 const INITIAL_STATE: RecitationState = {
@@ -56,16 +66,57 @@ const INITIAL_STATE: RecitationState = {
   downloadBytesTotal: 0,
   positionSeconds: 0,
   durationSeconds: 0,
-  timings: [],
   wordTimings: [],
   wordNumber: 0,
   error: null,
   progressEpoch: 0,
+  autoScrollSuspended: false,
+  rangeStartAyah: 1,
+  rangeEndAyah: Infinity,
+  rangeFinished: false,
 };
 
 function surahHasOpeningBismillah(surahNumber: number | null): boolean {
   if (!surahNumber) return false;
   return getSurahMeta(surahNumber)?.b === true;
+}
+
+/** The reciter+style chosen in Settings (see `lib/reciters.ts`); read live so a change takes
+ *  effect on the next ayah load without any extra wiring. */
+function getActiveReciter(): ReciterOption {
+  const key = useProgressStore.getState().settings.selectedReciterKey;
+  return findReciterOption(key) ?? findReciterOption(DEFAULT_RECITER_KEY)!;
+}
+
+/** Resolves a playable URI + word timings for one ayah, downloading the reciter's dataset first
+ *  (see `lib/reciter-dataset.ts`) if it isn't already cached. `onProgress` reports real bytes
+ *  for whichever of the two downloads below is actually in flight - the reciter's whole-Quran
+ *  metadata catalog (a few hundred KB, only ever fetched once per reciter) and/or this one
+ *  ayah's audio clip (tens to low-hundreds of KB) - so a cold first play shows real download
+ *  progress instead of just an indeterminate spinner. Left `undefined` for background preloads
+ *  (see `preloadNextChainedAyah`) so they don't hijack the visible progress bar. */
+async function resolveAyahSource(
+  reciter: ReciterOption,
+  surahNumber: number,
+  ayahNumber: number,
+  signal?: AbortSignal,
+  onProgress?: (data: DownloadProgress) => void,
+): Promise<{ uri: string; wordTimings: WordTiming[] }> {
+  const dataset = await downloadReciterDataset(reciter.key, signal, onProgress);
+  const entry = getAyahEntry(dataset, surahNumber, ayahNumber);
+  if (!entry?.audio_url) throw new Error('No recitation available for this ayah');
+  const uri = await getReciterAyahPlaybackUri(reciter.key, surahNumber, ayahNumber, entry.audio_url, signal, onProgress);
+  return { uri, wordTimings: entry.segments ?? [] };
+}
+
+/** Feeds one download's live progress into the player bar (see `RecitationPlayer`), ignoring
+ *  ticks from a now-superseded request (e.g. the user skipped again before this one finished). */
+function reportDownloadProgress(seq: number, data: DownloadProgress): void {
+  if (seq !== requestSeq) return;
+  useRecitationStore.setState({
+    downloadBytesWritten: data.bytesWritten,
+    downloadBytesTotal: Math.max(0, data.totalBytes),
+  });
 }
 
 function bumpProgressEpoch(): void {
@@ -79,7 +130,7 @@ function lockScreenMetadata(state: RecitationState): { title: string; artist: st
   const verse = state.playingBismillah ? 'Bismillah' : `Ayah ${state.ayahNumber}`;
   return {
     title: `${chapter}: ${verse}`,
-    artist: 'Mahmoud Khalil Al-Husary',
+    artist: getActiveReciter().reciterName,
     albumTitle: 'Quranki',
   };
 }
@@ -123,19 +174,23 @@ let wantPlaying = false;
 let ignoreFinishUntil = 0;
 let finishHandled = false;
 let downloadAbort: AbortController | null = null;
-let gaplessWordTimings: WordTiming[][] = [];
 let suppressStatus = false;
-/** While set, status ticks cannot remap the ayah (or zero the first-word underline) mid-seek. */
-let pinnedAyah = 0;
-let pendingSeekSeconds: number | null = null;
-let seeking = false;
-let loadedUri: string | null = null;
-let loadedKind: RecitationMode | null = null;
-let loadedSurah: number | null = null;
-/** After a replace/seek the next status tick can still report the previous file's clock.
- *  Hold the intended position until native time catches up so the progress bar does not jump full. */
+/** After a replace, the next status tick can still report the previous file's clock. Hold the
+ *  intended position (always 0 - every clip starts at its own beginning) until native time
+ *  catches up, so the progress bar does not jump full for a frame. */
 let holdPositionSeconds: number | null = null;
 let holdPositionUntil = 0;
+/** Second player used only for `'surah'` sessions: while `player` plays the current ayah, this
+ *  one is silently pre-loaded with the next ayah's clip (`preloadNextChainedAyah`) so the
+ *  natural-finish handler in `onPlaybackStatus` can promote it (`trySwapToStandby`) with just a
+ *  `.play()` call - no replace round-trip, which is what caused the audible blip between ayahs. */
+let standbyPlayer: AudioPlayer | null = null;
+let standbyReady = false;
+let standbyAyahNumber: number | null = null;
+let standbyWordTimings: WordTiming[] = [];
+/** Bumped on every `preloadNextChainedAyah` call so a slow, now-superseded resolution can't
+ *  clobber a newer one that already finished (e.g. two skips in quick succession). */
+let preloadToken = 0;
 
 function holdClock(positionSeconds: number, ms = 700): void {
   holdPositionSeconds = positionSeconds;
@@ -170,22 +225,15 @@ async function ensurePlayer(): Promise<AudioPlayer> {
   return playerReady;
 }
 
-function applyPendingSeek(instance: AudioPlayer): void {
-  const seek = pendingSeekSeconds ?? 0;
-  pendingSeekSeconds = null;
-  seeking = true;
-  holdClock(seek);
-  void instance.seekTo(seek).then(() => {
-    holdClock(seek);
-    useRecitationStore.setState({ positionSeconds: seek });
-    bumpProgressEpoch();
-    seeking = false;
-    if (wantPlaying) instance.play();
-  });
+async function ensureStandbyPlayer(): Promise<AudioPlayer> {
+  if (standbyPlayer) return standbyPlayer;
+  await ensurePlayer();
+  standbyPlayer = createAudioPlayer(null, { updateInterval: 80, keepAudioSessionActive: true });
+  return standbyPlayer;
 }
 
 function onPlaybackStatus(status: AudioStatus): void {
-  if (suppressStatus || seeking) return;
+  if (suppressStatus) return;
   if (status.error) {
     useRecitationStore.setState({
       error: 'Playback failed. Try again.',
@@ -195,31 +243,31 @@ function onPlaybackStatus(status: AudioStatus): void {
     return;
   }
 
-  if (pendingSeekSeconds != null && status.isLoaded && player) {
-    applyPendingSeek(player);
-    return;
-  }
-
   const finished = useRecitationStore.getState();
-  const pastBismillah =
-    finished.mode === 'surah' &&
-    finished.playingBismillah &&
-    status.currentTime >= BISMILLAH_AUDIO_END_SECONDS;
-  const justFinished =
-    Date.now() >= ignoreFinishUntil &&
-    (pastBismillah || (status.didJustFinish && status.duration > 0.25));
+  const justFinished = Date.now() >= ignoreFinishUntil && status.didJustFinish && status.duration > 0.25;
   if (justFinished && !finishHandled) {
     finishHandled = true;
     if (finished.mode === 'surah' && finished.playingBismillah) {
-      void startGaplessAfterBismillah(requestSeq);
+      void afterBismillah(requestSeq);
+      return;
+    }
+    if (finished.mode === 'surah' && finished.ayahNumber < finished.rangeEndAyah) {
+      if (trySwapToStandby(finished.ayahNumber + 1)) return;
+      void advanceChainedAyah(requestSeq);
       return;
     }
     wantPlaying = false;
+    try {
+      player?.pause();
+    } catch {
+      // Player may already be at/past the stop point.
+    }
     useRecitationStore.setState({
       playing: false,
       awaitingAudio: false,
       positionSeconds: status.duration,
       durationSeconds: status.duration,
+      rangeFinished: true,
     });
     return;
   }
@@ -238,23 +286,7 @@ function onPlaybackStatus(status: AudioStatus): void {
   }
   if (duration > 0) position = Math.min(position, duration);
 
-  const state = useRecitationStore.getState();
-  const liveAyah =
-    state.mode === 'surah' && !state.playingBismillah && state.timings.length
-      ? ayahAtTimeMs(state.timings, position * 1000)
-      : state.ayahNumber;
-  // Unpin only from the native clock. The held seek time is already inside the
-  // target ayah, and releasing on that made the highlight bounce back to ayah 1.
-  if (pinnedAyah > 0) {
-    const range = state.timings[pinnedAyah - 1];
-    const rawMs = rawPosition * 1000;
-    if (range && rawMs >= range[0] - 40 && rawMs <= range[1] + 80) pinnedAyah = 0;
-  }
-  const nextAyah = pinnedAyah > 0 ? pinnedAyah : liveAyah;
-  const words =
-    state.mode === 'surah' && !state.playingBismillah
-      ? (gaplessWordTimings[nextAyah - 1] ?? state.wordTimings)
-      : state.wordTimings;
+  const words = useRecitationStore.getState().wordTimings;
   // QUL ayah starts often precede the first word (2:2 is ~650ms). Keep that
   // word underlined for the lead-in instead of clearing it and lighting it again.
   const nextWord = wordAtTimeMs(words, position * 1000) || words[0]?.[0] || 0;
@@ -264,23 +296,19 @@ function onPlaybackStatus(status: AudioStatus): void {
     awaitingAudio: !status.isLoaded || (status.isBuffering && !status.playing),
     positionSeconds: position,
     durationSeconds: duration,
-    ayahNumber: nextAyah,
-    wordTimings: words,
     wordNumber: nextWord,
     error: null,
   });
-  if (nextAyah !== state.ayahNumber) activateLockScreen();
 }
 
 function beginSession(partial: Partial<RecitationState>): number {
   stopWordAudio();
-  gaplessWordTimings = [];
-  pinnedAyah = 0;
+  standbyReady = false;
+  standbyAyahNumber = null;
+  standbyWordTimings = [];
   requestSeq += 1;
   wantPlaying = true;
   finishHandled = false;
-  pendingSeekSeconds = null;
-  seeking = false;
   holdPositionSeconds = null;
   holdPositionUntil = 0;
   downloadAbort?.abort();
@@ -294,178 +322,140 @@ function beginSession(partial: Partial<RecitationState>): number {
   return requestSeq;
 }
 
+/** Silently loads `ayahNumber`'s clip into the standby player while the active one is still
+ *  playing the ayah before it, so the transition can be a plain `.play()` instead of a
+ *  replace round-trip. A no-op past the chosen range. */
+async function preloadNextChainedAyah(seq: number, ayahNumber: number): Promise<void> {
+  const token = ++preloadToken;
+  standbyReady = false;
+  standbyAyahNumber = null;
+  const { surahNumber, rangeEndAyah, mode } = useRecitationStore.getState();
+  if (mode !== 'surah' || !surahNumber || ayahNumber > rangeEndAyah) return;
+  try {
+    const reciter = getActiveReciter();
+    const { uri, wordTimings } = await resolveAyahSource(reciter, surahNumber, ayahNumber, downloadAbort?.signal);
+    if (seq !== requestSeq || token !== preloadToken) return;
+    const instance = await ensureStandbyPlayer();
+    if (seq !== requestSeq || token !== preloadToken) return;
+    instance.replace({ uri });
+    standbyWordTimings = wordTimings;
+    standbyAyahNumber = ayahNumber;
+    standbyReady = true;
+  } catch (error) {
+    if (seq !== requestSeq || isAbortError(error)) return;
+    // Leave standbyReady false - the caller falls back to a normal (small-gap) load instead.
+  }
+}
+
+/** Promotes the pre-buffered standby player to active when it already holds `targetAyahNumber`.
+ *  Used for both the natural end-of-clip advance and manual skip, so most ayah-to-ayah
+ *  transitions in a surah session play back-to-back with no re-load gap. Returns false if
+ *  standby isn't ready yet (e.g. a slow download), so the caller can fall back to loading it the
+ *  normal way. */
+function trySwapToStandby(targetAyahNumber: number): boolean {
+  if (!standbyReady || !standbyPlayer || standbyAyahNumber !== targetAyahNumber) return false;
+  const promoted = standbyPlayer;
+  const demoted = player;
+  statusSub?.remove();
+  if (lockScreenActive && demoted) {
+    try {
+      demoted.setActiveForLockScreen(false);
+    } catch {
+      // ignore
+    }
+    lockScreenActive = false;
+  }
+  // On a natural end-of-clip swap, `demoted` already finished on its own - this is a no-op. On
+  // a manual skip, though, it can still be mid-playback: without this, it silently keeps playing
+  // its old ayah in the background as the new "standby" until the next `preloadNextChainedAyah`
+  // call happens to reuse it and replaces its source - audibly overlapping with the
+  // newly-promoted player. That's the "two ayahs at once" on a fast skip.
+  try {
+    demoted?.pause();
+  } catch {
+    // ignore
+  }
+  player = promoted;
+  standbyPlayer = demoted;
+  standbyReady = false;
+  standbyAyahNumber = null;
+  const words = standbyWordTimings;
+  standbyWordTimings = [];
+  statusSub = player.addListener('playbackStatusUpdate', onPlaybackStatus);
+  ignoreFinishUntil = Date.now() + 500;
+  finishHandled = false;
+  suppressStatus = false;
+  wantPlaying = true;
+  useRecitationStore.setState({
+    ayahNumber: targetAyahNumber,
+    awaitingAudio: false,
+    positionSeconds: 0,
+    durationSeconds: 0,
+    wordTimings: words,
+    wordNumber: words[0]?.[0] ?? 0,
+  });
+  player.play();
+  activateLockScreen();
+  bumpProgressEpoch();
+  void preloadNextChainedAyah(requestSeq, targetAyahNumber + 1);
+  return true;
+}
+
 async function loadAyahSource(seq: number): Promise<void> {
   const { surahNumber, ayahNumber } = useRecitationStore.getState();
   if (!surahNumber) return;
 
   suppressStatus = true;
-  pendingSeekSeconds = null;
   holdClock(0);
+  const reciter = getActiveReciter();
   useRecitationStore.setState({
     awaitingAudio: true,
     error: null,
     positionSeconds: 0,
     durationSeconds: 0,
-    wordTimings: getGappedAyahWordTimings(surahNumber, ayahNumber),
+    wordTimings: [],
     wordNumber: 0,
+    downloadBytesWritten: 0,
+    downloadBytesTotal: 0,
   });
 
   try {
-    const uri = await getAyahPlaybackUri(surahNumber, ayahNumber, downloadAbort?.signal);
+    const { uri, wordTimings } = await resolveAyahSource(reciter, surahNumber, ayahNumber, downloadAbort?.signal, (data) =>
+      reportDownloadProgress(seq, data),
+    );
     if (seq !== requestSeq) return;
+    useRecitationStore.setState({ wordTimings, wordNumber: 0 });
     const instance = await ensurePlayer();
     if (seq !== requestSeq) return;
     ignoreFinishUntil = Date.now() + 500;
     finishHandled = false;
     instance.replace({ uri });
-    loadedUri = uri;
-    loadedKind = 'ayah';
-    loadedSurah = surahNumber;
     suppressStatus = false;
     bumpProgressEpoch();
     if (wantPlaying) instance.play();
     activateLockScreen();
+    if (ayahNumber < useRecitationStore.getState().rangeEndAyah) {
+      void preloadNextChainedAyah(seq, ayahNumber + 1);
+    }
   } catch (error) {
     if (seq !== requestSeq || isAbortError(error)) return;
     playbackFailed();
   }
 }
 
-function reportDownloadProgress(seq: number, bytesWritten: number, totalBytes: number): void {
+/** Auto-advance to the next ayah when one clip finishes naturally - the fallback path for when
+ *  `trySwapToStandby` couldn't (standby wasn't ready in time). */
+async function advanceChainedAyah(seq: number): Promise<void> {
   if (seq !== requestSeq) return;
+  wantPlaying = true;
+  finishHandled = false;
   useRecitationStore.setState((state) => ({
-    downloadBytesWritten: bytesWritten,
-    downloadBytesTotal: totalBytes > 0 ? totalBytes : state.downloadBytesTotal,
-  }));
-}
-
-/** Fetches timestamps and starts the surah MP3 immediately so a short opening Bismillah
- *  does not delay the (much larger) gapless download until after it finishes. */
-function prepareGaplessSurah(seq: number, surahNumber: number, ayahCount: number): void {
-  void (async () => {
-    try {
-      const metaPromise = getGaplessSurahMeta(surahNumber, ayahCount, downloadAbort?.signal)
-        .then((meta) => {
-          if (seq !== requestSeq) return;
-          gaplessWordTimings = meta.words;
-          useRecitationStore.setState((state) => ({
-            timings: meta.ayahs,
-            wordTimings: state.playingBismillah ? state.wordTimings : (meta.words[Math.max(1, state.ayahNumber) - 1] ?? []),
-            downloadBytesTotal: state.downloadBytesTotal > 0 ? state.downloadBytesTotal : meta.size,
-          }));
-        })
-        .catch((error) => {
-          if (seq !== requestSeq || isAbortError(error)) return;
-        });
-
-      const audioPromise = getGaplessPlaybackUri(surahNumber, {
-        signal: downloadAbort?.signal,
-        onProgress: (bytesWritten, totalBytes) => reportDownloadProgress(seq, bytesWritten, totalBytes),
-      }).catch((error) => {
-        if (seq !== requestSeq || isAbortError(error)) return;
-      });
-
-      await Promise.all([metaPromise, audioPromise]);
-    } catch (error) {
-      if (seq !== requestSeq || isAbortError(error)) return;
-    }
-  })();
-}
-
-async function loadGaplessSource(seq: number, options?: { fromAyah?: number }): Promise<void> {
-  const { surahNumber, ayahCount } = useRecitationStore.getState();
-  if (!surahNumber) return;
-
-  suppressStatus = true;
-  pendingSeekSeconds = null;
-  holdClock(0);
-  useRecitationStore.setState({
+    ayahNumber: state.ayahNumber + 1,
     awaitingAudio: true,
-    error: null,
     positionSeconds: 0,
     durationSeconds: 0,
-  });
-
-  try {
-    let size = 0;
-    const metaPromise = getGaplessSurahMeta(surahNumber, ayahCount, downloadAbort?.signal)
-      .then((meta) => {
-        if (seq !== requestSeq) return meta;
-        size = meta.size;
-        gaplessWordTimings = meta.words;
-        useRecitationStore.setState((state) => ({
-          timings: meta.ayahs,
-          wordTimings: state.playingBismillah ? state.wordTimings : (meta.words[Math.max(1, state.ayahNumber) - 1] ?? []),
-          downloadBytesTotal: state.downloadBytesTotal > 0 ? state.downloadBytesTotal : meta.size,
-        }));
-        return meta;
-      })
-      .catch((error) => {
-        if (seq !== requestSeq || isAbortError(error)) return undefined;
-        return undefined;
-      });
-
-    const cached = getCachedGaplessUri(surahNumber);
-    if (cached) {
-      const knownSize = size || useRecitationStore.getState().downloadBytesTotal;
-      if (knownSize > 0) {
-        useRecitationStore.setState({ downloadBytesWritten: knownSize, downloadBytesTotal: knownSize });
-      }
-    }
-
-    const uriPromise = getGaplessPlaybackUri(surahNumber, {
-      signal: downloadAbort?.signal,
-      onProgress: (bytesWritten, totalBytes) => reportDownloadProgress(seq, bytesWritten, totalBytes),
-    });
-
-    const [meta, uri] = await Promise.all([metaPromise, uriPromise]);
-    if (seq !== requestSeq) return;
-    if (meta?.size && getCachedGaplessUri(surahNumber)) {
-      useRecitationStore.setState({ downloadBytesWritten: meta.size, downloadBytesTotal: meta.size });
-    }
-
-    const instance = await ensurePlayer();
-    if (seq !== requestSeq) return;
-
-    const latest = useRecitationStore.getState();
-    const ayah = options?.fromAyah ?? latest.ayahNumber;
-    const fromMs = latest.timings[Math.max(1, ayah) - 1]?.[0] ?? 0;
-    const startSeconds = fromMs / 1000;
-    ignoreFinishUntil = Date.now() + 800;
-    finishHandled = false;
-
-    const alreadyLoaded =
-      loadedKind === 'surah' && loadedSurah === surahNumber && loadedUri === uri && instance.isLoaded;
-
-    if (alreadyLoaded) {
-      pendingSeekSeconds = null;
-      suppressStatus = false;
-      seeking = true;
-      await instance.seekTo(startSeconds);
-      seeking = false;
-      if (seq !== requestSeq) return;
-      holdClock(startSeconds);
-      useRecitationStore.setState({ positionSeconds: startSeconds, ayahNumber: Math.max(1, ayah) });
-      bumpProgressEpoch();
-      if (wantPlaying) instance.play();
-      activateLockScreen();
-      return;
-    }
-
-    // Seeking to 0 after replace() restarts ayah 1 (the file already opens at the start).
-    pendingSeekSeconds = startSeconds > 0.08 ? startSeconds : null;
-    instance.replace({ uri });
-    loadedUri = uri;
-    loadedKind = 'surah';
-    loadedSurah = surahNumber;
-    suppressStatus = false;
-    if (pendingSeekSeconds == null && wantPlaying) instance.play();
-    bumpProgressEpoch();
-    activateLockScreen();
-  } catch (error) {
-    if (seq !== requestSeq || isAbortError(error)) return;
-    playbackFailed();
-  }
+  }));
+  await loadAyahSource(seq);
 }
 
 function playbackFailed(): void {
@@ -482,46 +472,53 @@ function playbackFailed(): void {
   });
 }
 
+/** Every reciter's downloaded catalog includes their own Fatihah 1:1 recording - literally
+ *  "Bismillah ir-Rahman ir-Rahim" - reused as the inserted opening before every other surah with
+ *  a header (see `meta.b`). */
 async function loadBismillah(seq: number): Promise<void> {
+  const reciter = getActiveReciter();
+
   suppressStatus = true;
-  pendingSeekSeconds = BISMILLAH_AUDIO_START_SECONDS;
-  holdClock(BISMILLAH_AUDIO_START_SECONDS);
+  holdClock(0);
   useRecitationStore.setState({
     playingBismillah: true,
     ayahNumber: 0,
     awaitingAudio: true,
     error: null,
-    positionSeconds: BISMILLAH_AUDIO_START_SECONDS,
+    positionSeconds: 0,
     durationSeconds: 0,
-    wordTimings: getGappedAyahWordTimings(BISMILLAH_SURAH, BISMILLAH_AYAH),
+    wordTimings: [],
     wordNumber: 0,
+    downloadBytesWritten: 0,
+    downloadBytesTotal: 0,
   });
 
   try {
-    const uri = await getAyahPlaybackUri(BISMILLAH_SURAH, BISMILLAH_AYAH, downloadAbort?.signal);
+    const { uri, wordTimings } = await resolveAyahSource(reciter, BISMILLAH_SURAH, BISMILLAH_AYAH, downloadAbort?.signal, (data) =>
+      reportDownloadProgress(seq, data),
+    );
     if (seq !== requestSeq) return;
+    useRecitationStore.setState({ wordTimings, wordNumber: 0 });
     const instance = await ensurePlayer();
     if (seq !== requestSeq) return;
     ignoreFinishUntil = Date.now() + 500;
     finishHandled = false;
     instance.replace({ uri });
-    loadedUri = uri;
-    loadedKind = 'ayah';
-    loadedSurah = BISMILLAH_SURAH;
     suppressStatus = false;
     bumpProgressEpoch();
+    if (wantPlaying) instance.play();
     activateLockScreen();
   } catch (error) {
     if (seq !== requestSeq || isAbortError(error)) return;
     useRecitationStore.setState({ playingBismillah: false, ayahNumber: 1 });
-    await loadGaplessSource(seq);
+    await loadCurrent(seq);
   }
 }
 
-async function startGaplessAfterBismillah(seq: number): Promise<void> {
+/** Transitions from the opening Bismillah into ayah 1's clip. */
+async function afterBismillah(seq: number): Promise<void> {
   if (seq !== requestSeq) return;
   suppressStatus = true;
-  pendingSeekSeconds = null;
   try {
     player?.pause();
   } catch {
@@ -533,10 +530,10 @@ async function startGaplessAfterBismillah(seq: number): Promise<void> {
     awaitingAudio: true,
     positionSeconds: 0,
     durationSeconds: 0,
-    wordTimings: gaplessWordTimings[0] ?? [],
+    wordTimings: [],
     wordNumber: 0,
   });
-  await loadGaplessSource(seq, { fromAyah: 1 });
+  await loadAyahSource(seq);
 }
 
 async function loadCurrent(seq: number): Promise<void> {
@@ -545,48 +542,40 @@ async function loadCurrent(seq: number): Promise<void> {
     await loadBismillah(seq);
     return;
   }
-  if (mode === 'surah') {
-    await loadGaplessSource(seq);
-    return;
-  }
   await loadAyahSource(seq);
 }
 
 async function seekToAyah(ayahNumber: number): Promise<void> {
-  const { surahNumber, ayahCount, timings, mode } = useRecitationStore.getState();
+  const { surahNumber, ayahCount } = useRecitationStore.getState();
   if (!surahNumber || ayahNumber < 1 || ayahNumber > ayahCount) return;
+  // Bump so a still-in-flight `loadAyahSource` from an earlier, rapid-fire skip (one that fell
+  // through to here because `trySwapToStandby` wasn't ready in time) can't land its `replace()`
+  // after this one - every staleness guard in `loadAyahSource`/`resolveAyahSource` keys off this.
+  requestSeq += 1;
+  const seq = requestSeq;
   wantPlaying = true;
   finishHandled = false;
-  const words = mode === 'surah' ? (gaplessWordTimings[ayahNumber - 1] ?? []) : getGappedAyahWordTimings(surahNumber, ayahNumber);
-  pinnedAyah = ayahNumber;
   useRecitationStore.setState({
     ayahNumber,
     playingBismillah: false,
     playing: false,
     awaitingAudio: true,
-    wordTimings: words,
-    wordNumber: words[0]?.[0] ?? 0,
+    wordTimings: [],
+    wordNumber: 0,
+    rangeFinished: false,
   });
 
-  if (mode === 'surah') {
-    const fromMs = timings[ayahNumber - 1]?.[0];
-    if (fromMs == null) return;
-    pendingSeekSeconds = fromMs / 1000;
-    holdClock(fromMs / 1000);
-    if (player?.isLoaded) {
-      applyPendingSeek(player);
-      useRecitationStore.setState({ awaitingAudio: false });
-    }
-    return;
-  }
-
-  await loadAyahSource(requestSeq);
+  if (trySwapToStandby(ayahNumber)) return;
+  await loadAyahSource(seq);
 }
 
-export async function playSurah(surahNumber: number, fromAyah = 1): Promise<void> {
+/** @param toAyah Inclusive end of the range to play (default: the whole surah). Chosen via
+ *  `PlayOptionsSheet`; see `RecitationState.rangeEndAyah`. */
+export async function playSurah(surahNumber: number, fromAyah = 1, toAyah?: number): Promise<void> {
   const meta = getSurahMeta(surahNumber);
   if (!meta) return;
   const ayah = Math.min(Math.max(fromAyah, 1), meta.ac);
+  const rangeEndAyah = Math.min(Math.max(toAyah ?? meta.ac, ayah), meta.ac);
   const openingBismillah = meta.b && ayah === 1;
   const seq = beginSession({
     mode: 'surah',
@@ -594,8 +583,9 @@ export async function playSurah(surahNumber: number, fromAyah = 1): Promise<void
     ayahNumber: openingBismillah ? 0 : ayah,
     ayahCount: meta.ac,
     playingBismillah: openingBismillah,
+    rangeStartAyah: ayah,
+    rangeEndAyah,
   });
-  prepareGaplessSurah(seq, surahNumber, meta.ac);
   await loadCurrent(seq);
 }
 
@@ -613,16 +603,22 @@ export async function playAyah(surahNumber: number, ayahNumber: number): Promise
     return;
   }
 
-  const cached = getCachedAyahUri(surahNumber, ayahNumber) !== null;
   const seq = beginSession({
     mode: 'ayah',
     surahNumber,
     ayahNumber,
     ayahCount: meta.ac,
-    downloadBytesWritten: cached ? 1 : 0,
-    downloadBytesTotal: cached ? 1 : 0,
+    // Ayah mode has no custom range - bound skip/prev by the whole surah, same as before this
+    // existed (see `rangeStartAyah`/`rangeEndAyah`, otherwise left at the `Infinity` sentinel).
+    rangeStartAyah: 1,
+    rangeEndAyah: meta.ac,
   });
   await loadCurrent(seq);
+}
+
+/** See `RecitationState.autoScrollSuspended`. */
+export function setAutoScrollSuspended(suspended: boolean): void {
+  useRecitationStore.setState({ autoScrollSuspended: suspended });
 }
 
 /** Pause without tearing down the session so a word clip can play over it. */
@@ -645,7 +641,7 @@ export function pauseRecitation(): void {
 export function togglePlayPause(): void {
   const state = useRecitationStore.getState();
   if (!state.visible || !player) {
-    if (state.surahNumber) void playSurah(state.surahNumber, state.ayahNumber);
+    if (state.surahNumber) void playSurah(state.surahNumber, state.ayahNumber, state.rangeEndAyah);
     return;
   }
   if (state.error) {
@@ -660,10 +656,17 @@ export function togglePlayPause(): void {
     return;
   }
   wantPlaying = true;
-  const nearEnd = state.durationSeconds > 0 && state.positionSeconds >= state.durationSeconds - 0.15;
+  const nearEnd = state.rangeFinished || (state.durationSeconds > 0 && state.positionSeconds >= state.durationSeconds - 0.15);
   if (nearEnd) {
+    // `durationSeconds` is the *current ayah clip's* length, not the whole surah's - only treat
+    // "near end" as "range finished" on its last ayah; otherwise it just means this ayah's clip
+    // is ending, so advance like a natural finish would.
+    if (state.mode === 'surah' && state.ayahNumber < state.rangeEndAyah) {
+      void seekToAyah(state.ayahNumber + 1);
+      return;
+    }
     if (state.mode === 'surah' && state.surahNumber) {
-      void playSurah(state.surahNumber, 1);
+      void playSurah(state.surahNumber, state.rangeStartAyah, state.rangeEndAyah);
       return;
     }
     void player.seekTo(0).then(() => player?.play());
@@ -675,50 +678,20 @@ export function togglePlayPause(): void {
 export function skipNextAyah(): void {
   const state = useRecitationStore.getState();
   if (state.playingBismillah) {
-    void startGaplessAfterBismillah(requestSeq);
+    void afterBismillah(requestSeq);
     return;
   }
-  if (state.ayahNumber >= state.ayahCount) return;
+  if (state.ayahNumber >= state.rangeEndAyah) return;
   void seekToAyah(state.ayahNumber + 1);
 }
 
 export function skipPreviousAyah(): void {
   const state = useRecitationStore.getState();
   const clock = player?.currentTime ?? state.positionSeconds;
-  if (state.playingBismillah) {
-    if (clock > BISMILLAH_AUDIO_START_SECONDS + 2 && player) {
-      wantPlaying = true;
-      holdClock(BISMILLAH_AUDIO_START_SECONDS);
-      void player.seekTo(BISMILLAH_AUDIO_START_SECONDS).then(() => {
-        useRecitationStore.setState({ positionSeconds: BISMILLAH_AUDIO_START_SECONDS });
-        bumpProgressEpoch();
-        if (wantPlaying) player?.play();
-      });
-    }
-    return;
-  }
-  if (state.mode === 'surah') {
-    const timing = state.timings[state.ayahNumber - 1];
-    const elapsedMs = clock * 1000 - (timing?.[0] ?? 0);
-    if (elapsedMs > 2000 && timing && player) {
-      wantPlaying = true;
-      void player.seekTo(timing[0] / 1000).then(() => {
-        bumpProgressEpoch();
-        if (wantPlaying) player?.play();
-      });
-      return;
-    }
-    if (state.ayahNumber <= 1) {
-      if (surahHasOpeningBismillah(state.surahNumber)) {
-        wantPlaying = true;
-        void loadBismillah(requestSeq);
-      }
-      return;
-    }
-    void seekToAyah(state.ayahNumber - 1);
-    return;
-  }
 
+  // Restart the current clip (Bismillah, or an ayah in either mode) if we're more than 2s in;
+  // otherwise jump back a step - to the previous ayah, or into the opening Bismillah if we're at
+  // the first ayah of a range that starts the surah.
   if (clock > 2 && player) {
     wantPlaying = true;
     void player.seekTo(0).then(() => {
@@ -727,7 +700,14 @@ export function skipPreviousAyah(): void {
     });
     return;
   }
-  if (state.ayahNumber <= 1) return;
+  if (state.playingBismillah) return;
+  if (state.ayahNumber <= state.rangeStartAyah) {
+    if (state.mode === 'surah' && state.rangeStartAyah <= 1 && surahHasOpeningBismillah(state.surahNumber)) {
+      wantPlaying = true;
+      void loadBismillah(requestSeq);
+    }
+    return;
+  }
   void seekToAyah(state.ayahNumber - 1);
 }
 
@@ -746,13 +726,11 @@ export function stopRecitation(): void {
   requestSeq += 1;
   playerEpoch += 1;
   wantPlaying = false;
-  pendingSeekSeconds = null;
-  seeking = false;
   holdPositionSeconds = null;
   holdPositionUntil = 0;
-  loadedUri = null;
-  loadedKind = null;
-  loadedSurah = null;
+  standbyReady = false;
+  standbyAyahNumber = null;
+  standbyWordTimings = [];
   downloadAbort?.abort();
   downloadAbort = null;
   try {
@@ -775,6 +753,22 @@ export function stopRecitation(): void {
   }
   player = null;
   playerReady = null;
+  try {
+    standbyPlayer?.pause();
+  } catch {
+    // ignore
+  }
+  try {
+    standbyPlayer?.remove();
+  } catch {
+    // ignore
+  }
+  try {
+    standbyPlayer?.release();
+  } catch {
+    // ignore
+  }
+  standbyPlayer = null;
   useRecitationStore.setState({ ...INITIAL_STATE });
 }
 

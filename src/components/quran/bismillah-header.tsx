@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
   },
   wash: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: Radius.medium,
     opacity: 0.4,
   },

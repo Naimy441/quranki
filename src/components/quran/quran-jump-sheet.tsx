@@ -9,6 +9,12 @@ import { SURAH_INDEX } from '@/lib/quran-reader';
 
 const ROW_HEIGHT = 44;
 const WHEEL_HEIGHT = ROW_HEIGHT * 5;
+/** How far the surah wheel's rows (and the "SURAH" column label above them, so the two stay
+ *  aligned) sit in from the left edge - nearer the middle of the column than a flush left-align,
+ *  echoing the ayah wheel's fully-centered rows, but short of centering the surah names
+ *  themselves (long titles centered in a narrow column read worse than the short ayah numbers
+ *  next to them do). */
+const SURAH_NAME_INSET = Spacing.five;
 
 interface QuranJumpSheetProps {
   visible: boolean;
@@ -67,7 +73,7 @@ export function QuranJumpSheet({ visible, initialSurah, initialAyah = 1, onDismi
             <Pressable onPress={onDismiss} hitSlop={10}><ThemedText type="smallBold" themeColor="primary">Cancel</ThemedText></Pressable>
           </View>
           <View style={styles.labels}>
-            <View style={styles.surahLabel}><ThemedText type="small" themeColor="textMuted" style={styles.columnLabel}>SURAH</ThemedText></View>
+            <View style={styles.surahLabel}><ThemedText type="small" themeColor="textMuted" style={[styles.columnLabel, styles.surahColumnLabel]}>SURAH</ThemedText></View>
             <View style={styles.ayahLabel}><ThemedText type="small" themeColor="textMuted" style={styles.columnLabel}>AYAH</ThemedText></View>
           </View>
           <View style={styles.wheels}>
@@ -91,4 +97,4 @@ export function QuranJumpSheet({ visible, initialSurah, initialAyah = 1, onDismi
 
 function WheelRow({ label, active, centered = false }: { label: string; active: boolean; centered?: boolean }) { return <View style={[styles.wheelRow, centered && styles.centeredWheelRow]}><ThemedText type={active ? 'smallBold' : 'small'} themeColor={active ? 'text' : 'textMuted'} style={[styles.wheelText, centered && styles.centeredWheelText]} numberOfLines={1}>{label}</ThemedText></View>; }
 function WheelOverlay({ color }: { color: string }) { return <View pointerEvents="none" style={[styles.selection, { backgroundColor: color }]} />; }
-const styles = StyleSheet.create({ backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }, sheet: { borderTopLeftRadius: Radius.large, borderTopRightRadius: Radius.large, padding: Spacing.four, paddingBottom: Spacing.six, gap: Spacing.two }, header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, labels: { flexDirection: 'row', gap: Spacing.three, marginBottom: -Spacing.one }, surahLabel: { flex: 2, alignItems: 'flex-start' }, ayahLabel: { flex: 1, alignItems: 'flex-start' }, columnLabel: { alignSelf: 'flex-start', textAlign: 'left' }, wheels: { height: WHEEL_HEIGHT, flexDirection: 'row', gap: Spacing.three, position: 'relative', overflow: 'hidden' }, surahWheel: { flex: 2 }, ayahWheel: { flex: 1 }, wheelContent: { paddingVertical: ROW_HEIGHT * 2 }, wheelRow: { height: ROW_HEIGHT, justifyContent: 'center', alignItems: 'flex-start', paddingLeft: 0, paddingRight: Spacing.two }, centeredWheelRow: { alignItems: 'center', paddingHorizontal: 0 }, wheelText: { alignSelf: 'flex-start', textAlign: 'left' }, centeredWheelText: { alignSelf: 'center', textAlign: 'center' }, selection: { position: 'absolute', left: 0, right: 0, top: ROW_HEIGHT * 2, height: ROW_HEIGHT, borderRadius: Radius.medium }, go: { minHeight: 52, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, gap: 2 }, goDetail: { opacity: 0.85 }, pressed: { opacity: 0.75 } });
+const styles = StyleSheet.create({ backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }, sheet: { borderTopLeftRadius: Radius.large, borderTopRightRadius: Radius.large, padding: Spacing.four, paddingBottom: Spacing.six, gap: Spacing.two }, header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, labels: { flexDirection: 'row', gap: Spacing.three, marginBottom: -Spacing.one }, surahLabel: { flex: 2, alignItems: 'flex-start' }, ayahLabel: { flex: 1, alignItems: 'flex-start' }, columnLabel: { alignSelf: 'flex-start', textAlign: 'left' }, surahColumnLabel: { paddingLeft: SURAH_NAME_INSET }, wheels: { height: WHEEL_HEIGHT, flexDirection: 'row', gap: Spacing.three, position: 'relative', overflow: 'hidden' }, surahWheel: { flex: 2 }, ayahWheel: { flex: 1 }, wheelContent: { paddingVertical: ROW_HEIGHT * 2 }, wheelRow: { height: ROW_HEIGHT, justifyContent: 'center', alignItems: 'flex-start', paddingLeft: SURAH_NAME_INSET, paddingRight: Spacing.two }, centeredWheelRow: { alignItems: 'center', paddingHorizontal: 0 }, wheelText: { alignSelf: 'flex-start', textAlign: 'left' }, centeredWheelText: { alignSelf: 'center', textAlign: 'center' }, selection: { position: 'absolute', left: 0, right: 0, top: ROW_HEIGHT * 2, height: ROW_HEIGHT, borderRadius: Radius.medium }, go: { minHeight: 52, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, gap: 2 }, goDetail: { opacity: 0.85 }, pressed: { opacity: 0.75 } });

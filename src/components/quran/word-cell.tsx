@@ -14,9 +14,9 @@ import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 
 const glueJoins = Platform.OS === 'android';
-interface WordCellProps { word: ReaderWord; showTranslation: boolean; hideMeaning?: boolean; showTransliteration: boolean; arabicSize: number; glossSize: number; transliterationSize: number; hiddenLemmaIds: Set<LemmaId>; knownLemmaIds: Set<LemmaId>; onLongPressWord?: (word: ReaderWord) => void; speaking?: boolean; }
+interface WordCellProps { word: ReaderWord; showTranslation: boolean; hideMeaning?: boolean; showTransliteration: boolean; arabicSize: number; glossSize: number; transliterationSize: number; hiddenLemmaIds: Set<LemmaId>; knownLemmaIds: Set<LemmaId>; onLongPressWord?: (word: ReaderWord) => void; speaking?: boolean; onSpeakingLayout?: (top: number, height: number) => void; measureToken?: number; }
 
-export const WordCell = memo(function WordCell({ word, showTranslation, hideMeaning = false, showTransliteration, arabicSize, glossSize, transliterationSize, hiddenLemmaIds, knownLemmaIds, onLongPressWord, speaking = false }: WordCellProps) {
+export const WordCell = memo(function WordCell({ word, showTranslation, hideMeaning = false, showTransliteration, arabicSize, glossSize, transliterationSize, hiddenLemmaIds, knownLemmaIds, onLongPressWord, speaking = false, onSpeakingLayout, measureToken = 0 }: WordCellProps) {
   const theme = useTheme();
   const scheme = useAppColorScheme();
   const gradeWord = useProgressStore((state) => state.gradeWord);
@@ -27,6 +27,18 @@ export const WordCell = memo(function WordCell({ word, showTranslation, hideMean
   const peekCount = useProgressStore((state) => state.readerPeeks[peekKey] ?? 0);
   const unmarkKnown = useKnownWordsStore((state) => state.unmarkKnown);
   const [revealed, setRevealed] = useState(false);
+  const cellRef = useRef<View>(null);
+  // Report where the actively-speaking word landed on screen so the reader can nudge itself
+  // forward when a long, many-line ayah scrolls the current word past the comfortable reading
+  // area - a single-shot measurement per word change is cheap since only one cell is ever
+  // "speaking" at a time.
+  useEffect(() => {
+    if (!speaking || !onSpeakingLayout) return;
+    cellRef.current?.measureInWindow((_x, y, _w, height) => onSpeakingLayout(y, height));
+    // `measureToken` re-fires this without the word itself changing - used right after a
+    // resumed-from-suspend jump to ask "where did I actually land?" so the scroll can correct
+    // straight to the answer instead of the reader seeing a separate trip to the ayah's top first.
+  }, [speaking, onSpeakingLayout, measureToken]);
   const isHideEligible = lemmaIds.length > 0 && peekCount < 2 && lemmaIds.every(
     (id) => hiddenLemmaIds.has(id) || knownLemmaIds.has(id),
   );
@@ -49,7 +61,7 @@ export const WordCell = memo(function WordCell({ word, showTranslation, hideMean
     if (studyWordId) gradeWord(studyWordId, 'again');
     if (lemmaIds.some((id) => knownLemmaIds.has(id))) unmarkKnown(lemmaIds);
   };
-  return <Pressable style={({ pressed }) => [styles.cell, pressed && { backgroundColor: theme.backgroundSelected }]} onPress={handlePress} onLongPress={() => { if (onLongPressWord) { hapticLongPress(); onLongPressWord(word); } }} delayLongPress={350} hitSlop={4}>
+  return <Pressable ref={cellRef} style={({ pressed }) => [styles.cell, pressed && { backgroundColor: theme.backgroundSelected }]} onPress={handlePress} onLongPress={() => { if (onLongPressWord) { hapticLongPress(); onLongPressWord(word); } }} delayLongPress={350} hitSlop={4}>
     <Text style={[styles.arabic, ArabicTextStyle, { color: theme.text, fontSize: arabicSize, lineHeight: arabicSize * 1.9, includeFontPadding: false }]}>{keepJoined ? joinedArabic : segments.map((segment, index) => <Text key={index} style={{ color: tajweedColor(segment.c, scheme, theme.text) }}>{glueJoins && index > 0 && '\u200D'}{segment.t}{glueJoins && index < segments.length - 1 && '\u200D'}</Text>)}</Text>
     {showTransliteration && word.tl ? <Text style={[styles.transliteration, { color: theme.primary, fontSize: transliterationSize, lineHeight: transliterationSize * 1.3 }]} numberOfLines={2}>{word.tl}</Text> : null}
     {(showGloss || speaking) && <View style={[styles.divider, { backgroundColor: speaking ? theme.primary : theme.border }]} />}

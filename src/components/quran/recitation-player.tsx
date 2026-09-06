@@ -2,26 +2,25 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
-  Easing,
-  cancelAnimation,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
+    Easing,
+    cancelAnimation,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withTiming,
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticLight, hapticSelection } from '@/lib/haptics';
-import { BISMILLAH_AUDIO_END_SECONDS, BISMILLAH_AUDIO_START_SECONDS } from '@/lib/recitation';
 import { getSurahMeta } from '@/lib/quran-reader';
 import {
-  skipNextAyah,
-  skipPreviousAyah,
-  stopRecitation,
-  togglePlayPause,
-  useRecitationStore,
+    skipNextAyah,
+    skipPreviousAyah,
+    stopRecitation,
+    togglePlayPause,
+    useRecitationStore,
 } from '@/store/recitation-store';
 
 /** Height of the player chrome (progress + controls), not including the home-indicator inset. */
@@ -65,7 +64,7 @@ function SmoothProgressBar({
     if (run && remainingMs > 80) {
       progress.value = withTiming(1, { duration: remainingMs, easing: Easing.linear });
     }
-    // Sync on play/pause/ayah remount, not on every 250ms status tick — remainingMs is read from
+    // Sync on play/pause/ayah remount, not on every 250ms status tick - remainingMs is read from
     // the render that flipped `run`.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
   }, [run, indeterminate, idleValue, progress]);
@@ -85,12 +84,16 @@ function SmoothProgressBar({
   );
 }
 
-export function RecitationPlayer() {
+interface RecitationPlayerProps {
+  /** Tapping the surah name/status jumps back to whatever's currently being recited. */
+  onPressTitle?: () => void;
+}
+
+export function RecitationPlayer({ onPressTitle }: RecitationPlayerProps) {
   const theme = useTheme();
   const mode = useRecitationStore((s) => s.mode);
   const surahNumber = useRecitationStore((s) => s.surahNumber);
   const ayahNumber = useRecitationStore((s) => s.ayahNumber);
-  const ayahCount = useRecitationStore((s) => s.ayahCount);
   const playingBismillah = useRecitationStore((s) => s.playingBismillah);
   const playing = useRecitationStore((s) => s.playing);
   const awaitingAudio = useRecitationStore((s) => s.awaitingAudio);
@@ -98,41 +101,32 @@ export function RecitationPlayer() {
   const downloadBytesTotal = useRecitationStore((s) => s.downloadBytesTotal);
   const positionSeconds = useRecitationStore((s) => s.positionSeconds);
   const durationSeconds = useRecitationStore((s) => s.durationSeconds);
-  const timings = useRecitationStore((s) => s.timings);
+  const rangeStartAyah = useRecitationStore((s) => s.rangeStartAyah);
+  const rangeEndAyah = useRecitationStore((s) => s.rangeEndAyah);
   const error = useRecitationStore((s) => s.error);
   const progressEpoch = useRecitationStore((s) => s.progressEpoch);
 
   const meta = surahNumber ? getSurahMeta(surahNumber) : undefined;
   const downloading = downloadBytesTotal > 0 && downloadBytesWritten < downloadBytesTotal;
   const downloadProgress = downloadBytesTotal > 0 ? downloadBytesWritten / downloadBytesTotal : 0;
-  const timing = timings[ayahNumber - 1];
-  const ayahSpan = timing ? timing[1] - timing[0] : 0;
-  const bismillahSpan = BISMILLAH_AUDIO_END_SECONDS - BISMILLAH_AUDIO_START_SECONDS;
-  const fileProgress = durationSeconds > 0 ? Math.min(1, positionSeconds / durationSeconds) : 0;
-  const bismillahProgress = Math.min(
-    1,
-    Math.max(0, (positionSeconds - BISMILLAH_AUDIO_START_SECONDS) / bismillahSpan),
-  );
-  const ayahProgress = playingBismillah
-    ? bismillahProgress
-    : mode !== 'surah' || ayahSpan <= 0
-      ? fileProgress
-      : Math.min(1, Math.max(0, (positionSeconds * 1000 - timing[0]) / ayahSpan));
+  // Every clip (Bismillah, or one ayah in either mode) is its own file, so `positionSeconds`/
+  // `durationSeconds` are always relative to whatever's currently loaded.
+  const ayahProgress = durationSeconds > 0 ? Math.min(1, positionSeconds / durationSeconds) : 0;
   const showDownloadBar = (downloading || (awaitingAudio && downloadBytesWritten === 0)) && !playing;
-  const remainingMs = playingBismillah
-    ? Math.max(0, (BISMILLAH_AUDIO_END_SECONDS - positionSeconds) * 1000)
-    : mode !== 'surah' || ayahSpan <= 0
-      ? Math.max(0, (durationSeconds - positionSeconds) * 1000)
-      : Math.max(0, timing[1] - positionSeconds * 1000);
+  const remainingMs = Math.max(0, (durationSeconds - positionSeconds) * 1000);
   const mediaReady = durationSeconds > 0;
   const barValue = error ? 0 : showDownloadBar ? downloadProgress : ayahProgress;
   const barRun = !error && !showDownloadBar && playing && mediaReady;
   const canPrev =
-    playingBismillah || ayahNumber > 1 || Boolean(mode === 'surah' && meta?.b && ayahNumber <= 1);
-  const canNext = playingBismillah || ayahNumber < ayahCount;
+    playingBismillah ||
+    ayahNumber > rangeStartAyah ||
+    Boolean(mode === 'surah' && meta?.b && rangeStartAyah <= 1 && ayahNumber <= rangeStartAyah);
+  const canNext = playingBismillah || ayahNumber < rangeEndAyah;
   const busy = awaitingAudio && !playing;
 
-  let status = playingBismillah ? 'Bismillah' : `Ayah ${ayahNumber} of ${ayahCount}`;
+  // Bounded by the chosen range, not the whole surah - matches `ayahCount` exactly when playing
+  // the default full range, so this is a no-op for the common case.
+  let status = playingBismillah ? 'Bismillah' : `Ayah ${ayahNumber} of ${rangeEndAyah}`;
   if (error) {
     status = error;
   } else if (downloading && !playingBismillah) {
@@ -153,7 +147,7 @@ export function RecitationPlayer() {
         key={
           showDownloadBar
             ? 'download'
-            : `${progressEpoch}-${ayahNumber}-${playingBismillah}-${mode}-${mediaReady}-${ayahSpan > 0}`
+            : `${progressEpoch}-${ayahNumber}-${playingBismillah}-${mode}-${mediaReady}`
         }
         value={barValue}
         remainingMs={showDownloadBar ? 0 : remainingMs}
@@ -164,14 +158,23 @@ export function RecitationPlayer() {
       />
 
       <View style={styles.row}>
-        <View style={styles.copy}>
+        <Pressable
+          onPress={() => {
+            hapticSelection();
+            onPressTitle?.();
+          }}
+          disabled={!onPressTitle}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Jump to the ayah being recited"
+          style={({ pressed }) => [styles.copy, pressed && styles.pressed]}>
           <ThemedText type="smallBold" numberOfLines={1}>
             {meta?.en ?? 'Recitation'}
           </ThemedText>
           <ThemedText type="small" themeColor={error ? 'danger' : 'textSecondary'} numberOfLines={1}>
             {status}
           </ThemedText>
-        </View>
+        </Pressable>
 
         <View style={styles.controls}>
           <Pressable

@@ -151,9 +151,9 @@ function pickGloss(lemma, variantMap, isVerb) {
     else clusters.set(key, { text: cleaned, count });
   }
   const ranked = [...clusters.values()].sort((a, b) => b.count - a.count || a.text.length - b.text.length);
-  let text = ranked[0]?.text ?? '—';
-  if (isVerb && text !== '—' && !/^to /i.test(text) && !/\s/.test(text)) text = `to ${text}`;
-  if (text !== '—') {
+  let text = ranked[0]?.text ?? '-';
+  if (isVerb && text !== '-' && !/^to /i.test(text) && !/\s/.test(text)) text = `to ${text}`;
+  if (text !== '-') {
     text = text.charAt(0).toLowerCase() + text.slice(1);
     text = text.replace(/^to ([A-Z])/, (_, letter) => `to ${letter.toLowerCase()}`);
   }

@@ -29,7 +29,7 @@ export interface ReaderWord {
   l?: number | number[];
   /** Light-normalized QAC LEM tag for this location. Display and recognition use `l`, not this. */
   lm?: string;
-  /** Corpus ROOT tag (vowel-stripped). Analysis only — never used to assign vocabulary ownership. */
+  /** Corpus ROOT tag (vowel-stripped). Analysis only - never used to assign vocabulary ownership. */
   rt?: string;
   /** Corpus stem POS column: `N` (noun), `V` (verb), or `P` (particle). */
   ps?: string;

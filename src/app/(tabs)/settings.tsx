@@ -7,7 +7,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ReaderDisplaySettings } from '@/components/quran/reader-display-settings';
 import { ChoiceGrid } from '@/components/quranki/choice-grid';
+import { ReciterSettingsRow } from '@/components/quranki/reciter-picker-sheet';
 import { ReminderTimePicker } from '@/components/quranki/reminder-time-picker';
+import { TranslationSettingsRow } from '@/components/quranki/translation-picker-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ACCENTS, BottomTabInset, MaxContentWidth, Radius, Spacing, type AccentId } from '@/constants/theme';
@@ -189,6 +191,14 @@ export default function SettingsScreen() {
           </SettingsSection>
 
           <SettingsSection title="Quran">
+            <ReciterSettingsRow
+              selectedKey={settings.selectedReciterKey}
+              onPress={() => router.push('/reciter-picker')}
+            />
+            <TranslationSettingsRow
+              selectedKey={settings.selectedTranslationKey}
+              onPress={() => router.push('/translation-picker')}
+            />
             <ReaderDisplaySettings
               arabicSize={settings.readerArabicSize}
               onArabicSizeChange={(readerArabicSize) => updateSettings({ readerArabicSize })}
@@ -202,6 +212,8 @@ export default function SettingsScreen() {
               onShowTransliterationChange={(readerTransliteration) => updateSettings({ readerTransliteration })}
               transliterationSize={settings.readerTransliterationSize}
               onTransliterationSizeChange={(readerTransliterationSize) => updateSettings({ readerTransliterationSize })}
+              alwaysShowTranslation={settings.readerAlwaysShowTranslation}
+              onAlwaysShowTranslationChange={(readerAlwaysShowTranslation) => updateSettings({ readerAlwaysShowTranslation })}
             />
           </SettingsSection>
 

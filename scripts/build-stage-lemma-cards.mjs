@@ -9,8 +9,8 @@
  * Re-run after changing quran-lemmas.json, quranic-words.json, or reader glosses,
  * then keep lemma-level-coverage.json in sync (this script rewrites it).
  */
-import { createRequire } from 'node:module';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -48,7 +48,7 @@ function cleanOneGloss(raw) {
 }
 
 function polishGloss(text, isVerb) {
-  if (!text || text === '—') return '—';
+  if (!text || text === '-') return '-';
   let next = text.charAt(0).toLowerCase() + text.slice(1);
   if (isVerb && !/^to /i.test(next) && !/\s/.test(next)) next = `to ${next}`;
   return next.replace(/\bto ([A-Za-z]+)/g, (_, word) => `to ${word.toLowerCase()}`);
@@ -65,7 +65,7 @@ function pickGloss(variantMap, isVerb) {
     else clusters.set(key, { text: cleaned, count });
   }
   const ranked = [...clusters.values()].sort((a, b) => b.count - a.count || a.text.length - b.text.length);
-  return polishGloss(ranked[0]?.text ?? '—', isVerb);
+  return polishGloss(ranked[0]?.text ?? '-', isVerb);
 }
 
 function stageForLemmaId(id) {

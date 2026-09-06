@@ -162,7 +162,7 @@ function dhuFamily(stem) {
   return stem.lightLemma === normalizeLight('ذُو');
 }
 
-/** أُولُو / أُولِي / أُولَات — plural "people of", not ذُو / ذَوِي. */
+/** أُولُو / أُولِي / أُولَات - plural "people of", not ذُو / ذَوِي. */
 function isUluPossessive(stem) {
   return /اول/.test(normalizeArabic(stem.looseSurface || stem.lightSurface || ''));
 }
@@ -239,7 +239,7 @@ function shaddaSkeleton(light) {
 
 /** Corpus lemmas often omit a fatha the deck writes (إِلَّا vs إِلّا, كَانَ vs كان).
  *  Compatible only when letters+shadda match and every lemma vowel still appears, in order,
- *  on the citation — never when shadda is the whole difference (مَن / مَنّ). */
+ *  on the citation - never when shadda is the whole difference (مَن / مَنّ). */
 function vocalizationCompatible(citationLight, lemmaLight) {
   if (citationLight === lemmaLight) return true;
   if (shaddaSkeleton(citationLight) !== shaddaSkeleton(lemmaLight)) return false;
@@ -999,7 +999,7 @@ function buildVocabMatches(rawSurfaceByLocation, ayahWordOrder) {
   }
   seedAttachedLemmaCards();
 
-  // Lemma completion — not root expansion. Inflected surface forms of the *same dictionary
+  // Lemma completion - not root expansion. Inflected surface forms of the *same dictionary
   // lemma* ("المبينِ", "مبيناً", "مبينون") should hide together; derivatives that only share a
   // root ("بين" "between" vs "مبين" "clear", "شاء" "to will" vs "شيء" "thing") must not.
   // A card may claim leftover locations of a lemma only when it is the unique study word whose
@@ -1197,7 +1197,7 @@ function tagAttachedLemmas(stemByLocation, matchByLocation) {
 /** One-letter prefixes fused onto a word (وَكتاب, فَقال, سَيَعْلَم). Prefix cards only own a
  *  whole reader word when it has no lexical stem lemma of its own. Otherwise the word must fall
  *  through to the lemma fallback: assigning وَ to وَثُلَاثَ, for example, would make “three” and
- *  every other unmatched و-prefixed word share the “and” card. Definite الْ is skipped too —
+ *  every other unmatched و-prefixed word share the “and” card. Definite الْ is skipped too -
  *  tagging every leftover noun as "the" would hide the noun itself. */
 function tagGluedPrefixes(stemByLocation, matchByLocation) {
   const skip = new Set(['ال', normalizeArabic('الْ')]);

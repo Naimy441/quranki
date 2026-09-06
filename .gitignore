@@ -43,3 +43,11 @@ example
 # generated native folders
 /ios
 /android
+
+# raw reciter datasets already uploaded to Firebase Storage (recitation-data/);
+# see scripts/upload-recitation-data.js
+/src/data/audio
+
+# raw translation datasets already uploaded to Firebase Storage (translation-data/);
+# see scripts/upload-translation-data.js
+/scripts/data/translations

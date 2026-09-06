@@ -4,7 +4,7 @@ import type { ReaderAyah } from '@/lib/quran-reader-types';
 export interface AyahUnderstanding {
   /** Words whose every canonical lemma is in the learner's recognized set. */
   knownWords: number;
-  /** Lexical Quran words only — opening letters have no lemma id and are excluded. */
+  /** Lexical Quran words only - opening letters have no lemma id and are excluded. */
   totalWords: number;
   /** The share of this ayah's vocabulary the learner recognizes. */
   ratio: number;

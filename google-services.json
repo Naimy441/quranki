@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "840813317138",
+    "project_id": "quranki-506915",
+    "storage_bucket": "quranki-506915.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:840813317138:android:1f1e664357848bc0375ccb",
+        "android_client_info": {
+          "package_name": "com.quranki.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZzXdGtzfwAdOtcIDejZGLJ7ruw3jHY5o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

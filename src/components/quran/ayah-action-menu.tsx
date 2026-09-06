@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, type ViewStyle } from 'react-native';
-import Animated, { Easing, Extrapolation, interpolate, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import { ActivityIndicator, Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import Animated, { Easing, Extrapolation, interpolate, useAnimatedStyle, useSharedValue, withTiming, type AnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -15,7 +15,11 @@ const STACK = MAX_ACTIONS * SLOT;
 const SNAP = Easing.bezier(0.2, 0.85, 0.25, 1);
 export type AyahPlayback = 'idle' | 'loading' | 'playing' | 'paused';
 export type AyahActionDirection = 'horizontal' | 'up';
-interface Props { open: boolean; onToggle: () => void; bookmarked: boolean; copied: boolean; playback: AyahPlayback; showTranslation: boolean; showTranslationAction?: boolean; onSave: () => void; onCopy: () => void; onPlay: () => void; onTranslate: () => void; style?: ViewStyle; direction?: AyahActionDirection; presence?: number; }
+// `StyleProp<AnimatedStyle<ViewStyle>>` (not the plain `ViewStyle` this used to be, and matching
+// `Animated.View`'s own `style` prop exactly) - the sticky (`direction="up"`) instance in
+// `AyahBlock` passes an array containing a `useAnimatedStyle` result to drive its `top` from a
+// worklet, which a plain `ViewStyle`/`StyleProp<ViewStyle>` doesn't structurally allow.
+interface Props { open: boolean; onToggle: () => void; bookmarked: boolean; copied: boolean; playback: AyahPlayback; showTranslation: boolean; showTranslationAction?: boolean; onSave: () => void; onCopy: () => void; onPlay: () => void; onTranslate: () => void; style?: StyleProp<AnimatedStyle<ViewStyle>>; direction?: AyahActionDirection; presence?: number; }
 
 function animateProgress(progress: SharedValue<number>, open: boolean) {
   progress.value = withTiming(open ? 1 : 0, { duration: open ? 220 : 160, easing: SNAP });

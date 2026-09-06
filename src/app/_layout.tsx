@@ -108,6 +108,9 @@ export default function RootLayout() {
               />
               <Stack.Screen name="saved" options={{ title: 'Saved', headerBackTitle: "Quran" }} />
               <Stack.Screen name="known-words" options={{ title: 'Known words', headerBackTitle: 'Settings' }} />
+              <Stack.Screen name="reader-settings" options={{ title: 'Settings' }} />
+              <Stack.Screen name="reciter-picker" options={{ title: 'Reciter' }} />
+              <Stack.Screen name="translation-picker" options={{ title: 'Translation' }} />
               <Stack.Screen
                 name="session/review"
                 options={{ headerShown: false, gestureEnabled: false, animation: 'fade' }}

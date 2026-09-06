@@ -24,9 +24,11 @@ export interface ReaderDisplaySettingsProps {
   onShowTransliterationChange: (value: boolean) => void;
   transliterationSize: number;
   onTransliterationSizeChange: (size: number) => void;
+  alwaysShowTranslation: boolean;
+  onAlwaysShowTranslationChange: (value: boolean) => void;
 }
 
-export function ReaderDisplaySettings({ arabicSize, onArabicSizeChange, glossSize, onGlossSizeChange, showTranslation, onShowTranslationChange, showAyahCoverage, onShowAyahCoverageChange, showTransliteration, onShowTransliterationChange, transliterationSize, onTransliterationSizeChange }: ReaderDisplaySettingsProps) {
+export function ReaderDisplaySettings({ arabicSize, onArabicSizeChange, glossSize, onGlossSizeChange, showTranslation, onShowTranslationChange, showAyahCoverage, onShowAyahCoverageChange, showTransliteration, onShowTransliterationChange, transliterationSize, onTransliterationSizeChange, alwaysShowTranslation, onAlwaysShowTranslationChange }: ReaderDisplaySettingsProps) {
   const theme = useTheme();
   return <View style={styles.content}>
     <FontSizeSlider label="Arabic text" value={arabicSize} range={ARABIC_SIZE_RANGE} onChange={onArabicSizeChange} />
@@ -43,6 +45,10 @@ export function ReaderDisplaySettings({ arabicSize, onArabicSizeChange, glossSiz
     <View style={styles.toggleRow}>
       <ThemedText type="small">Show ayah coverage %</ThemedText>
       <Switch value={showAyahCoverage} onValueChange={(value) => { const next = value === true; hapticToggle(next); onShowAyahCoverageChange(next); }} color={theme.primary} />
+    </View>
+    <View style={styles.toggleRow}>
+      <ThemedText type="small">Always show full translation</ThemedText>
+      <Switch value={alwaysShowTranslation} onValueChange={(value) => { const next = value === true; hapticToggle(next); onAlwaysShowTranslationChange(next); }} color={theme.primary} />
     </View>
   </View>;
 }

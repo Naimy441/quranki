@@ -10,6 +10,8 @@ import { clampReminderHour, clampReminderMinute, DEFAULT_REMINDER_HOUR, DEFAULT_
 import type { KnownWordsMap } from '@/lib/known-words';
 import type { ProgressMap } from '@/lib/levels';
 import { EMPTY_QURAN_MARKS, sanitizeQuranMarks, type QuranMarksData } from '@/lib/quran-marks';
+import { DEFAULT_RECITER_KEY, isReciterKey } from '@/lib/reciters';
+import { DEFAULT_TRANSLATION_KEY, isTranslationKey } from '@/lib/translations';
 
 const PROGRESS_KEY = 'quranki:progress:v1';
 const SETTINGS_KEY = 'quranki:settings:v1';
@@ -37,6 +39,15 @@ export interface Settings {
   reminderHour: number;
   /** Local minute (0–59) for the practice reminder. */
   reminderMinute: number;
+  /** Which reciter+style plays Quran audio; see `lib/reciters.ts`. Every option downloads on
+   *  demand from Firebase Storage the first time it's picked. */
+  selectedReciterKey: string;
+  /** Which English translation the reader shows; see `lib/translations.ts`. Every option besides
+   *  the bundled default downloads on demand from Firebase Storage the first time it's picked. */
+  selectedTranslationKey: string;
+  /** Keeps the full ayah translation panel open for every ayah at all times, instead of only the
+   *  ones the reader has tapped "Translate" on. */
+  readerAlwaysShowTranslation: boolean;
 }
 
 /** Inclusive bounds for the Settings "new words per day" slider. */
@@ -82,6 +93,9 @@ export const DEFAULT_SETTINGS: Settings = {
   reminderEnabled: false,
   reminderHour: DEFAULT_REMINDER_HOUR,
   reminderMinute: DEFAULT_REMINDER_MINUTE,
+  selectedReciterKey: DEFAULT_RECITER_KEY,
+  selectedTranslationKey: DEFAULT_TRANSLATION_KEY,
+  readerAlwaysShowTranslation: false,
 };
 
 export const DEFAULT_META: Meta = {
@@ -144,6 +158,14 @@ function normalizeSettings(settings: Settings): Settings {
     reminderEnabled: persistFlag(settings.reminderEnabled, DEFAULT_SETTINGS.reminderEnabled),
     reminderHour: clampReminderHour(settings.reminderHour ?? DEFAULT_SETTINGS.reminderHour),
     reminderMinute: clampReminderMinute(settings.reminderMinute ?? DEFAULT_SETTINGS.reminderMinute),
+    selectedReciterKey: isReciterKey(settings.selectedReciterKey) ? settings.selectedReciterKey : DEFAULT_RECITER_KEY,
+    selectedTranslationKey: isTranslationKey(settings.selectedTranslationKey)
+      ? settings.selectedTranslationKey
+      : DEFAULT_TRANSLATION_KEY,
+    readerAlwaysShowTranslation: persistFlag(
+      settings.readerAlwaysShowTranslation,
+      DEFAULT_SETTINGS.readerAlwaysShowTranslation,
+    ),
   };
 }
 

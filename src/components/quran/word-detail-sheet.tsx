@@ -10,11 +10,11 @@ import { useTheme } from '@/hooks/use-theme';
 import { displayMorphologyArabic } from '@/lib/arabic-display';
 import { hapticLight, hapticSelection, hapticSuccess, hapticWarning } from '@/lib/haptics';
 import type { Level } from '@/lib/levels';
-import { getRootEntry, posLabel } from '@/lib/quran-morphology';
 import { getQuranLemma, getWordLemmaIds } from '@/lib/quran-lemmas';
+import { getRootEntry, posLabel } from '@/lib/quran-morphology';
 import type { ReaderMorphSegment, ReaderWord, ReaderWordRef } from '@/lib/quran-reader-types';
-import { playWordAudio, stopWordAudio } from '@/lib/word-audio';
 import { formatCount } from '@/lib/stats';
+import { playWordAudio, stopWordAudio } from '@/lib/word-audio';
 import { pauseRecitation } from '@/store/recitation-store';
 
 interface WordDetailSheetProps {
@@ -117,7 +117,7 @@ type WordAudioStatus = 'idle' | 'loading' | 'playing' | 'error';
 
 /** Bottom sheet opened by long-pressing a word in the Quran reader. Shows corpus
  *  lemma/root analysis, a speaker control for that word, and lets the user mark
- *  canonical lemma ids as known — hiding translations everywhere those lemmas appear. */
+ *  canonical lemma ids as known - hiding translations everywhere those lemmas appear. */
 export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, onMarkKnown, onForget }: WordDetailSheetProps) {
   const theme = useTheme();
   const word = selection?.word ?? null;

@@ -12,20 +12,20 @@
 
 Quranki is a React Native (Expo) app with two parts:
 
-1. **Vocabulary trainer** — An Anki-style spaced repetition system for the most frequent words in the Quran, split into 141 progressive levels. Each word is scheduled with the [FSRS](https://github.com/open-spaced-repetition/ts-fsrs) algorithm (Again / Hard / Good / Easy), so review timing adapts to how well you actually know each word.
-2. **Quran reader** — Browse and read all 114 surahs, ayah by ayah, with word-by-word Tajweed-colored Arabic, word-by-word English gloss, and full ayah translations (Sahih International, with expandable footnotes). Words you've already mastered in the trainer are hidden from the word-by-word translation until you tap them, turning the reader into a live comprehension check.
+1. **Vocabulary trainer** - An Anki-style spaced repetition system for the most frequent words in the Quran, split into 141 progressive levels. Each word is scheduled with the [FSRS](https://github.com/open-spaced-repetition/ts-fsrs) algorithm (Again / Hard / Good / Easy), so review timing adapts to how well you actually know each word.
+2. **Quran reader** - Browse and read all 114 surahs, ayah by ayah, with word-by-word Tajweed-colored Arabic, word-by-word English gloss, and full ayah translations (Sahih International, with expandable footnotes). Words you've already mastered in the trainer are hidden from the word-by-word translation until you tap them, turning the reader into a live comprehension check.
 
 ## Features
 
-- **FSRS spaced repetition** — real scheduling algorithm (`ts-fsrs`), not a fixed interval list.
-- **47-level curriculum** — new vocabulary is introduced level by level; levels are recommended, not hard-gated, so review is never blocked.
-- **Configurable session size** — choose how many new words to study per session.
+- **FSRS spaced repetition** - real scheduling algorithm (`ts-fsrs`), not a fixed interval list.
+- **47-level curriculum** - new vocabulary is introduced level by level; levels are recommended, not hard-gated, so review is never blocked.
+- **Configurable session size** - choose how many new words to study per session.
 - **Word-by-word recitation** for vocabulary cards and the Quran reader, plus haptic feedback on grading.
 - **Full Quran reader** with Tajweed-colored Arabic (Uthmanic Hafs V18 font), word-by-word gloss, ayah translations, and expandable footnotes.
 - **Fluid swipe navigation** between surahs with adjacent-surah preloading.
 - **Adjustable font sizes** for Arabic and translation text, independently.
-- **Progress dashboard** — streaks, per-level mastery, and overall Quran memorization coverage (how many actual words of the Quran text you've learned, not just unique vocabulary).
-- **Fully local & offline** — progress is stored on-device with AsyncStorage; no account or network connection required.
+- **Progress dashboard** - streaks, per-level mastery, and overall Quran memorization coverage (how many actual words of the Quran text you've learned, not just unique vocabulary).
+- **Fully local & offline** - progress is stored on-device with AsyncStorage; no account or network connection required.
 
 ## Tech stack
 
@@ -56,7 +56,7 @@ Quranki is a React Native (Expo) app with two parts:
 
    From there, open the app in a [development build](https://docs.expo.dev/develop/development-builds/introduction/), an [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/), an [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/), or [Expo Go](https://expo.dev/go).
 
-   Some native modules used here (e.g. `expo-glass-effect`) don't fully work in Expo Go — for the most accurate preview, build a [dev client](https://docs.expo.dev/develop/development-builds/introduction/):
+   Some native modules used here (e.g. `expo-glass-effect`) don't fully work in Expo Go - for the most accurate preview, build a [dev client](https://docs.expo.dev/develop/development-builds/introduction/):
 
    ```bash
    npx expo run:ios      # or: eas build --profile development
@@ -118,10 +118,10 @@ This rebuilds `src/data/quran/surahs/*.json`, `src/data/quran/surah-index.json`,
 
 Quranki wouldn't exist without the following open resources:
 
-- **[80% of Quranic Words](https://www.kalamullah.com/80-percent-of-quranic-words.html)** by Dr. AbdulAzeez AbdulRaheem — the classified word list (covering ~82.6% of the Quran's total word count) that Quranki's vocabulary curriculum is ultimately based on.
-- **[80 Percent Quranic Words](https://ankiweb.net/shared/info/1905238053)** on AnkiWeb — the Anki deck adaptation of the above word list. This deck, not the original word list document, is the actual source Quranki's 47-level curriculum (`src/data/quranic-words.json`) was built from — its pre-split, per-card level tagging was far easier to extract programmatically than parsing the source PDF/list, and it's also what inspired Quranki's spaced-repetition approach to teaching the words in the first place.
-- **[Quranic Arabic Corpus](https://corpus.quran.com/)** by Kais Dukes — the word-by-word morphological segmentation and grammatical tagging (part of speech, lemma, root) that `scripts/vocab-word-matcher.js` uses to reliably match studied vocabulary to every occurrence of that word across the Quran, via the [Arabic-script transliteration](https://github.com/mustafa0x/quran-morphology) of Corpus v0.4 (`scripts/data/quran-morphology.txt`, kept verbatim as downloaded, GNU GPL).
-- **[Quranic Universal Library (QUL)](https://qul.tarteel.ai/)** by [Tarteel AI](https://www.tarteel.ai/) — the source of the Quran text, Tajweed rules (`qpc-hafs-tajweed.json`), word-by-word and ayah translations, and morphology/grammar data that power the Quran reader and vocabulary-matching pipeline.
+- **[80% of Quranic Words](https://www.kalamullah.com/80-percent-of-quranic-words.html)** by Dr. AbdulAzeez AbdulRaheem - the classified word list (covering ~82.6% of the Quran's total word count) that Quranki's vocabulary curriculum is ultimately based on.
+- **[80 Percent Quranic Words](https://ankiweb.net/shared/info/1905238053)** on AnkiWeb - the Anki deck adaptation of the above word list. This deck, not the original word list document, is the actual source Quranki's 47-level curriculum (`src/data/quranic-words.json`) was built from - its pre-split, per-card level tagging was far easier to extract programmatically than parsing the source PDF/list, and it's also what inspired Quranki's spaced-repetition approach to teaching the words in the first place.
+- **[Quranic Arabic Corpus](https://corpus.quran.com/)** by Kais Dukes - the word-by-word morphological segmentation and grammatical tagging (part of speech, lemma, root) that `scripts/vocab-word-matcher.js` uses to reliably match studied vocabulary to every occurrence of that word across the Quran, via the [Arabic-script transliteration](https://github.com/mustafa0x/quran-morphology) of Corpus v0.4 (`scripts/data/quran-morphology.txt`, kept verbatim as downloaded, GNU GPL).
+- **[Quranic Universal Library (QUL)](https://qul.tarteel.ai/)** by [Tarteel AI](https://www.tarteel.ai/) - the source of the Quran text, Tajweed rules (`qpc-hafs-tajweed.json`), word-by-word and ayah translations, and morphology/grammar data that power the Quran reader and vocabulary-matching pipeline.
 
 May Allah reward everyone who worked on these resources and made them freely available.
 
