@@ -339,11 +339,8 @@ export function SurahPage({
         if (recitationAyahRef.current > 0 || recitationBismillahRef.current) setAutoScrollSuspended(true);
       }}
       viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-      // Each ayah is a dense tree of word cells, so a modest flick easily outruns a ~1-screen
-      // buffer and you get blank holes that fill in a beat later. Prefetch a few screens so
-      // upcoming rows are already mounted. Don't set `removeClippedSubviews` — it detaches
-      // those already-drawn rows the moment they leave the clip rect, which undoes this.
-      drawDistance={windowHeight * 4}
+      drawDistance={900}
+      removeClippedSubviews
       showsVerticalScrollIndicator={false}
     />
   );
