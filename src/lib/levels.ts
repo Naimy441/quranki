@@ -414,6 +414,16 @@ function isLearningDue(state: WordState): boolean {
  *  vs "New cards/day" split. */
 export const DAILY_REVIEW_LIMIT = 200;
 
+function shuffleInPlace<T>(items: T[]): T[] {
+  for (let i = items.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const swap = items[i];
+    items[i] = items[j]!;
+    items[j] = swap!;
+  }
+  return items;
+}
+
 export interface UpcomingReview {
   count: number;
   dueAt: Date;
@@ -445,7 +455,8 @@ export function getUpcomingLearning(progressMap: ProgressMap, now: Date): Upcomi
 /**
  * Builds today's queue across the whole sequential deck, the way Anki does for one sequential
  * deck: due learning/relearning first, then up to DAILY_REVIEW_LIMIT Review-state cards
- * (oldest-due first, minus any already reviewed today), then up to `wordsPerSession` unseen
+ * (oldest-due first to fill the cap, then shuffled so the session isn't in due-date
+ * order, minus any already reviewed today), then up to `wordsPerSession` unseen
  * study words in curriculum order (level 1, then 2, …), minus any new cards already introduced
  * today. Grammar intros in that same stretch are included for free so they don't consume the
  * new-word quota. Stages hide later level lists until introduction reaches them, the same
@@ -490,6 +501,7 @@ export function buildGlobalSessionQueue(
 
   learning.sort((a, b) => a.dueTime - b.dueTime);
   reviews.sort((a, b) => a.dueTime - b.dueTime);
+  const dueReviews = shuffleInPlace(reviews.slice(0, remainingReviewSlots));
 
   const newCards: SessionWord[] = [];
   let vocabSlots = remainingNewSlots;
@@ -507,7 +519,7 @@ export function buildGlobalSessionQueue(
 
   return [
     ...learning.map(({ dueTime, ...rest }) => rest),
-    ...reviews.slice(0, remainingReviewSlots).map(({ dueTime, ...rest }) => rest),
+    ...dueReviews.map(({ dueTime, ...rest }) => rest),
     ...newCards,
   ];
 }

@@ -63,8 +63,6 @@ example
 /src/data/en-sahih-international-with-footnote-tags.json
 /src/data/quran-metadata-surah-name.json
 /src/data/ayah-recitation-mahmoud-khalil-al-husary-mujawwad-hafs-956.json
-/src/data/quran-lemmas.json
-/src/data/quran-word-lemmas.json
 
 # Raw per-reciter recitation datasets already uploaded to Firebase Storage
 # (recitation-data/); see scripts/upload-recitation-data.js. (Raw translation

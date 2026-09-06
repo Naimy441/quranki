@@ -34,7 +34,7 @@ export function AyahActionMenu({ open, onToggle, bookmarked, copied, playback, s
   const fromTrigger = useRef(false);
   useLayoutEffect(() => {
     if (direction !== 'up') return;
-    appear.value = withTiming(presence, { duration: 90, easing: Easing.linear });
+    appear.value = withTiming(presence, { duration: 180, easing: Easing.out(Easing.cubic) });
   }, [appear, direction, presence]);
   const appearStyle = useAnimatedStyle(() => ({ opacity: appear.value }));
   useLayoutEffect(() => {

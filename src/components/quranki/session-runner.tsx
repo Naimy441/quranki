@@ -244,8 +244,16 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
             {studyTotal === 0 ? '' : `${Math.max(studyPosition, 1)}/${studyTotal}`}
           </ThemedText>
           <View style={[styles.topBarSide, styles.topBarSideEnd]}>
-            <ThemedText type="small" themeColor="textSecondary">
+            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
               Level {currentEntry.levelNumber}
+              {' · '}
+              {currentEntry.word.kind === 'grammar'
+                ? 'Lesson'
+                : currentEntry.reason === 'new'
+                  ? 'New'
+                  : currentCard.state === State.Learning || currentCard.state === State.Relearning
+                    ? 'Learn'
+                    : 'Review'}
             </ThemedText>
           </View>
         </View>
@@ -306,7 +314,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.two,
   },
   topBarSide: {
-    width: 72,
+    width: 120,
     justifyContent: 'center',
   },
   topBarSideEnd: {

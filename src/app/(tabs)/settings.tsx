@@ -14,6 +14,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ACCENTS, BottomTabInset, MaxContentWidth, Radius, Spacing, type AccentId } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
+import { previewWhatsNew } from '@/lib/firebase-remote-config';
 import { hapticSelection } from '@/lib/haptics';
 import { formatReminderTime } from '@/lib/practice-reminder';
 import { clampWordsPerSession, WORDS_PER_SESSION_MAX, WORDS_PER_SESSION_MIN } from '@/lib/storage';
@@ -233,6 +234,13 @@ export default function SettingsScreen() {
                 icon="sparkles-outline"
                 label="Replay onboarding"
                 onPress={() => setOnboardingCompleted(false)}
+              />
+            )}
+            {__DEV__ && (
+              <ActionRow
+                icon="newspaper-outline"
+                label="Show what's new"
+                onPress={() => void previewWhatsNew()}
               />
             )}
           </SettingsSection>

@@ -11,6 +11,7 @@ import type { KnownWordsMap } from '@/lib/known-words';
 import type { ProgressMap } from '@/lib/levels';
 import { EMPTY_QURAN_MARKS, sanitizeQuranMarks, type QuranMarksData } from '@/lib/quran-marks';
 import { DEFAULT_RECITER_KEY, isReciterKey } from '@/lib/reciters';
+import { REMOTE_CONFIG_STORAGE_KEYS } from '@/lib/firebase-remote-config';
 import { DEFAULT_TRANSLATION_KEY, isTranslationKey } from '@/lib/translations';
 
 const PROGRESS_KEY = 'quranki:progress:v1';
@@ -228,5 +229,6 @@ export async function resetAllAsync(): Promise<void> {
     KNOWN_WORDS_KEY,
     LEGACY_KNOWN_WORDS_KEY,
     QURAN_MARKS_KEY,
+    ...REMOTE_CONFIG_STORAGE_KEYS,
   ]);
 }

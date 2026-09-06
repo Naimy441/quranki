@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 
 import { StreakGraceNotice } from '@/components/quranki/streak-grace-notice';
+import { WhatsNewNotice } from '@/components/quranki/whats-new-notice';
 import { createPaperTheme } from '@/constants/paper-theme';
 import { ArabicFont, Colors, SurahNameFont } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
@@ -121,6 +122,10 @@ export default function RootLayout() {
             visible={hasFinishedOnboarding && reclaimableStreak > 0 && dismissedReclaimableStreak !== reclaimableStreak}
             streak={reclaimableStreak}
             onDismiss={() => setDismissedReclaimableStreak(reclaimableStreak)}
+          />
+          <WhatsNewNotice
+            enabled={hasFinishedOnboarding}
+            paused={reclaimableStreak > 0 && dismissedReclaimableStreak !== reclaimableStreak}
           />
         </ThemeProvider>
       </PaperProvider>

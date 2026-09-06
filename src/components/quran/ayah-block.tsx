@@ -35,6 +35,7 @@ export const AyahBlock = memo(function AyahBlock({ ayah, surahNumber, surahName,
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const wrapRef = useRef<View>(null);
+  const blockRef = useRef<View>(null);
   const [stickyMenuTop, setStickyMenuTop] = useState<number | null>(null);
   const [stickyPresence, setStickyPresence] = useState(0);
   const [numberWidth, setNumberWidth] = useState(() => (ayah.a < 10 ? 10 : ayah.a < 100 ? 18 : 26));
@@ -93,32 +94,36 @@ export const AyahBlock = memo(function AyahBlock({ ayah, surahNumber, surahName,
   }, [autoScrollSuspended]);
   const updateStickyMenu = useCallback(() => {
     wrapRef.current?.measureInWindow((_x, y, _w, height) => {
-      const topClip = insets.top + 52;
-      const bottomClip = windowHeight - Math.max(insets.bottom, 8) - 8;
-      const visibleBottom = Math.min(y + height, bottomClip);
-      const next = Math.min(height - MENU_SIZE - TOP_MENU_OFFSET, visibleBottom - y - MENU_SIZE - TOP_MENU_OFFSET);
-      const menuTop = y + next;
-      const menuBottom = menuTop + MENU_SIZE;
-      const offBy = topClip - (y + HEADER_BAND);
-      const enter = Math.min(1, Math.max(0, offBy / DISSOLVE));
-      const eased = enter * enter * enter;
-      const leave = Math.min(1, Math.max(0, (menuBottom - topClip) / MENU_SIZE));
-      // For a really long ayah (spanning several screens), most of a scroll happens with its
-      // true bottom edge still far below the viewport - `visibleBottom` above stands in for
-      // `bottomClip` for most of that scroll, which kept the sticky menu hovering near the
-      // bottom of the screen the *entire* time, following the reader down instead of only
-      // showing up once they're actually nearing the ayah's end. Fade it in only once that real
-      // end is within about a screen's reach.
-      const distanceToEnd = y + height - bottomClip;
-      const nearEnd = Math.min(1, Math.max(0, 1 - distanceToEnd / windowHeight));
-      const presence = Math.min(eased, leave, nearEnd);
-      if (presence <= 0.02 || menuTop >= bottomClip) {
-        setStickyPresence(0);
-        setStickyMenuTop((current) => (current == null ? current : null));
-      } else {
-        setStickyPresence((current) => (Math.abs(current - presence) < 0.02 ? current : presence));
-        setStickyMenuTop((current) => (current != null && Math.abs(current - next) < 1 ? current : next));
-      }
+      blockRef.current?.measureInWindow((_cx, cy, _cw, ch) => {
+        const topClip = insets.top + 52;
+        const bottomClip = windowHeight - Math.max(insets.bottom, 8) - 8;
+        const visibleBottom = Math.min(y + height, bottomClip);
+        const next = Math.min(height - MENU_SIZE - TOP_MENU_OFFSET, visibleBottom - y - MENU_SIZE - TOP_MENU_OFFSET);
+        const menuTop = y + next;
+        const menuBottom = menuTop + MENU_SIZE;
+        const offBy = topClip - (y + HEADER_BAND);
+        const enter = Math.min(1, Math.max(0, offBy / DISSOLVE));
+        const eased = enter * enter * enter;
+        const leave = Math.min(1, Math.max(0, (menuBottom - topClip) / MENU_SIZE));
+        // For a really long ayah (spanning several screens), most of a scroll happens with its
+        // true bottom edge still far below the viewport - `visibleBottom` above stands in for
+        // `bottomClip` for most of that scroll, which kept the sticky menu hovering near the
+        // bottom of the screen the *entire* time. Fully visible once the divider is 80% down
+        // the viewport; fade across the stretch above that so a flick isn't a pop.
+        const fadeRange = windowHeight * 0.2;
+        const distanceToAnchor = cy + ch - windowHeight * 0.8;
+        const nearEnd = Math.min(1, Math.max(0, 1 - distanceToAnchor / fadeRange));
+        const presence = Math.min(eased, leave, nearEnd);
+        // Short ayahs keep their top-right trigger in view for the whole time they're on
+        // screen, so a second sticky copy would only duplicate it as they scroll off.
+        if (ch < windowHeight || presence <= 0.02 || menuTop >= bottomClip) {
+          setStickyPresence(0);
+          setStickyMenuTop((current) => (current == null ? current : null));
+        } else {
+          setStickyPresence((current) => (Math.abs(current - presence) < 0.02 ? current : presence));
+          setStickyMenuTop((current) => (current != null && Math.abs(current - next) < 1 ? current : next));
+        }
+      });
     });
   }, [insets.bottom, insets.top, windowHeight]);
   useEffect(() => () => { if (copyTimer.current) clearTimeout(copyTimer.current); }, []);
@@ -148,7 +153,7 @@ export const AyahBlock = memo(function AyahBlock({ ayah, surahNumber, surahName,
   }, [settleEpoch, playback, windowHeight, insets.top, insets.bottom]);
   const copy = async () => { await Clipboard.setStringAsync(buildAyahShareText(surahName, ayah)); hapticSuccess(); setCopied(true); if (copyTimer.current) clearTimeout(copyTimer.current); copyTimer.current = setTimeout(() => setCopied(false), 1500); };
   const menu = { open: actionsOpen, onToggle: () => onToggleActions?.(ayah.a), bookmarked, copied, playback, showTranslation: effectiveShowTranslation, showTranslationAction: !isOpeningLetters && !alwaysShowTranslation, onSave: () => { onToggleActions?.(ayah.a); onOpenMarks?.(ayah.a); }, onCopy: copy, onPlay: () => { hapticLight(); void playAyah(surahNumber, ayah.a); }, onTranslate: () => { hapticSelection(); setShowFullTranslation((value) => !value); } };
-  return <View style={[styles.container, { borderBottomColor: theme.border }]}>
+  return <View ref={blockRef} collapsable={false} style={[styles.container, { borderBottomColor: theme.border }]}>
     {playback !== 'idle' ? <View pointerEvents="none" style={[styles.highlight, { backgroundColor: theme.backgroundSelected, opacity: 0.4 }]} /> : null}
     <Animated.View pointerEvents="none" style={[styles.highlight, { backgroundColor: theme.backgroundSelected, opacity: highlightOpacity }]} />
     <View ref={wrapRef} onLayout={updateStickyMenu} collapsable={false} style={styles.body}>
