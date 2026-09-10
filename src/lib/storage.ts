@@ -11,6 +11,7 @@ import type { KnownWordsMap } from '@/lib/known-words';
 import type { ProgressMap } from '@/lib/levels';
 import { EMPTY_QURAN_MARKS, sanitizeQuranMarks, type QuranMarksData } from '@/lib/quran-marks';
 import { DEFAULT_RECITER_KEY, isReciterKey } from '@/lib/reciters';
+import { accountStorageKeys } from '@/lib/account-auth';
 import { REMOTE_CONFIG_STORAGE_KEYS } from '@/lib/firebase-remote-config';
 import { DEFAULT_TRANSLATION_KEY, isTranslationKey } from '@/lib/translations';
 import { persistNativeThemePreference } from '@/lib/color-scheme';
@@ -140,6 +141,11 @@ function persistFlag(value: unknown, defaultValue: boolean): boolean {
   return defaultValue;
 }
 
+export function sanitizeSettings(value: unknown): Settings {
+  if (!value || typeof value !== 'object') return DEFAULT_SETTINGS;
+  return normalizeSettings({ ...DEFAULT_SETTINGS, ...(value as Partial<Settings>) });
+}
+
 function normalizeSettings(settings: Settings): Settings {
   return {
     ...settings,
@@ -237,5 +243,6 @@ export async function resetAllAsync(): Promise<void> {
     LEGACY_KNOWN_WORDS_KEY,
     QURAN_MARKS_KEY,
     ...REMOTE_CONFIG_STORAGE_KEYS,
+    ...accountStorageKeys(),
   ]);
 }

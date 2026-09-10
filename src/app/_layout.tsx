@@ -11,6 +11,7 @@ import { WhatsNewNotice } from '@/components/quranki/whats-new-notice';
 import { createPaperTheme } from '@/constants/paper-theme';
 import { ArabicFont, Colors, SurahNameFont } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
+import { mergeAccountCloud } from '@/lib/account-sync';
 import {
   applyThemePreference,
   didApplyThemeAtImport,
@@ -18,6 +19,7 @@ import {
 } from '@/lib/color-scheme';
 import '@/lib/practice-reminder';
 import { getStreakReclaimOpportunity } from '@/lib/stats';
+import { useAccountStore } from '@/store/account-store';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 import { useQuranMarksStore } from '@/store/quran-marks-store';
@@ -37,6 +39,8 @@ export default function RootLayout() {
   const knownWordsHydrated = useKnownWordsStore((state) => state.hydrated);
   const hydrateQuranMarks = useQuranMarksStore((state) => state.hydrate);
   const quranMarksHydrated = useQuranMarksStore((state) => state.hydrated);
+  const hydrateAccount = useAccountStore((state) => state.hydrate);
+  const accountHydrated = useAccountStore((state) => state.hydrated);
   const themePreference = useProgressStore((state) => state.settings.themePreference);
   const hasFinishedOnboarding = useProgressStore(selectHasFinishedOnboarding);
   const reviewDates = useProgressStore((state) => state.reviewDates);
@@ -54,7 +58,13 @@ export default function RootLayout() {
     void hydrate();
     void hydrateKnownWords();
     void hydrateQuranMarks();
-  }, [hydrate, hydrateKnownWords, hydrateQuranMarks]);
+    void hydrateAccount();
+  }, [hydrate, hydrateKnownWords, hydrateQuranMarks, hydrateAccount]);
+
+  useEffect(() => {
+    if (!hydrated || !knownWordsHydrated || !accountHydrated) return;
+    void mergeAccountCloud();
+  }, [hydrated, knownWordsHydrated, accountHydrated]);
 
   useEffect(() => {
     if (didApplyThemeAtImport) return;
@@ -129,6 +139,12 @@ export default function RootLayout() {
                 options={{ headerShown: false, gestureEnabled: false, animation: 'fade' }}
               />
             </Stack.Protected>
+            <Stack.Screen name="sign-in" options={{ title: 'Sign in', headerBackTitle: 'Back' }} />
+            <Stack.Screen name="create-account" options={{ title: 'Create account', headerBackTitle: 'Back' }} />
+            <Stack.Screen
+              name="reminder-setup"
+              options={{ headerShown: false, gestureEnabled: false, animation: 'fade' }}
+            />
           </Stack>
           <StreakGraceNotice
             visible={hasFinishedOnboarding && reclaimableStreak > 0 && dismissedReclaimableStreak !== reclaimableStreak}

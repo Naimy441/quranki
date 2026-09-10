@@ -2,10 +2,10 @@ rules_version = '2';
 
 // Quranki's Storage bucket hosts large, optional datasets (e.g. per-reciter recitation
 // data) that the app downloads on demand instead of bundling into the binary. Everything
-// under `recitation-data/` is public-read, immutable-by-clients content: no user auth
-// exists in this app, so reads are open, but all writes are blocked - files are only
-// ever published by `scripts/upload-recitation-data.js` using the Admin SDK, which
-// bypasses these rules entirely.
+// under `recitation-data/` is public-read, immutable-by-clients content. Optional accounts
+// persist learned-word ids in Firestore, not Storage, so reads stay open and writes stay
+// blocked. Files are only ever published by `scripts/upload-recitation-data.js` using the
+// Admin SDK, which bypasses these rules entirely.
 service firebase.storage {
   match /b/{bucket}/o {
     match /recitation-data/{allPaths=**} {

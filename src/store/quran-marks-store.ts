@@ -67,6 +67,7 @@ interface QuranMarksState extends QuranMarksData {
   removeCollection: (id: string) => void;
   toggleBookmark: (collectionId: string, surah: number, ayah: number) => void;
   removeBookmark: (id: string) => void;
+  clearAllMarks: () => void;
 }
 
 export const useQuranMarksStore = create<QuranMarksState>((set, get) => ({
@@ -227,5 +228,14 @@ export const useQuranMarksStore = create<QuranMarksState>((set, get) => ({
   removeBookmark: (id) => {
     set({ bookmarks: get().bookmarks.filter((bookmark) => bookmark.id !== id) });
     persist(snapshot(get()), true);
+  },
+
+  clearAllMarks: () => {
+    if (persistTimer) {
+      clearTimeout(persistTimer);
+      persistTimer = null;
+    }
+    set({ ...EMPTY_QURAN_MARKS });
+    persist(EMPTY_QURAN_MARKS, true);
   },
 }));

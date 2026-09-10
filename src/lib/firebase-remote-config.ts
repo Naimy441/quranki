@@ -19,7 +19,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-const PROJECT_ID = 'quranki-506915';
+import { FIREBASE_PROJECT_ID, firebaseAppConfig } from '@/lib/firebase-config';
+
+const PROJECT_ID = FIREBASE_PROJECT_ID;
 const INSTALLATIONS_SDK = 'w:0.6.4';
 const AUTH_VERSION = 'FIS_v2';
 const RC_SDK_VERSION = '11.0.0';
@@ -59,19 +61,7 @@ export interface WhatsNewAnnouncement {
 }
 
 function appConfig(): FirebaseAppConfig | null {
-  if (Platform.OS === 'ios') {
-    return {
-      apiKey: 'AIzaSyDF7zLexThLA3SbEUN64YiGDeLWLQURtnE',
-      appId: '1:840813317138:ios:9c9ba27b9bf44a19375ccb',
-    };
-  }
-  if (Platform.OS === 'android') {
-    return {
-      apiKey: 'AIzaSyAZzXdGtzfwAdOtcIDejZGLJ7ruw3jHY5o',
-      appId: '1:840813317138:android:1f1e664357848bc0375ccb',
-    };
-  }
-  return null;
+  return firebaseAppConfig();
 }
 
 function appVersion(): string {

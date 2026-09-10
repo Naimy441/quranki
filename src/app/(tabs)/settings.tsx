@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ReaderDisplaySettings } from '@/components/quran/reader-display-settings';
+import { AccountSessionCard } from '@/components/quranki/account-card';
 import { ChoiceGrid } from '@/components/quranki/choice-grid';
 import { ReciterSettingsRow } from '@/components/quranki/reciter-picker-sheet';
 import { ReminderTimePicker } from '@/components/quranki/reminder-time-picker';
@@ -18,6 +19,7 @@ import { previewWhatsNew } from '@/lib/firebase-remote-config';
 import { hapticSelection } from '@/lib/haptics';
 import { formatReminderTime } from '@/lib/practice-reminder';
 import { clampWordsPerSession, WORDS_PER_SESSION_MAX, WORDS_PER_SESSION_MIN } from '@/lib/storage';
+import { useAccountStore } from '@/store/account-store';
 import { useProgressStore } from '@/store/progress-store';
 
 const THEME_OPTIONS = [
@@ -68,6 +70,7 @@ export default function SettingsScreen() {
   const masterAllWords = useProgressStore((state) => state.masterAllWords);
   const seedDemoStudyTime = useProgressStore((state) => state.seedDemoStudyTime);
   const setOnboardingCompleted = useProgressStore((state) => state.setOnboardingCompleted);
+  const accountUid = useAccountStore((state) => state.uid);
   const [openingKnownWords, setOpeningKnownWords] = useState(false);
   const openingKnownWordsRef = useRef(false);
   const knownWordsNavigationFrame = useRef<number | null>(null);
@@ -104,7 +107,7 @@ export default function SettingsScreen() {
     }
     Alert.alert(
       'Reset all progress?',
-      'This clears every word\u2019s review history and starts the deck over from the first word. This cannot be undone.',
+      'This clears review history, known-word marks, and Quran bookmarks, and starts the deck over from the first word. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Reset', style: 'destructive', onPress: () => resetProgress() },
@@ -117,11 +120,18 @@ export default function SettingsScreen() {
       <SafeAreaView style={styles.flex} edges={['top']} collapsable={false}>
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={[styles.content, { paddingBottom: BottomTabInset + Spacing.four }]}>
+          contentContainerStyle={[styles.content, { paddingBottom: BottomTabInset + Spacing.four }]}
+          keyboardShouldPersistTaps="handled">
           <View style={styles.titleBlock}>
 
 
           </View>
+          {accountUid ? (
+            <SettingsSection title="Account">
+              <AccountSessionCard />
+            </SettingsSection>
+          ) : null}
+
           <SettingsSection title="New words per day">
             <View style={styles.sliderValueBlock}>
               <ThemedText type="title" style={styles.sliderValue}>
@@ -219,6 +229,17 @@ export default function SettingsScreen() {
           </SettingsSection>
 
           <SettingsSection title="Data">
+            {accountUid ? null : (
+              <>
+                <ActionRow icon="log-in-outline" label="Sign in" chevron onPress={() => router.push('/sign-in')} />
+                <ActionRow
+                  icon="person-add-outline"
+                  label="Create account"
+                  chevron
+                  onPress={() => router.push('/create-account')}
+                />
+              </>
+            )}
             <ActionRow
               icon="list-outline"
               label="Known words"
@@ -233,7 +254,10 @@ export default function SettingsScreen() {
               <ActionRow
                 icon="sparkles-outline"
                 label="Replay onboarding"
-                onPress={() => setOnboardingCompleted(false)}
+                onPress={() => {
+                  setOnboardingCompleted(false);
+                  router.replace('/onboarding');
+                }}
               />
             )}
             {__DEV__ && (

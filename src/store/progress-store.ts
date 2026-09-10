@@ -10,7 +10,7 @@ import {
     type Card,
     type GradeName,
 } from '@/lib/fsrs';
-import { computeReachedLevel, getLevel, getWord, isLevelUnlocked as levelIsUnlocked, LAST_LEVEL_NUMBER, LEVELS, nextReachedLevel, type ProgressMap, type WordProgress } from '@/lib/levels';
+import { computeReachedLevel, getLevel, getWord, isLevelUnlocked as levelIsUnlocked, isStudyWord, LAST_LEVEL_NUMBER, LEVELS, nextReachedLevel, type ProgressMap, type WordProgress } from '@/lib/levels';
 import { syncPracticeReminder } from '@/lib/practice-reminder';
 import { calendarDayKey, pruneStudyMsByDate, sanitizeStudyMsByDate, getStreakReclaimOpportunity } from '@/lib/stats';
 import {
@@ -20,6 +20,7 @@ import {
     loadMetaAsync,
     loadProgressAsync,
     loadSettingsAsync,
+    sanitizeSettings,
     saveMetaAsync,
     saveProgressAsync,
     saveSettingsAsync,
@@ -64,6 +65,8 @@ interface ProgressState {
   /** Drops the in-memory peek count so a word can hide again (e.g. after marking it known). */
   clearReaderPeek: (wordId: string) => void;
   updateSettings: (partial: Partial<Settings>) => void;
+  /** Replaces local settings with a cloud copy. Does not prompt for notification permission. */
+  importSettings: (settings: Settings) => void;
   completeOnboarding: (
     wordsPerSession: number,
     reminder?: { enabled: boolean; hour: number; minute: number },
@@ -75,6 +78,8 @@ interface ProgressState {
   seedDemoStudyTime: () => void;
   autoMasterWord: (wordId: string) => void;
   autoMasterWords: (wordIds: readonly string[]) => void;
+  /** Restores cloud-learned ids that are missing locally. Existing FSRS cards are left alone. */
+  importLearnedWordIds: (wordIds: readonly string[]) => void;
   revertAutoMasteredWord: (wordId: string) => void;
   revertAutoMasteredWords: (wordIds: readonly string[]) => void;
 }
@@ -128,6 +133,10 @@ function persistMeta(
 
 function getOnboardingCompleted(): boolean {
   return useProgressStore.getState().onboardingCompleted;
+}
+
+function queueCloudSync(): void {
+  void import('@/lib/account-sync').then(({ scheduleAccountSync }) => scheduleAccountSync());
 }
 
 export const useProgressStore = create<ProgressState>((set, get) => ({
@@ -267,6 +276,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       reviewsToday,
       newCardsToday,
     });
+    queueCloudSync();
     return nextCard;
   },
 
@@ -301,6 +311,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       reviewsToday,
       newCardsToday,
     });
+    queueCloudSync();
   },
 
   noteReaderPeek: (wordId) => {
@@ -323,6 +334,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     if ('reminderEnabled' in partial) nextSettings.reminderEnabled = partial.reminderEnabled === true;
     set({ settings: nextSettings });
     void saveSettingsAsync(nextSettings);
+    queueCloudSync();
     if ('reminderEnabled' in partial || 'reminderHour' in partial || 'reminderMinute' in partial) {
       void syncPracticeReminder(nextSettings).then((scheduled) => {
         if (nextSettings.reminderEnabled && !scheduled) {
@@ -332,6 +344,13 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
         }
       });
     }
+  },
+
+  importSettings: (settings) => {
+    const nextSettings = sanitizeSettings(settings);
+    set({ settings: nextSettings });
+    void saveSettingsAsync(nextSettings);
+    void syncPracticeReminder(nextSettings, { requestPermission: false });
   },
 
   completeOnboarding: async (wordsPerSession, reminder) => {
@@ -352,11 +371,15 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     set({ settings: nextSettings, onboardingCompleted: true });
     void saveSettingsAsync(nextSettings);
     persistMeta({ ...state, onboardingCompleted: true });
+    queueCloudSync();
   },
 
   setOnboardingCompleted: (value) => {
     set({ onboardingCompleted: value });
     persistMeta({ ...get(), onboardingCompleted: value });
+    // Only push completion. Local replay must not write `false` to the cloud or a later
+    // merge will immediately flip onboarding back on.
+    if (value) queueCloudSync();
   },
 
   resetProgress: () => {
@@ -377,6 +400,13 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     void saveProgressAsync({});
     void saveMetaAsync({ ...DEFAULT_META, onboardingCompleted });
     void saveSettingsAsync(DEFAULT_SETTINGS);
+    void import('@/store/known-words-store').then(({ useKnownWordsStore }) => {
+      useKnownWordsStore.getState().clearAllKnown();
+    });
+    void import('@/store/quran-marks-store').then(({ useQuranMarksStore }) => {
+      useQuranMarksStore.getState().clearAllMarks();
+    });
+    void import('@/lib/account-sync').then(({ pushCloudSnapshot }) => pushCloudSnapshot());
   },
 
   /** Dev-only helper: instantly marks every word as mastered (Review state, last grade "good",
@@ -416,6 +446,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     set({ progress: nextProgress, maxUnlockedLevel: LAST_LEVEL_NUMBER });
     void saveProgressAsync(nextProgress);
     persistMeta({ ...get(), maxUnlockedLevel: LAST_LEVEL_NUMBER });
+    queueCloudSync();
   },
 
   /** Called when a study word is marked "known"
@@ -476,6 +507,17 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     set({ progress: nextProgress, maxUnlockedLevel: nextMaxUnlockedLevel, readerPeeks: nextPeeks });
     void saveProgressAsync(nextProgress);
     persistMeta({ ...state, maxUnlockedLevel: nextMaxUnlockedLevel });
+    queueCloudSync();
+  },
+
+  importLearnedWordIds: (wordIds) => {
+    const progress = get().progress;
+    const missing = wordIds.filter((wordId) => {
+      if (progress[wordId]) return false;
+      const word = getWord(wordId);
+      return Boolean(word && isStudyWord(word));
+    });
+    get().autoMasterWords(missing);
   },
 
   /** Undoes `autoMasterWord` - only when that fabricated entry is still in place untouched. If
@@ -502,6 +544,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     set({ progress: nextProgress, maxUnlockedLevel: nextMaxUnlockedLevel });
     void saveProgressAsync(nextProgress);
     persistMeta({ ...state, maxUnlockedLevel: nextMaxUnlockedLevel });
+    queueCloudSync();
   },
 }));
 

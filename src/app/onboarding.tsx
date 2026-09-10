@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -245,6 +246,15 @@ export default function OnboardingScreen() {
                 style={({ pressed }) => [styles.skip, (pressed || finishing) && styles.pressed]}>
                 <ThemedText type="smallBold" themeColor="textSecondary">
                   Not now
+                </ThemedText>
+              </Pressable>
+            ) : index === 0 ? (
+              <Pressable
+                onPress={() => router.push('/sign-in')}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.skip, pressed && styles.pressed]}>
+                <ThemedText type="smallBold" themeColor="textSecondary">
+                  I already have an account
                 </ThemedText>
               </Pressable>
             ) : null}

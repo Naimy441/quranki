@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 import { getKnownLemmaIds, type KnownWordEntry, type KnownWordsMap } from '@/lib/known-words';
 import { getStudyWordIdsForLemmas, getWord } from '@/lib/levels';
-import { getLemmaIdsForLegacyArabic, lemmaIdFromStorageKey, lemmaPeekKey, lemmaStorageKey, type LemmaId } from '@/lib/quran-lemmas';
+import { getLemmaIdsForLegacyArabic, getQuranLemma, lemmaIdFromStorageKey, lemmaPeekKey, lemmaStorageKey, type LemmaId } from '@/lib/quran-lemmas';
 import { loadKnownWordsAsync, saveKnownWordsAsync } from '@/lib/storage';
 import { useProgressStore } from '@/store/progress-store';
 
@@ -22,6 +22,11 @@ interface KnownWordsState {
    *  too - see useProgressStore.revertAutoMasteredWord. */
   unmarkKnown: (ids: readonly LemmaId[]) => void;
   clearAllKnown: () => void;
+  mergeCloudKnownLemmas: (keys: readonly string[]) => void;
+}
+
+function queueCloudSync(): void {
+  void import('@/lib/account-sync').then(({ scheduleAccountSync }) => scheduleAccountSync());
 }
 
 export const useKnownWordsStore = create<KnownWordsState>((set, get) => ({
@@ -57,6 +62,7 @@ export const useKnownWordsStore = create<KnownWordsState>((set, get) => ({
     for (const id of ids) nextKnownWords[lemmaStorageKey(id)] = entry;
     set({ knownWords: nextKnownWords });
     void saveKnownWordsAsync(nextKnownWords);
+    queueCloudSync();
     const progress = useProgressStore.getState();
     progress.clearReaderPeek(lemmaPeekKey(ids));
     progress.autoMasterWords(getStudyWordIdsForLemmas(ids));
@@ -67,6 +73,7 @@ export const useKnownWordsStore = create<KnownWordsState>((set, get) => ({
     for (const id of ids) delete nextKnownWords[lemmaStorageKey(id)];
     set({ knownWords: nextKnownWords });
     void saveKnownWordsAsync(nextKnownWords);
+    queueCloudSync();
     const remainingIds = getKnownLemmaIds(nextKnownWords);
     const toRevert = getStudyWordIdsForLemmas(ids).filter((wordId) => {
       const stillKnown = getWord(wordId)?.lemmaIds?.some((id) => remainingIds.has(id));
@@ -79,9 +86,29 @@ export const useKnownWordsStore = create<KnownWordsState>((set, get) => ({
     const ids = Object.keys(get().knownWords);
     set({ knownWords: {} });
     void saveKnownWordsAsync({});
+    queueCloudSync();
     const lemmaIds = ids.map(lemmaIdFromStorageKey).filter((id): id is LemmaId => id !== undefined);
     for (const wordId of getStudyWordIdsForLemmas(lemmaIds)) {
       useProgressStore.getState().revertAutoMasteredWord(wordId);
     }
+  },
+
+  mergeCloudKnownLemmas: (keys) => {
+    const nextKnownWords: KnownWordsMap = { ...get().knownWords };
+    let changed = false;
+    const addedAt = new Date().toISOString();
+    for (const key of keys) {
+      if (nextKnownWords[key]) continue;
+      const id = lemmaIdFromStorageKey(key);
+      if (id === undefined) continue;
+      nextKnownWords[key] = {
+        sampleArabic: getQuranLemma(id)?.arabic ?? '',
+        addedAt,
+      };
+      changed = true;
+    }
+    if (!changed) return;
+    set({ knownWords: nextKnownWords });
+    void saveKnownWordsAsync(nextKnownWords);
   },
 }));
