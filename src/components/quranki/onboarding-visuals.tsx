@@ -10,7 +10,7 @@ import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
 import { createNewCard, previewGrades } from '@/lib/fsrs';
 import { hapticSelection } from '@/lib/haptics';
 import { shapeQpcArabic } from '@/lib/arabic-display';
-import { CURRICULUM_LEMMA_COUNT, getCoverageThroughLevel, LAST_LEVEL_NUMBER, LEVELS, STAGES, THEMATIC_WORD_COUNT } from '@/lib/levels';
+import { CURRICULUM_LEMMA_COUNT, getCoverageThroughLevel, LAST_FREQUENCY_LEVEL, LEVELS, STAGES, THEMATIC_WORD_COUNT } from '@/lib/levels';
 import { exampleSurface, getVocabExample } from '@/lib/vocab-examples';
 import { glossColor } from '@/lib/quran-colors';
 import { BISMILLAH_WORDS } from '@/lib/quran-reader';
@@ -174,7 +174,7 @@ function PreviewWord({
 export function OnboardingCoveragePreview() {
   const theme = useTheme();
   const core = getCoverageThroughLevel(STAGES[0].lastLevel);
-  const full = getCoverageThroughLevel(LAST_LEVEL_NUMBER);
+  const full = getCoverageThroughLevel(LAST_FREQUENCY_LEVEL);
 
   return (
     <View style={styles.coverageCol}>

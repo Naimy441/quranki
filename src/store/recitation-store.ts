@@ -268,6 +268,7 @@ function onPlaybackStatus(status: AudioStatus): void {
       positionSeconds: status.duration,
       durationSeconds: status.duration,
       rangeFinished: true,
+      wordNumber: 0,
     });
     return;
   }

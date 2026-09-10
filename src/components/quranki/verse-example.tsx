@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/immutability -- Reanimated SharedValue.value is written on the UI thread. */
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -86,7 +86,9 @@ export function VerseExample({ word, example }: VerseExampleProps) {
     return s.awaitingAudio && !s.playing ? 'loading' as const : s.playing ? 'playing' as const : 'paused' as const;
   });
   const speakingWord = useRecitationStore((s) => (
-    s.mode === 'ayah' && s.surahNumber === example.s && s.ayahNumber === example.a ? s.wordNumber : 0
+    s.playing && s.mode === 'ayah' && s.surahNumber === example.s && s.ayahNumber === example.a
+      ? s.wordNumber
+      : 0
   ));
   const showSpinner = downloading || playback === 'loading';
 
@@ -197,12 +199,23 @@ export function VerseExamplePager({ word, examples }: { word: Word; examples: Vo
   const theme = useTheme();
   const [index, setIndex] = useState(0);
   const [pageWidth, setPageWidth] = useState(0);
+  const [clipReady, setClipReady] = useState(false);
   const count = examples.length;
   const safeIndex = Math.min(index, Math.max(count - 1, 0));
   const offset = useSharedValue(0);
   const startOffset = useSharedValue(0);
   const widthSV = useSharedValue(0);
   const indexSV = useSharedValue(0);
+  const clipHeight = useSharedValue(0);
+  const pageHeightsRef = useRef<number[]>([]);
+
+  const applyClipHeight = useCallback((next: number, animated: boolean) => {
+    const height = pageHeightsRef.current[next] ?? 0;
+    if (height <= 0) return;
+    clipHeight.value = animated
+      ? withTiming(height, { duration: SLIDE_MS, easing: Easing.out(Easing.cubic) })
+      : height;
+  }, [clipHeight]);
 
   const settleTo = useCallback(
     (next: number, haptic: boolean) => {
@@ -211,19 +224,23 @@ export function VerseExamplePager({ word, examples }: { word: Word; examples: Vo
       if (haptic && clamped !== indexSV.value) hapticSelection();
       indexSV.value = clamped;
       setIndex(clamped);
+      applyClipHeight(clamped, true);
       offset.value = withTiming(-clamped * width, {
         duration: SLIDE_MS,
         easing: Easing.out(Easing.cubic),
       });
     },
-    [count, indexSV, offset, widthSV],
+    [applyClipHeight, count, indexSV, offset, widthSV],
   );
 
   useEffect(() => {
     indexSV.value = 0;
     offset.value = 0;
+    clipHeight.value = 0;
+    pageHeightsRef.current = [];
+    setClipReady(false);
     setIndex(0);
-  }, [word.id, indexSV, offset]);
+  }, [word.id, clipHeight, indexSV, offset]);
 
   useEffect(() => {
     stopRecitation();
@@ -261,20 +278,24 @@ export function VerseExamplePager({ word, examples }: { word: Word; examples: Vo
           });
           if (next !== current) runOnJS(hapticSelection)();
           runOnJS(setIndex)(next);
+          runOnJS(applyClipHeight)(next, true);
         }),
-    [count, indexSV, offset, pageWidth, startOffset, widthSV],
+    [applyClipHeight, count, indexSV, offset, pageWidth, startOffset, widthSV],
   );
 
   const stripStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: offset.value }],
+  }));
+  const clipStyle = useAnimatedStyle(() => ({
+    height: clipHeight.value,
   }));
 
   if (count === 0) return null;
 
   return (
     <View style={styles.pager}>
-      <View
-        style={styles.pagerClip}
+      <Animated.View
+        style={[styles.pagerClip, clipReady && count > 1 && clipStyle]}
         onLayout={(event) => {
           const width = event.nativeEvent.layout.width;
           if (width <= 0 || width === pageWidth) return;
@@ -287,15 +308,26 @@ export function VerseExamplePager({ word, examples }: { word: Word; examples: Vo
         ) : (
           <GestureDetector gesture={swipe}>
             <Animated.View style={[styles.strip, { width: pageWidth * count }, stripStyle]}>
-              {examples.map((item) => (
-                <View key={`${item.s}:${item.a}:${item.p}`} style={[styles.page, { width: pageWidth }]}>
+              {examples.map((item, pageIndex) => (
+                <View
+                  key={`${item.s}:${item.a}:${item.p}`}
+                  style={[styles.page, { width: pageWidth }]}
+                  onLayout={(event) => {
+                    const height = Math.round(event.nativeEvent.layout.height);
+                    if (height <= 0 || pageHeightsRef.current[pageIndex] === height) return;
+                    pageHeightsRef.current[pageIndex] = height;
+                    if (pageIndex === indexSV.value) {
+                      applyClipHeight(pageIndex, clipReady);
+                      if (!clipReady) setClipReady(true);
+                    }
+                  }}>
                   <VerseExample word={word} example={item} />
                 </View>
               ))}
             </Animated.View>
           </GestureDetector>
         )}
-      </View>
+      </Animated.View>
       {count > 1 ? (
         <View style={styles.dots} accessibilityRole="adjustable" accessibilityLabel="Example ayah">
           {examples.map((item, i) => (

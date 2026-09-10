@@ -44,6 +44,7 @@ const PINNED = {
   تِلَاوَت: 'religion',
   ٱعْتَمَرَ: 'worship',
   إِى: 'questions',
+  سَحَر: 'time',
 };
 
 function hay(word, glosses = []) {

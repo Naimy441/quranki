@@ -57,6 +57,11 @@ export function FlashCard({ word, revealed, onSpeak, isSpeaking }: FlashCardProp
           <ThemedText type="subtitle" style={styles.englishText}>
             {word.english}
           </ThemedText>
+          {word.transliteration ? (
+            <ThemedText type="small" themeColor="textSecondary" style={styles.note}>
+              {word.transliteration}
+            </ThemedText>
+          ) : null}
           {word.contractionOf ? (
             <View style={styles.composition}>
               <ArabicText style={styles.compositionArabic}>{word.contractionOf}</ArabicText>

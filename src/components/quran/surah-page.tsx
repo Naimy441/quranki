@@ -33,6 +33,9 @@ interface SurahPageProps {
   onLongPressWord?: (ref: ReaderWordRef) => void;
   onOpenMarks?: (ayah: number) => void;
   focusAyah?: number;
+  /** Bumped when an external jump (bookmark, pin) asks this page to scroll again, even
+   *  to the ayah it already opened on. */
+  focusEpoch?: number;
   isActive?: boolean;
   onVisibleAyah?: (ayah: number) => void;
   /** Retained for callers while virtualization owns the actual render window. */
@@ -59,6 +62,7 @@ export function SurahPage({
   onLongPressWord,
   onOpenMarks,
   focusAyah = 0,
+  focusEpoch = 0,
   isActive = false,
   onVisibleAyah,
   extraBottomPadding = 0,
@@ -139,7 +143,7 @@ export function SurahPage({
 
   useEffect(() => {
     didFocus.current = false;
-  }, [focusAyah, surahNumber]);
+  }, [focusAyah, focusEpoch, surahNumber]);
 
   const scrollToAyah = useCallback(
     (ayahNumber: number, animated: boolean, viewPosition = 0.12) => {
@@ -229,13 +233,14 @@ export function SurahPage({
   }, [recitationAyah, recitationBismillah, autoScrollSuspended, scrollToAyah, scrollToSurahStart]);
 
   useEffect(() => {
-    if (!isActive || focusAyah <= 0 || focusAyah === initialFocusAyah || didFocus.current) return;
+    if (!isActive || focusAyah <= 0 || didFocus.current) return;
+    if (focusEpoch === 0 && focusAyah === initialFocusAyah) return;
     didFocus.current = true;
     requestAnimationFrame(() => {
       if (focusAyah === 1) scrollToSurahStart();
       else scrollToAyah(focusAyah, false);
     });
-  }, [focusAyah, initialFocusAyah, isActive, scrollToAyah, scrollToSurahStart]);
+  }, [focusAyah, focusEpoch, initialFocusAyah, isActive, scrollToAyah, scrollToSurahStart]);
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<ReaderAyah>) => (

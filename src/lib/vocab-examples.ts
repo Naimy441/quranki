@@ -1,3 +1,4 @@
+import vocabExampleOverrides from '@/data/quran/vocab-example-overrides.json';
 import vocabExamplesData from '@/data/quran/vocab-examples.json';
 import { studyForms } from '@/lib/arabic-display';
 import type { Word } from '@/lib/levels';
@@ -23,7 +24,10 @@ export interface VocabExample extends VocabExampleRef {
 
 type StoredExample = VocabExampleRef & { w?: string[]; tr?: string };
 
-const examples = vocabExamplesData as Record<string, StoredExample | StoredExample[]>;
+const examples = {
+  ...(vocabExamplesData as Record<string, StoredExample | StoredExample[]>),
+  ...(vocabExampleOverrides as Record<string, StoredExample | StoredExample[]>),
+};
 
 /** Keep vowels so لِمَ does not collide with لَم; drop shadda/recitation marks so لِّمَا matches لِمَا. */
 function foldExampleSurface(text: string): string {
@@ -91,6 +95,15 @@ function exampleFromVerse(word: Word): VocabExample | undefined {
 
 export function exampleSurface(example: VocabExample): string {
   return example.w[example.p - 1] ?? '';
+}
+
+/** Word positions to play for this example: a phrase span, discrete hits, or the tagged word. */
+export function exampleAudioPositions(example: VocabExampleRef): number[] {
+  if (example.hits && example.hits.length > 0) {
+    return [...example.hits].sort((a, b) => a - b);
+  }
+  const span = Math.max(1, example.n ?? 1);
+  return Array.from({ length: span }, (_, index) => example.p + index);
 }
 
 export function getVocabExamples(word: Word): VocabExample[] {

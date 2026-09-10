@@ -10,7 +10,7 @@ import {
     type Card,
     type GradeName,
 } from '@/lib/fsrs';
-import { computeReachedLevel, getLevel, getWord, LAST_LEVEL_NUMBER, LEVELS, nextReachedLevel, type ProgressMap, type WordProgress } from '@/lib/levels';
+import { computeReachedLevel, getLevel, getWord, isLevelUnlocked as levelIsUnlocked, LAST_LEVEL_NUMBER, LEVELS, nextReachedLevel, type ProgressMap, type WordProgress } from '@/lib/levels';
 import { syncPracticeReminder } from '@/lib/practice-reminder';
 import { calendarDayKey, pruneStudyMsByDate, sanitizeStudyMsByDate, getStreakReclaimOpportunity } from '@/lib/stats';
 import {
@@ -51,7 +51,13 @@ interface ProgressState {
    *  whether it graduated to the long-term Review state or is still Learning/Relearning (due
    *  again within minutes, per ts-fsrs's learning_steps/relearning_steps), the same distinction
    *  Anki uses to decide whether a card needs to resurface later in *this* sitting. */
-  gradeWord: (wordId: string, grade: GradeName) => Card;
+  gradeWord: (wordId: string, grade: GradeName, options?: { fromCard?: Card; replaceSessionGrade?: boolean }) => Card;
+  /** Restores a word to its pre-session card after the learner goes back and discards a rating. */
+  revertSessionWord: (
+    wordId: string,
+    previous: WordProgress | undefined,
+    daily: { countedAsNew?: boolean; countedAsReview?: boolean },
+  ) => void;
   /** Increments and returns the number of times this vocab id has been peeked (hidden → shown)
    *  in the reader since the last real passing grade. */
   noteReaderPeek: (wordId: string) => number;
@@ -205,11 +211,11 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     persistMeta({ ...state, studyMsByDate });
   },
 
-  gradeWord: (wordId, grade) => {
+  gradeWord: (wordId, grade, options) => {
     const now = new Date();
     const state = get();
     const existing = state.progress[wordId];
-    const card = existing ? deserializeCard(existing.card) : createNewCard(now);
+    const card = options?.fromCard ?? (existing ? deserializeCard(existing.card) : createNewCard(now));
     const { card: nextCard } = gradeCard(card, grade, now);
 
     const nextWordProgress: WordProgress = {
@@ -229,8 +235,10 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
         ? [...state.streakGraceDates, missedDay]
         : state.streakGraceDates;
     const nextMaxUnlockedLevel = nextReachedLevel(nextProgress, state.maxUnlockedLevel);
-    const countsAsDailyReview = existing !== undefined && card.state === State.Review;
-    const isNewIntroduction = existing === undefined && getWord(wordId)?.kind !== 'grammar';
+    const countsAsDailyReview =
+      !options?.replaceSessionGrade && existing !== undefined && card.state === State.Review;
+    const isNewIntroduction =
+      !options?.replaceSessionGrade && existing === undefined && getWord(wordId)?.kind !== 'grammar';
     const reviewsToday = (state.reviewCountDate === key ? state.reviewsToday : 0) + (countsAsDailyReview ? 1 : 0);
     const newCardsToday = (state.reviewCountDate === key ? state.newCardsToday : 0) + (isNewIntroduction ? 1 : 0);
 
@@ -260,6 +268,39 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       newCardsToday,
     });
     return nextCard;
+  },
+
+  revertSessionWord: (wordId, previous, daily) => {
+    const state = get();
+    const nextProgress: ProgressMap = { ...state.progress };
+    if (previous) nextProgress[wordId] = previous;
+    else delete nextProgress[wordId];
+    const now = new Date();
+    const key = todayKey(now);
+    const reviewsToday = Math.max(
+      0,
+      (state.reviewCountDate === key ? state.reviewsToday : 0) - (daily.countedAsReview ? 1 : 0),
+    );
+    const newCardsToday = Math.max(
+      0,
+      (state.reviewCountDate === key ? state.newCardsToday : 0) - (daily.countedAsNew ? 1 : 0),
+    );
+    const nextMaxUnlockedLevel = nextReachedLevel(nextProgress, state.maxUnlockedLevel);
+    set({
+      progress: nextProgress,
+      maxUnlockedLevel: nextMaxUnlockedLevel,
+      reviewCountDate: key,
+      reviewsToday,
+      newCardsToday,
+    });
+    void saveProgressAsync(nextProgress);
+    persistMeta({
+      ...state,
+      maxUnlockedLevel: nextMaxUnlockedLevel,
+      reviewCountDate: key,
+      reviewsToday,
+      newCardsToday,
+    });
   },
 
   noteReaderPeek: (wordId) => {
@@ -470,7 +511,7 @@ export function didUnlockLevel(previousMax: number, nextMax: number, levelNumber
 }
 
 export function isLevelUnlocked(levelNumber: number, maxUnlockedLevel: number): boolean {
-  return levelNumber <= maxUnlockedLevel;
+  return levelIsUnlocked(levelNumber, maxUnlockedLevel);
 }
 
 export function levelExists(levelNumber: number): boolean {

@@ -9,7 +9,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { displayArabic } from '@/lib/arabic-display';
-import { getCoverageThroughLevel, getGrammarIntro, getLevel, getLevelStatus, type WordState } from '@/lib/levels';
+import { getCoverageThroughLevel, getGrammarIntro, getLevel, getLevelStatus, isAsmaLevel, type WordState } from '@/lib/levels';
 import { formatCount } from '@/lib/stats';
 import { useProgressStore } from '@/store/progress-store';
 
@@ -50,16 +50,27 @@ export default function LevelDetailScreen() {
               <ThemedText type="title" style={styles.title}>
                 {level.title}
               </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                Once mastered through here, {coverage.percent}% of the Quran
-              </ThemedText>
-              <ThemedText type="small" themeColor="textMuted">
-                {formatCount(coverage.quranWords)} words
-              </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                These words are introduced automatically, in this order, during study. Reviews of
-                words you already know are mixed into the same daily session.
-              </ThemedText>
+              {isAsmaLevel(level.number) ? (
+                <ThemedText type="small" themeColor="textSecondary">
+                  These names unlock after Stage 1 and are studied as their own stage. When the
+                  Quran uses the name itself, that verse is the example; otherwise the verse shows
+                  the same meaning. Reviews of names you already know are mixed into the same daily
+                  session.
+                </ThemedText>
+              ) : (
+                <>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Once mastered through here, {coverage.percent}% of the Quran
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textMuted">
+                    {formatCount(coverage.quranWords)} words
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    These words are introduced automatically, in this order, during study. Reviews of
+                    words you already know are mixed into the same daily session.
+                  </ThemedText>
+                </>
+              )}
 
               <View style={styles.summaryRow}>
                 <SummaryPill label="Mastered" value={status.masteredCount} color={theme.primary} />
@@ -80,7 +91,7 @@ export default function LevelDetailScreen() {
               <View style={[styles.wordRow, { borderColor: theme.border }]}>
                 <ArabicText style={styles.wordArabic}>{displayArabic(item.word)}</ArabicText>
                 <ThemedText type="small" themeColor="textSecondary" style={styles.wordEnglish} numberOfLines={1}>
-                  {item.word.english}
+                  {item.word.transliteration ?? item.word.english}
                 </ThemedText>
                 <ThemedText type="small" themeColor={color} style={styles.wordStatus}>
                   {label}

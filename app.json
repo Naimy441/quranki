@@ -46,6 +46,7 @@
         }
       ],
       "./plugins/with-android-text-metrics",
+      "./plugins/with-launch-theme",
       [
         "expo-audio",
         {

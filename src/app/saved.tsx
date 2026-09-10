@@ -130,13 +130,24 @@ export default function SavedScreen() {
                         removePin(pin.id);
                       });
                     }}
+                    onPlay={
+                      placement
+                        ? () => {
+                            setMenuId(null);
+                            openQuranLocation(placement.surah, placement.ayah, {
+                              play: true,
+                              fromOverlay: true,
+                            });
+                          }
+                        : undefined
+                    }
                     onPress={() => {
                       if (menuId === pin.id) {
                         setMenuId(null);
                         return;
                       }
                       if (placement) {
-                        openQuranLocation(placement.surah, placement.ayah);
+                        openQuranLocation(placement.surah, placement.ayah, { fromOverlay: true });
                         return;
                       }
                       hapticSelection();
@@ -209,6 +220,12 @@ export default function SavedScreen() {
                             key={bookmark.id}
                             surah={bookmark.surah}
                             ayah={bookmark.ayah}
+                            onPlay={() => {
+                              openQuranLocation(bookmark.surah, bookmark.ayah, {
+                                play: true,
+                                fromOverlay: true,
+                              });
+                            }}
                             onRemove={() => {
                               hapticWarning();
                               removeBookmark(bookmark.id);
@@ -323,6 +340,7 @@ function MarkRow({
   onToggleMenu,
   onEdit,
   onDelete,
+  onPlay,
   onPress,
 }: {
   icon: 'pin' | 'bookmark';
@@ -333,6 +351,7 @@ function MarkRow({
   onToggleMenu: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onPlay?: () => void;
   onPress: () => void;
 }) {
   const theme = useTheme();
@@ -357,6 +376,9 @@ function MarkRow({
           {subtitle}
         </ThemedText>
       </View>
+      {onPlay && !menuOpen ? (
+        <PlayAyahButton label={`Play from ${subtitle}`} onPress={onPlay} />
+      ) : null}
       <SlideOutActions
         open={menuOpen}
         onToggle={onToggleMenu}
@@ -382,23 +404,49 @@ function MarkRow({
   );
 }
 
-function AyahRow({ surah, ayah, onRemove }: { surah: number; ayah: number; onRemove: () => void }) {
+function PlayAyahButton({ label, onPress }: { label: string; onPress: () => void }) {
   const theme = useTheme();
-  const preview = getAyahArabicPreview(surah, ayah);
   return (
     <Pressable
-      onPress={() => openQuranLocation(surah, ayah)}
+      onPress={onPress}
+      hitSlop={8}
       accessibilityRole="button"
-      accessibilityLabel={formatAyahLocation(surah, ayah)}
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.playButton, pressed && styles.pressed]}>
+      <Ionicons name="play" size={18} color={theme.primary} />
+    </Pressable>
+  );
+}
+
+function AyahRow({
+  surah,
+  ayah,
+  onPlay,
+  onRemove,
+}: {
+  surah: number;
+  ayah: number;
+  onPlay: () => void;
+  onRemove: () => void;
+}) {
+  const theme = useTheme();
+  const preview = getAyahArabicPreview(surah, ayah);
+  const location = formatAyahLocation(surah, ayah);
+  return (
+    <Pressable
+      onPress={() => openQuranLocation(surah, ayah, { fromOverlay: true })}
+      accessibilityRole="button"
+      accessibilityLabel={location}
       style={({ pressed }) => [styles.ayahRow, pressed && styles.pressed]}>
       <View style={styles.rowBody}>
-        <ThemedText type="smallBold">{formatAyahLocation(surah, ayah)}</ThemedText>
+        <ThemedText type="smallBold">{location}</ThemedText>
         {preview ? (
           <ArabicText numberOfLines={1} style={styles.preview}>
             {preview}
           </ArabicText>
         ) : null}
       </View>
+      <PlayAyahButton label={`Play from ${location}`} onPress={onPlay} />
       <Pressable onPress={onRemove} hitSlop={8} accessibilityLabel="Remove bookmark">
         <Ionicons name="close" size={18} color={theme.textMuted} />
       </Pressable>
@@ -468,6 +516,12 @@ const styles = StyleSheet.create({
     paddingLeft: Spacing.four + 28 + Spacing.three,
     paddingRight: Spacing.four,
     paddingVertical: Spacing.two,
+  },
+  playButton: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyCollection: {
     paddingLeft: Spacing.four + 28 + Spacing.three,

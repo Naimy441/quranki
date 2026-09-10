@@ -329,10 +329,22 @@ function buildVocabExampleMap({
       return { s, a, p, n, ayah, bonus, hits };
     };
 
+    const prefixFits = (item) => {
+      if (!study.isPrefix || !item?.ayah) return true;
+      const word = item.ayah.w.find((row) => row.p === item.p);
+      if (!word) return false;
+      const surface = normalizeLightLoose(word.ar.map((seg) => seg.t).join(''));
+      const forms = String(study.arabic ?? '')
+        .split(/[,\u060c]/)
+        .map((part) => normalizeLightLoose(part.replace(/\u0640/g, '').trim()))
+        .filter(Boolean);
+      return forms.some((form) => surface.startsWith(form) || surface.startsWith(`و${form}`) || surface.startsWith(`ف${form}`));
+    };
+
     const candidates = [];
     const pushAll = (items) => {
       for (const item of items) {
-        if (item.ayah) candidates.push(item);
+        if (item.ayah && prefixFits(item)) candidates.push(item);
       }
     };
 

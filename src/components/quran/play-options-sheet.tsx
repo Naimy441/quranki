@@ -16,6 +16,9 @@ const WHEEL_HEIGHT = ROW_HEIGHT * 5;
 interface PlayOptionsSheetProps {
   visible: boolean;
   surahNumber: number;
+  /** Inclusive start of the default range - the ayah currently on screen when the
+   *  header play button opened this sheet. End still defaults to the last ayah. */
+  initialFromAyah?: number;
   onDismiss: () => void;
   /** Dismisses this sheet and pushes `/reciter-picker` - see `[surah].tsx`, which reopens this
    *  sheet when the reader comes back. The list can't be embedded inline here: unlike a plain
@@ -28,9 +31,16 @@ interface PlayOptionsSheetProps {
 }
 
 /** Shown the moment the header play button starts a *fresh* surah session (not on plain
- *  pause/resume - see `[surah].tsx`) - lets the reader narrow which ayahs play (default: the
- *  whole surah) before starting. */
-export function PlayOptionsSheet({ visible, surahNumber, onDismiss, onPressReciter, onPlay }: PlayOptionsSheetProps) {
+ *  pause/resume - see `[surah].tsx`) - lets the reader narrow which ayahs play (default: from
+ *  the ayah on screen through the end of the surah) before starting. */
+export function PlayOptionsSheet({
+  visible,
+  surahNumber,
+  initialFromAyah = 1,
+  onDismiss,
+  onPressReciter,
+  onPlay,
+}: PlayOptionsSheetProps) {
   const theme = useTheme();
   const { height: windowHeight } = useWindowDimensions();
   const meta = getSurahMeta(surahNumber);
@@ -38,7 +48,9 @@ export function PlayOptionsSheet({ visible, surahNumber, onDismiss, onPressRecit
   const ayahs = useMemo(() => Array.from({ length: ayahCount }, (_, index) => index + 1), [ayahCount]);
   const selectedReciterKey = useProgressStore((s) => s.settings.selectedReciterKey);
 
-  const [fromAyah, setFromAyah] = useState(1);
+  const [fromAyah, setFromAyah] = useState(() =>
+    Math.max(1, Math.min(ayahCount, Math.round(initialFromAyah) || 1)),
+  );
   const [toAyah, setToAyah] = useState(ayahCount);
   const fromRef = useRef<FlatList<number>>(null);
   const toRef = useRef<FlatList<number>>(null);
@@ -97,9 +109,8 @@ export function PlayOptionsSheet({ visible, surahNumber, onDismiss, onPressRecit
                 style={styles.wheel}
                 contentContainerStyle={styles.wheelContent}
                 // Not `contentOffset` (see the "to" wheel below for why): `initialScrollIndex`
-                // is a no-op here since `fromAyah` defaults to 1 (index 0, already the resting
-                // scroll position), but stays correct if a reciter-picker round trip preserved a
-                // non-default starting ayah.
+                // waits for a real content size before scrolling, which matters when the start
+                // ayah is mid-surah (the ayah currently on screen).
                 initialScrollIndex={fromAyah - 1}
                 data={ayahs}
                 keyExtractor={String}
@@ -126,8 +137,8 @@ export function PlayOptionsSheet({ visible, surahNumber, onDismiss, onPressRecit
                 // mount, which - since `ayahCount` is bundled, static `SURAH_INDEX` data (see
                 // `lib/quran-reader.ts`), never anything downloaded - is already known and
                 // correct on this component's very first render, covering both a genuinely fresh
-                // open (a remount via `[surah].tsx`'s `playOptionsOpenId` key, landing on the
-                // full range) and the reciter-picker round trip (`fromAyah`/`toAyah` preserved).
+                // open (a remount via `[surah].tsx`'s `playOptionsOpenId` key, start at the
+                // on-screen ayah) and the reciter-picker round trip (`fromAyah`/`toAyah` preserved).
                 initialScrollIndex={toAyah - 1}
                 data={ayahs}
                 keyExtractor={String}

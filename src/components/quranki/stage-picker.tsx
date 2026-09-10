@@ -5,7 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticSelection } from '@/lib/haptics';
-import { getCoverageThroughLevel, type Stage, type StageProgress } from '@/lib/levels';
+import { getCoverageThroughLevel, isAsmaStage, type Stage, type StageProgress } from '@/lib/levels';
 import { daysAtPace, formatCount, formatDaysAtPace } from '@/lib/stats';
 
 export interface StageEntry {
@@ -77,9 +77,13 @@ export function StagePicker({ entries, selectedStageId, wordsPerDay, onSelect }:
           {stage.title}
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {unlocked
-            ? `${formatCount(mastered)} of ${formatCount(total)} mastered · ${coverage.percent}% of the Quran`
-            : `${stage.subtitle} · ${formatCount(total)} words · unlocks as you progress`}
+          {isAsmaStage(stage)
+            ? unlocked
+              ? `${formatCount(mastered)} of ${formatCount(total)} mastered · ${stage.subtitle}`
+              : `${stage.subtitle} · ${formatCount(total)} names · unlocks after Stage 1`
+            : unlocked
+              ? `${formatCount(mastered)} of ${formatCount(total)} mastered · ${coverage.percent}% of the Quran`
+              : `${stage.subtitle} · ${formatCount(total)} words · unlocks as you progress`}
         </ThemedText>
         {daysLabel ? (
           <ThemedText type="small" themeColor="textMuted">

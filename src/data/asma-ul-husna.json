@@ -1,0 +1,1078 @@
+{
+  "metadata": {
+    "source": "Traditional Asma ul-Husna list, with Quran examples",
+    "firstLevel": 48,
+    "lastLevel": 57,
+    "wordCount": 99
+  },
+  "levels": [
+    {
+      "number": 48,
+      "id": "asma-1",
+      "title": "99 Names 1",
+      "words": [
+        {
+          "id": "asma-000",
+          "kind": "grammar",
+          "arabic": "الْأَسْمَاءُ الْحُسْنَىٰ",
+          "english": "The most beautiful names",
+          "note": "Memorize the 99 names. When the Quran uses the name itself, that verse is the example. Some traditional names are not in the Quran as a name; those cards use a verse where Allah is described with the same meaning.",
+          "exampleOf": "asma-01"
+        },
+        {
+          "id": "asma-01",
+          "arabic": "ٱلرَّحْمَٰنُ",
+          "english": "The Most or Entirely Merciful",
+          "transliteration": "Ar-Raḥmān",
+          "exampleVerse": {
+            "s": 1,
+            "a": 3
+          }
+        },
+        {
+          "id": "asma-02",
+          "arabic": "ٱلرَّحِيمُ",
+          "english": "The Especially Merciful",
+          "transliteration": "Ar-Raḥīm",
+          "exampleVerse": {
+            "s": 1,
+            "a": 3
+          }
+        },
+        {
+          "id": "asma-03",
+          "arabic": "ٱلْمَلِكُ",
+          "english": "The King and Owner of Dominion",
+          "transliteration": "Al-Malik",
+          "exampleVerse": {
+            "s": 59,
+            "a": 23
+          }
+        },
+        {
+          "id": "asma-04",
+          "arabic": "ٱلْقُدُّوسُ",
+          "english": "The Absolutely Pure and Perfect",
+          "transliteration": "Al-Quddūs",
+          "exampleVerse": {
+            "s": 59,
+            "a": 23
+          }
+        },
+        {
+          "id": "asma-05",
+          "arabic": "ٱلسَّلَامُ",
+          "english": "The Perfection and Giver of Peace",
+          "transliteration": "As-Salām",
+          "exampleVerse": {
+            "s": 59,
+            "a": 23
+          }
+        },
+        {
+          "id": "asma-06",
+          "arabic": "ٱلْمُؤْمِنُ",
+          "english": "The Granter of Security and Faith",
+          "transliteration": "Al-Mu'min",
+          "exampleVerse": {
+            "s": 59,
+            "a": 23
+          }
+        },
+        {
+          "id": "asma-07",
+          "arabic": "ٱلْمُهَيْمِنُ",
+          "english": "The Guardian, The Witness, The Overseer",
+          "transliteration": "Al-Muhaymin",
+          "exampleVerse": {
+            "s": 59,
+            "a": 23
+          }
+        },
+        {
+          "id": "asma-08",
+          "arabic": "ٱلْعَزِيزُ",
+          "english": "The Almighty, The All-Powerful, The Invincible, The Honorable",
+          "transliteration": "Al-'Azīz",
+          "exampleVerse": {
+            "s": 59,
+            "a": 23
+          }
+        },
+        {
+          "id": "asma-09",
+          "arabic": "ٱلْجَبَّارُ",
+          "english": "The Compeller, The Restorer",
+          "transliteration": "Al-Jabbār",
+          "exampleVerse": {
+            "s": 59,
+            "a": 23
+          }
+        },
+        {
+          "id": "asma-10",
+          "arabic": "ٱلْمُتَكَبِّرُ",
+          "english": "The Supreme, The Majestic",
+          "transliteration": "Al-Mutakabbir",
+          "exampleVerse": {
+            "s": 59,
+            "a": 23
+          }
+        }
+      ]
+    },
+    {
+      "number": 49,
+      "id": "asma-2",
+      "title": "99 Names 2",
+      "words": [
+        {
+          "id": "asma-11",
+          "arabic": "ٱلْخَٰلِقُ",
+          "english": "The Creator, The Maker",
+          "transliteration": "Al-Khāliq",
+          "exampleVerse": {
+            "s": 59,
+            "a": 24
+          }
+        },
+        {
+          "id": "asma-12",
+          "arabic": "ٱلْبَارِئُ",
+          "english": "The Originator, The Inventor",
+          "transliteration": "Al-Bāriʾ",
+          "exampleVerse": {
+            "s": 59,
+            "a": 24
+          }
+        },
+        {
+          "id": "asma-13",
+          "arabic": "ٱلْمُصَوِّرُ",
+          "english": "The Fashioner, The Shaper",
+          "transliteration": "Al-Muṣawwir",
+          "exampleVerse": {
+            "s": 59,
+            "a": 24
+          }
+        },
+        {
+          "id": "asma-14",
+          "arabic": "ٱلْغَفَّارُ",
+          "english": "The Constant Forgiver, The Great Forgiver",
+          "transliteration": "Al-Ghaffār",
+          "exampleVerse": {
+            "s": 20,
+            "a": 82
+          }
+        },
+        {
+          "id": "asma-15",
+          "arabic": "ٱلْقَهَّارُ",
+          "english": "The Subduer, The Ever-Dominating",
+          "transliteration": "Al-Qahhār",
+          "exampleVerse": {
+            "s": 13,
+            "a": 16
+          }
+        },
+        {
+          "id": "asma-16",
+          "arabic": "ٱلْوَهَّابُ",
+          "english": "The Giver of Gifts, The Bestower",
+          "transliteration": "Al-Wahhāb",
+          "exampleVerse": {
+            "s": 3,
+            "a": 8
+          }
+        },
+        {
+          "id": "asma-17",
+          "arabic": "ٱلرَّزَّاقُ",
+          "english": "The Ever-Providing, The Constant Provider",
+          "transliteration": "Ar-Razzāq",
+          "exampleVerse": {
+            "s": 51,
+            "a": 58
+          }
+        },
+        {
+          "id": "asma-18",
+          "arabic": "ٱلْفَتَّاحُ",
+          "english": "The Opener, The Judge",
+          "transliteration": "Al-Fattāḥ",
+          "exampleVerse": {
+            "s": 34,
+            "a": 26
+          }
+        },
+        {
+          "id": "asma-19",
+          "arabic": "ٱلْعَلِيمُ",
+          "english": "The All-Knowing, The Omniscient",
+          "transliteration": "Al-ʿAlīm",
+          "exampleVerse": {
+            "s": 2,
+            "a": 32
+          }
+        },
+        {
+          "id": "asma-20",
+          "arabic": "ٱلْقَابِضُ",
+          "english": "The Withholder, The Restrainer",
+          "transliteration": "Al-Qābiḍ",
+          "exampleVerse": {
+            "s": 2,
+            "a": 245
+          }
+        }
+      ]
+    },
+    {
+      "number": 50,
+      "id": "asma-3",
+      "title": "99 Names 3",
+      "words": [
+        {
+          "id": "asma-21",
+          "arabic": "ٱلْبَاسِطُ",
+          "english": "The Extender, The Expander",
+          "transliteration": "Al-Bāsiṭ",
+          "exampleVerse": {
+            "s": 2,
+            "a": 245
+          }
+        },
+        {
+          "id": "asma-22",
+          "arabic": "ٱلْخَافِضُ",
+          "english": "The Reducer, The Abaser",
+          "transliteration": "Al-Khāfiḍ",
+          "exampleVerse": {
+            "s": 56,
+            "a": 3
+          }
+        },
+        {
+          "id": "asma-23",
+          "arabic": "ٱلرَّافِعُ",
+          "english": "The Exalter, The Elevator",
+          "transliteration": "Ar-Rāfiʿ",
+          "exampleVerse": {
+            "s": 56,
+            "a": 3
+          }
+        },
+        {
+          "id": "asma-24",
+          "arabic": "ٱلْمُعِزُّ",
+          "english": "The Honourer, The Bestower of Honor",
+          "transliteration": "Al-Muʿizz",
+          "exampleVerse": {
+            "s": 3,
+            "a": 26
+          }
+        },
+        {
+          "id": "asma-25",
+          "arabic": "ٱلْمُذِلُّ",
+          "english": "The Dishonourer, The Humiliator",
+          "transliteration": "Al-Mudhill",
+          "exampleVerse": {
+            "s": 3,
+            "a": 26
+          }
+        },
+        {
+          "id": "asma-26",
+          "arabic": "ٱلسَّمِيعُ",
+          "english": "The All-Hearing",
+          "transliteration": "As-Samīʿ",
+          "exampleVerse": {
+            "s": 2,
+            "a": 127
+          }
+        },
+        {
+          "id": "asma-27",
+          "arabic": "ٱلْبَصِيرُ",
+          "english": "The All-Seeing",
+          "transliteration": "Al-Baṣīr",
+          "exampleVerse": {
+            "s": 17,
+            "a": 1
+          }
+        },
+        {
+          "id": "asma-28",
+          "arabic": "ٱلْحَكَمُ",
+          "english": "The Judge, The Giver of Justice",
+          "transliteration": "Al-Ḥakam",
+          "exampleVerse": {
+            "s": 6,
+            "a": 114
+          }
+        },
+        {
+          "id": "asma-29",
+          "arabic": "ٱلْعَدْلُ",
+          "english": "The Utterly Just",
+          "transliteration": "Al-'Adl",
+          "exampleVerse": {
+            "s": 6,
+            "a": 115
+          }
+        },
+        {
+          "id": "asma-30",
+          "arabic": "ٱللَّطِيفُ",
+          "english": "The Most Gentle, The Subtle One",
+          "transliteration": "Al-Laṭīf",
+          "exampleVerse": {
+            "s": 6,
+            "a": 103
+          }
+        }
+      ]
+    },
+    {
+      "number": 51,
+      "id": "asma-4",
+      "title": "99 Names 4",
+      "words": [
+        {
+          "id": "asma-31",
+          "arabic": "ٱلْخَبِيرُ",
+          "english": "The All-Aware, The All-Acquainted",
+          "transliteration": "Al-Khabīr",
+          "exampleVerse": {
+            "s": 6,
+            "a": 103
+          }
+        },
+        {
+          "id": "asma-32",
+          "arabic": "ٱلْحَلِيمُ",
+          "english": "The Most Forbearing",
+          "transliteration": "Al-Ḥalīm",
+          "exampleVerse": {
+            "s": 2,
+            "a": 225
+          }
+        },
+        {
+          "id": "asma-33",
+          "arabic": "ٱلْعَظِيمُ",
+          "english": "The Magnificent, The Supreme",
+          "transliteration": "Al-ʿAẓīm",
+          "exampleVerse": {
+            "s": 2,
+            "a": 255
+          }
+        },
+        {
+          "id": "asma-34",
+          "arabic": "ٱلْغَفُورُ",
+          "english": "The Forgiving, The Exceedingly Forgiving",
+          "transliteration": "Al-Ghafūr",
+          "exampleVerse": {
+            "s": 2,
+            "a": 173
+          }
+        },
+        {
+          "id": "asma-35",
+          "arabic": "ٱلشَّكُورُ",
+          "english": "The Most Appreciative",
+          "transliteration": "Ash-Shakūr",
+          "exampleVerse": {
+            "s": 35,
+            "a": 30
+          }
+        },
+        {
+          "id": "asma-36",
+          "arabic": "ٱلْعَلِيُّ",
+          "english": "The Most High, The Exalted",
+          "transliteration": "Al-ʿAlī",
+          "exampleVerse": {
+            "s": 2,
+            "a": 255
+          }
+        },
+        {
+          "id": "asma-37",
+          "arabic": "ٱلْكَبِيرُ",
+          "english": "The Greatest, The Most Grand",
+          "transliteration": "Al-Kabīr",
+          "exampleVerse": {
+            "s": 13,
+            "a": 9
+          }
+        },
+        {
+          "id": "asma-38",
+          "arabic": "ٱلْحَفِيظُ",
+          "english": "The Preserver, The All-Heedful and All-Protecting",
+          "transliteration": "Al-Ḥafīẓ",
+          "exampleVerse": {
+            "s": 11,
+            "a": 57
+          }
+        },
+        {
+          "id": "asma-39",
+          "arabic": "ٱلْمُقِيتُ",
+          "english": "The Sustainer, The Maintainer",
+          "transliteration": "Al-Muqīt",
+          "exampleVerse": {
+            "s": 4,
+            "a": 85
+          }
+        },
+        {
+          "id": "asma-40",
+          "arabic": "ٱلْحَسِيبُ",
+          "english": "The Reckoner",
+          "transliteration": "Al-Ḥasīb",
+          "exampleVerse": {
+            "s": 4,
+            "a": 86
+          }
+        }
+      ]
+    },
+    {
+      "number": 52,
+      "id": "asma-5",
+      "title": "99 Names 5",
+      "words": [
+        {
+          "id": "asma-41",
+          "arabic": "ٱلْجَلِيلُ",
+          "english": "The Majestic",
+          "transliteration": "Al-Jalīl",
+          "exampleVerse": {
+            "s": 55,
+            "a": 27
+          }
+        },
+        {
+          "id": "asma-42",
+          "arabic": "ٱلْكَرِيمُ",
+          "english": "The Most Generous, The Most Noble",
+          "transliteration": "Al-Karīm",
+          "exampleVerse": {
+            "s": 82,
+            "a": 6
+          }
+        },
+        {
+          "id": "asma-43",
+          "arabic": "ٱلرَّقِيبُ",
+          "english": "The Watchful, The All-Watchful",
+          "transliteration": "Ar-Raqīb",
+          "exampleVerse": {
+            "s": 4,
+            "a": 1
+          }
+        },
+        {
+          "id": "asma-44",
+          "arabic": "ٱلْمُجِيبُ",
+          "english": "The Responsive, The Answerer",
+          "transliteration": "Al-Mujīb",
+          "exampleVerse": {
+            "s": 11,
+            "a": 61
+          }
+        },
+        {
+          "id": "asma-45",
+          "arabic": "ٱلْوَاسِعُ",
+          "english": "The All-Encompassing, the Boundless",
+          "transliteration": "Al-Wāsiʿ",
+          "exampleVerse": {
+            "s": 2,
+            "a": 115
+          }
+        },
+        {
+          "id": "asma-46",
+          "arabic": "ٱلْحَكِيمُ",
+          "english": "The All-Wise",
+          "transliteration": "Al-Ḥakīm",
+          "exampleVerse": {
+            "s": 2,
+            "a": 32
+          }
+        },
+        {
+          "id": "asma-47",
+          "arabic": "ٱلْوَدُودُ",
+          "english": "The Most Loving",
+          "transliteration": "Al-Wadūd",
+          "exampleVerse": {
+            "s": 85,
+            "a": 14
+          }
+        },
+        {
+          "id": "asma-48",
+          "arabic": "ٱلْمَجِيدُ",
+          "english": "The Glorious, The Most Honorable",
+          "transliteration": "Al-Majīd",
+          "exampleVerse": {
+            "s": 85,
+            "a": 15
+          }
+        },
+        {
+          "id": "asma-49",
+          "arabic": "ٱلْبَاعِثُ",
+          "english": "The Infuser of New Life, The Resurrector",
+          "transliteration": "Al-Bāʿith",
+          "exampleVerse": {
+            "s": 22,
+            "a": 7
+          }
+        },
+        {
+          "id": "asma-50",
+          "arabic": "ٱلشَّهِيدُ",
+          "english": "The All-Witnessing",
+          "transliteration": "As-Shahīd",
+          "exampleVerse": {
+            "s": 3,
+            "a": 98
+          }
+        }
+      ]
+    },
+    {
+      "number": 53,
+      "id": "asma-6",
+      "title": "99 Names 6",
+      "words": [
+        {
+          "id": "asma-51",
+          "arabic": "ٱلْحَقُّ",
+          "english": "The Absolute Truth",
+          "transliteration": "Al-Ḥaqq",
+          "exampleVerse": {
+            "s": 22,
+            "a": 6
+          }
+        },
+        {
+          "id": "asma-52",
+          "arabic": "ٱلْوَكِيلُ",
+          "english": "The Trustee, The Disposer of Affairs",
+          "transliteration": "Al-Wakīl",
+          "exampleVerse": {
+            "s": 3,
+            "a": 173
+          }
+        },
+        {
+          "id": "asma-53",
+          "arabic": "ٱلْقَوِيُّ",
+          "english": "The All-Strong",
+          "transliteration": "Al-Qawiyy",
+          "exampleVerse": {
+            "s": 22,
+            "a": 40
+          }
+        },
+        {
+          "id": "asma-54",
+          "arabic": "ٱلْمَتِينُ",
+          "english": "The Firm, The Steadfast",
+          "transliteration": "Al-Matīn",
+          "exampleVerse": {
+            "s": 51,
+            "a": 58
+          }
+        },
+        {
+          "id": "asma-55",
+          "arabic": "ٱلْوَلِيُّ",
+          "english": "The Protector, The Guardian",
+          "transliteration": "Al-Waliyy",
+          "exampleVerse": {
+            "s": 2,
+            "a": 257
+          }
+        },
+        {
+          "id": "asma-56",
+          "arabic": "ٱلْحَمِيدُ",
+          "english": "The Praiseworthy, The Most Praised",
+          "transliteration": "Al-Ḥamīd",
+          "exampleVerse": {
+            "s": 22,
+            "a": 64
+          }
+        },
+        {
+          "id": "asma-57",
+          "arabic": "ٱلْمُحْصِي",
+          "english": "The All-Enumerating, The Counter",
+          "transliteration": "Al-Muḥṣī",
+          "exampleVerse": {
+            "s": 19,
+            "a": 94
+          }
+        },
+        {
+          "id": "asma-58",
+          "arabic": "ٱلْمُبْدِئُ",
+          "english": "The Originator, The Initiator",
+          "transliteration": "Al-Mubdiʾ",
+          "exampleVerse": {
+            "s": 10,
+            "a": 4
+          }
+        },
+        {
+          "id": "asma-59",
+          "arabic": "ٱلْمُعِيدُ",
+          "english": "The Restorer, The Reinstater",
+          "transliteration": "Al-Muʿīd",
+          "exampleVerse": {
+            "s": 10,
+            "a": 4
+          }
+        },
+        {
+          "id": "asma-60",
+          "arabic": "ٱلْمُحْيِي",
+          "english": "The Giver of Life",
+          "transliteration": "Al-Muḥyī",
+          "exampleVerse": {
+            "s": 30,
+            "a": 50
+          }
+        }
+      ]
+    },
+    {
+      "number": 54,
+      "id": "asma-7",
+      "title": "99 Names 7",
+      "words": [
+        {
+          "id": "asma-61",
+          "arabic": "ٱلْمُمِيتُ",
+          "english": "The Creator of Death",
+          "transliteration": "Al-Mumīt",
+          "exampleVerse": {
+            "s": 3,
+            "a": 156
+          }
+        },
+        {
+          "id": "asma-62",
+          "arabic": "ٱلْحَيُّ",
+          "english": "The Ever-Living",
+          "transliteration": "Al-Ḥayy",
+          "exampleVerse": {
+            "s": 2,
+            "a": 255
+          }
+        },
+        {
+          "id": "asma-63",
+          "arabic": "ٱلْقَيُّومُ",
+          "english": "The Sustainer, The Self-Subsisting",
+          "transliteration": "Al-Qayyūm",
+          "exampleVerse": {
+            "s": 2,
+            "a": 255
+          }
+        },
+        {
+          "id": "asma-64",
+          "arabic": "ٱلْوَاجِدُ",
+          "english": "The Finder, The Perceiver",
+          "transliteration": "Al-Wājid",
+          "exampleVerse": {
+            "s": 93,
+            "a": 7
+          }
+        },
+        {
+          "id": "asma-65",
+          "arabic": "ٱلْمَاجِدُ",
+          "english": "The Illustrious, The Magnificent",
+          "transliteration": "Al-Mājid",
+          "exampleVerse": {
+            "s": 11,
+            "a": 73
+          }
+        },
+        {
+          "id": "asma-66",
+          "arabic": "ٱلْوَاحِدُ",
+          "english": "The One, The Indivisible",
+          "transliteration": "Al-Wāḥid",
+          "exampleVerse": {
+            "s": 2,
+            "a": 163
+          }
+        },
+        {
+          "id": "asma-67",
+          "arabic": "ٱلْأَحَدُ",
+          "english": "The Unique, The Only One",
+          "transliteration": "Al-Aḥad",
+          "exampleVerse": {
+            "s": 112,
+            "a": 1
+          }
+        },
+        {
+          "id": "asma-68",
+          "arabic": "ٱلصَّمَدُ",
+          "english": "The Eternal, The Absolute",
+          "transliteration": "Aṣ-Ṣamad",
+          "exampleVerse": {
+            "s": 112,
+            "a": 2
+          }
+        },
+        {
+          "id": "asma-69",
+          "arabic": "ٱلْقَادِرُ",
+          "english": "The Omnipotent, The All-Able",
+          "transliteration": "Al-Qādir",
+          "exampleVerse": {
+            "s": 6,
+            "a": 65
+          }
+        },
+        {
+          "id": "asma-70",
+          "arabic": "ٱلْمُقْتَدِرُ",
+          "english": "The All-Powerful, The Dominant",
+          "transliteration": "Al-Muqtadir",
+          "exampleVerse": {
+            "s": 54,
+            "a": 42
+          }
+        }
+      ]
+    },
+    {
+      "number": 55,
+      "id": "asma-8",
+      "title": "99 Names 8",
+      "words": [
+        {
+          "id": "asma-71",
+          "arabic": "ٱلْمُقَدِّمُ",
+          "english": "The Expediter, The Promoter",
+          "transliteration": "Al-Muqaddim",
+          "exampleVerse": {
+            "s": 15,
+            "a": 24
+          }
+        },
+        {
+          "id": "asma-72",
+          "arabic": "ٱلْمُؤَخِّرُ",
+          "english": "The Delayer, The Postponer",
+          "transliteration": "Al-Muʾakhkhir",
+          "exampleVerse": {
+            "s": 71,
+            "a": 4
+          }
+        },
+        {
+          "id": "asma-73",
+          "arabic": "ٱلْأَوَّلُ",
+          "english": "The First, The Foremost",
+          "transliteration": "Al-Awwal",
+          "exampleVerse": {
+            "s": 57,
+            "a": 3
+          }
+        },
+        {
+          "id": "asma-74",
+          "arabic": "ٱلْآخِرُ",
+          "english": "The Last, The Utmost",
+          "transliteration": "Al-Ākhir",
+          "exampleVerse": {
+            "s": 57,
+            "a": 3
+          }
+        },
+        {
+          "id": "asma-75",
+          "arabic": "ٱلظَّاهِرُ",
+          "english": "The Manifest, The All-Surpassing",
+          "transliteration": "Aẓ-Ẓāhir",
+          "exampleVerse": {
+            "s": 57,
+            "a": 3
+          }
+        },
+        {
+          "id": "asma-76",
+          "arabic": "ٱلْبَاطِنُ",
+          "english": "The Hidden One, Knower of the Hidden",
+          "transliteration": "Al-Bāṭin",
+          "exampleVerse": {
+            "s": 57,
+            "a": 3
+          }
+        },
+        {
+          "id": "asma-77",
+          "arabic": "ٱلْوَالِي",
+          "english": "The Sole Governor",
+          "transliteration": "Al-Wālī",
+          "exampleVerse": {
+            "s": 13,
+            "a": 11
+          }
+        },
+        {
+          "id": "asma-78",
+          "arabic": "ٱلْمُتَعَالِي",
+          "english": "The Self-Exalted",
+          "transliteration": "Al-Mutaʿālī",
+          "exampleVerse": {
+            "s": 13,
+            "a": 9
+          }
+        },
+        {
+          "id": "asma-79",
+          "arabic": "ٱلْبَرُّ",
+          "english": "The Source of All Goodness",
+          "transliteration": "Al-Barr",
+          "exampleVerse": {
+            "s": 52,
+            "a": 28
+          }
+        },
+        {
+          "id": "asma-80",
+          "arabic": "ٱلتَّوَابُ",
+          "english": "The Ever-Pardoning",
+          "transliteration": "At-Tawwāb",
+          "exampleVerse": {
+            "s": 2,
+            "a": 37
+          }
+        }
+      ]
+    },
+    {
+      "number": 56,
+      "id": "asma-9",
+      "title": "99 Names 9",
+      "words": [
+        {
+          "id": "asma-81",
+          "arabic": "ٱلْمُنْتَقِمُ",
+          "english": "The Avenger",
+          "transliteration": "Al-Muntaqim",
+          "exampleVerse": {
+            "s": 32,
+            "a": 22
+          }
+        },
+        {
+          "id": "asma-82",
+          "arabic": "ٱلْعَفُوُّ",
+          "english": "The Pardoner",
+          "transliteration": "Al-ʿAfūw",
+          "exampleVerse": {
+            "s": 4,
+            "a": 99
+          }
+        },
+        {
+          "id": "asma-83",
+          "arabic": "ٱلرَّءُوفُ",
+          "english": "The Most Kind",
+          "transliteration": "Ar-Raʾūf",
+          "exampleVerse": {
+            "s": 2,
+            "a": 143
+          }
+        },
+        {
+          "id": "asma-84",
+          "arabic": "مَالِكُ ٱلْمُلْكِ",
+          "english": "Master of the Dominion, Owner of the Kingdom",
+          "transliteration": "Mālik al-Mulk",
+          "exampleVerse": {
+            "s": 3,
+            "a": 26
+          }
+        },
+        {
+          "id": "asma-85",
+          "arabic": "ذُو ٱلْجَلَالِ وَٱلْإِكْرَامِ",
+          "english": "Possessor of Glory and Honour",
+          "transliteration": "Dhū al-Jalāli wa'l-Ikrām",
+          "exampleVerse": {
+            "s": 55,
+            "a": 27
+          }
+        },
+        {
+          "id": "asma-86",
+          "arabic": "ٱلْمُقْسِطُ",
+          "english": "The Just One",
+          "transliteration": "Al-Muqsiṭ",
+          "exampleVerse": {
+            "s": 3,
+            "a": 18
+          }
+        },
+        {
+          "id": "asma-87",
+          "arabic": "ٱلْجَامِعُ",
+          "english": "The Gatherer, the Uniter",
+          "transliteration": "Al-Jāmiʿ",
+          "exampleVerse": {
+            "s": 3,
+            "a": 9
+          }
+        },
+        {
+          "id": "asma-88",
+          "arabic": "ٱلْغَنِيُّ",
+          "english": "The Self-Sufficient, The Wealthy",
+          "transliteration": "Al-Ghaniyy",
+          "exampleVerse": {
+            "s": 2,
+            "a": 263
+          }
+        },
+        {
+          "id": "asma-89",
+          "arabic": "ٱلْمُغْنِيُ",
+          "english": "The Enricher",
+          "transliteration": "Al-Mughnī",
+          "exampleVerse": {
+            "s": 9,
+            "a": 28
+          }
+        },
+        {
+          "id": "asma-90",
+          "arabic": "ٱلْمَانِعُ",
+          "english": "The Withholder",
+          "transliteration": "Al-Māniʿ",
+          "exampleVerse": {
+            "s": 67,
+            "a": 21
+          }
+        }
+      ]
+    },
+    {
+      "number": 57,
+      "id": "asma-10",
+      "title": "99 Names 10",
+      "words": [
+        {
+          "id": "asma-91",
+          "arabic": "ٱلضَّارُّ",
+          "english": "The Distresser",
+          "transliteration": "Aḍ-Ḍārr",
+          "exampleVerse": {
+            "s": 6,
+            "a": 17
+          }
+        },
+        {
+          "id": "asma-92",
+          "arabic": "ٱلنَّافِعُ",
+          "english": "The Propitious, The Benefactor",
+          "transliteration": "An-Nāfiʿ",
+          "exampleVerse": {
+            "s": 5,
+            "a": 76
+          }
+        },
+        {
+          "id": "asma-93",
+          "arabic": "ٱلنُّورُ",
+          "english": "The Light",
+          "transliteration": "An-Nūr",
+          "exampleVerse": {
+            "s": 24,
+            "a": 35
+          }
+        },
+        {
+          "id": "asma-94",
+          "arabic": "ٱلْهَادِي",
+          "english": "The Guide",
+          "transliteration": "Al-Hādī",
+          "exampleVerse": {
+            "s": 22,
+            "a": 54
+          }
+        },
+        {
+          "id": "asma-95",
+          "arabic": "ٱلْبَدِيعُ",
+          "english": "The Incomparable Originator",
+          "transliteration": "Al-Badīʿ",
+          "exampleVerse": {
+            "s": 2,
+            "a": 117
+          }
+        },
+        {
+          "id": "asma-96",
+          "arabic": "ٱلْبَاقِي",
+          "english": "The Ever-Lasting",
+          "transliteration": "Al-Bāqī",
+          "exampleVerse": {
+            "s": 55,
+            "a": 27
+          }
+        },
+        {
+          "id": "asma-97",
+          "arabic": "ٱلْوَارِثُ",
+          "english": "The Inheritor",
+          "transliteration": "Al-Wāriṯ",
+          "exampleVerse": {
+            "s": 15,
+            "a": 23
+          }
+        },
+        {
+          "id": "asma-98",
+          "arabic": "ٱلرَّشِيدُ",
+          "english": "The Guide to the Right Path",
+          "transliteration": "Ar-Rashīd",
+          "exampleVerse": {
+            "s": 11,
+            "a": 87
+          }
+        },
+        {
+          "id": "asma-99",
+          "arabic": "ٱلصَّبُورُ",
+          "english": "The Patient",
+          "transliteration": "Aṣ-Ṣabūr",
+          "exampleVerse": {
+            "s": 2,
+            "a": 153
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -13,6 +13,7 @@ import { EMPTY_QURAN_MARKS, sanitizeQuranMarks, type QuranMarksData } from '@/li
 import { DEFAULT_RECITER_KEY, isReciterKey } from '@/lib/reciters';
 import { REMOTE_CONFIG_STORAGE_KEYS } from '@/lib/firebase-remote-config';
 import { DEFAULT_TRANSLATION_KEY, isTranslationKey } from '@/lib/translations';
+import { persistNativeThemePreference } from '@/lib/color-scheme';
 
 const PROGRESS_KEY = 'quranki:progress:v1';
 const SETTINGS_KEY = 'quranki:settings:v1';
@@ -142,6 +143,10 @@ function persistFlag(value: unknown, defaultValue: boolean): boolean {
 function normalizeSettings(settings: Settings): Settings {
   return {
     ...settings,
+    themePreference:
+      settings.themePreference === 'light' || settings.themePreference === 'dark' || settings.themePreference === 'system'
+        ? settings.themePreference
+        : DEFAULT_SETTINGS.themePreference,
     wordsPerSession: clampWordsPerSession(settings.wordsPerSession),
     accentColor: isAccentId(settings.accentColor) ? settings.accentColor : DEFAULT_ACCENT,
     readerArabicSize: Number.isFinite(settings.readerArabicSize)
@@ -178,7 +183,9 @@ export async function loadSettingsAsync(): Promise<Settings> {
 let settingsWriteChain: Promise<void> = Promise.resolve();
 
 export function saveSettingsAsync(settings: Settings): Promise<void> {
-  const payload = JSON.stringify(normalizeSettings(settings));
+  const normalized = normalizeSettings(settings);
+  persistNativeThemePreference(normalized.themePreference);
+  const payload = JSON.stringify(normalized);
   const write = settingsWriteChain.then(() => AsyncStorage.setItem(SETTINGS_KEY, payload));
   settingsWriteChain = write.catch(() => undefined);
   return write;

@@ -3,7 +3,6 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect, useState } from 'react';
-import { Appearance } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 
@@ -12,6 +11,11 @@ import { WhatsNewNotice } from '@/components/quranki/whats-new-notice';
 import { createPaperTheme } from '@/constants/paper-theme';
 import { ArabicFont, Colors, SurahNameFont } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
+import {
+  applyThemePreference,
+  didApplyThemeAtImport,
+  themePreferenceReady,
+} from '@/lib/color-scheme';
 import '@/lib/practice-reminder';
 import { getStreakReclaimOpportunity } from '@/lib/stats';
 import { useKnownWordsStore } from '@/store/known-words-store';
@@ -44,6 +48,7 @@ export default function RootLayout() {
     [ArabicFont]: require('@/assets/fonts/UthmanicHafs1Ver18.ttf'),
     [SurahNameFont]: require('@/assets/fonts/surah_names.ttf'),
   });
+  const [themeReady, setThemeReady] = useState(didApplyThemeAtImport);
 
   useEffect(() => {
     void hydrate();
@@ -51,23 +56,30 @@ export default function RootLayout() {
     void hydrateQuranMarks();
   }, [hydrate, hydrateKnownWords, hydrateQuranMarks]);
 
-  // Native chrome (tab bar liquid glass, scroll-edge effects) follows the window color scheme,
-  // not React theme tokens. Keep them in lockstep with the in-app appearance setting.
   useEffect(() => {
-    Appearance.setColorScheme(themePreference === 'system' ? 'unspecified' : themePreference);
-  }, [themePreference]);
+    if (didApplyThemeAtImport) return;
+    void themePreferenceReady.finally(() => setThemeReady(true));
+  }, []);
+
+  // Native chrome (tab bar liquid glass, scroll-edge effects) follows the window color scheme,
+  // not React theme tokens. Wait until settings are loaded so the default "system" value does
+  // not flash the light splash over a persisted Dark preference.
+  useEffect(() => {
+    if (!hydrated) return;
+    applyThemePreference(themePreference);
+  }, [hydrated, themePreference]);
 
   useEffect(() => {
     void SystemUI.setBackgroundColorAsync(Colors[scheme].background);
   }, [scheme]);
 
   useEffect(() => {
-    if (fontsLoaded && hydrated && knownWordsHydrated && quranMarksHydrated) {
+    if (fontsLoaded && hydrated && knownWordsHydrated && quranMarksHydrated && themeReady) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, hydrated, knownWordsHydrated, quranMarksHydrated]);
+  }, [fontsLoaded, hydrated, knownWordsHydrated, quranMarksHydrated, themeReady]);
 
-  if (!fontsLoaded || !hydrated || !knownWordsHydrated || !quranMarksHydrated) {
+  if (!fontsLoaded || !hydrated || !knownWordsHydrated || !quranMarksHydrated || !themeReady) {
     return null;
   }
 

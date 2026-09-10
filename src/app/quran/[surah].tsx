@@ -4,7 +4,7 @@
    React state. */
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, AppState, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -23,6 +23,7 @@ import { hapticLight, hapticSelection } from '@/lib/haptics';
 import { getKnownLemmaIds } from '@/lib/known-words';
 import { getHiddenLemmaIds, getMasteredLemmaIds, getMasteredStudyWordForLemmas } from '@/lib/levels';
 import { getWordLemmaIds, hasEveryLemma } from '@/lib/quran-lemmas';
+import { getPendingReaderTarget, noteQuranReaderMounted } from '@/lib/quran-nav';
 import { getSurahMeta, SURAH_COUNT } from '@/lib/quran-reader';
 import type { ReaderWordRef } from '@/lib/quran-reader-types';
 import { useKnownWordsStore } from '@/store/known-words-store';
@@ -99,7 +100,13 @@ export default function SurahReaderScreen() {
   // round trip below) - keyed onto `PlayOptionsSheet` to force a fresh range selection then, while
   // leaving the in-progress range alone when the reader just went to switch reciters.
   const [playOptionsOpenId, setPlayOptionsOpenId] = useState(0);
+  const [playFromAyah, setPlayFromAyah] = useState(1);
   const returningToPlayOptionsRef = useRef(false);
+  // Latest ayah at the top of the viewport - snapshotted into `playFromAyah` when the header
+  // play button opens a fresh range picker, so the start wheel matches where the reader is.
+  const visibleAyahRef = useRef(1);
+  const lastAppliedNavToken = useRef(0);
+  const [readerFocusEpoch, setReaderFocusEpoch] = useState(0);
   const noteOpenedSurah = useQuranMarksStore((s) => s.noteOpenedSurah);
   const setLastRead = useQuranMarksStore((s) => s.setLastRead);
   const hasSaved = useQuranMarksStore((s) => s.pinPlacements.length > 0 || s.bookmarks.length > 0);
@@ -125,6 +132,18 @@ export default function SurahReaderScreen() {
   // button still just replays it; see the header `onPress` below vs `togglePlayPause`).
   const thisSurahFinished = hasSessionForActiveSurah && recitationFinished;
 
+  useEffect(() => noteQuranReaderMounted(), []);
+
+  // Play after focus-effect cleanup has finished - starting it inside `useFocusEffect` would
+  // lose the session if React remounts the effect (the blur path calls `stopRecitation`).
+  useEffect(() => {
+    if (readerFocusEpoch === 0) return;
+    const target = getPendingReaderTarget();
+    if (!target || target.token !== readerFocusEpoch || !target.play) return;
+    setAutoScrollSuspended(false);
+    void playSurah(target.surah, target.ayah);
+  }, [readerFocusEpoch]);
+
   useFocusEffect(
     useCallback(() => {
       // Coming back from `/reciter-picker` after tapping "Reciter" inside `PlayOptionsSheet`
@@ -136,19 +155,35 @@ export default function SurahReaderScreen() {
         returningToPlayOptionsRef.current = false;
         setPlayOptionsVisible(true);
       }
+      // Saved stashes a jump here so we update this same reader instead of pushing
+      // another `/quran/[surah]`. Applied on focus so `setParams` hits this route.
+      const target = getPendingReaderTarget();
+      if (target && target.token !== lastAppliedNavToken.current) {
+        lastAppliedNavToken.current = target.token;
+        setReaderFocusEpoch(target.token);
+        router.setParams({ surah: String(target.surah), ayah: String(target.ayah) });
+      }
       return () => {
         // Backgrounding the app blurs this screen on some platforms; keep recitation going.
         const appState = AppState.currentState;
         if (appState === 'background' || appState === 'inactive') return;
         stopRecitation();
       };
-    }, []),
+    }, [router]),
   );
 
   useLayoutEffect(() => {
     noteOpenedSurah(active);
     if (focusAyah > 0) setLastRead(active, focusAyah);
   }, [active, focusAyah, noteOpenedSurah, setLastRead]);
+
+  useLayoutEffect(() => {
+    visibleAyahRef.current = focusAyah > 0 ? focusAyah : 1;
+  }, [active]);
+
+  useLayoutEffect(() => {
+    if (focusAyah > 0) visibleAyahRef.current = focusAyah;
+  }, [focusAyah]);
 
   // Each mounted surah sits at its OWN permanent absolute offset (`-surahNumber * screenWidth`),
   // not at a position derived from its index among "currently mounted" slots. That means the
@@ -273,6 +308,7 @@ export default function SurahReaderScreen() {
                   if (hasSessionForActiveSurah && !thisSurahFinished) {
                     toggleSurahPlayback(active);
                   } else {
+                    setPlayFromAyah(Math.max(1, Math.min(meta.ac, visibleAyahRef.current)));
                     setPlayOptionsOpenId((id) => id + 1);
                     setPlayOptionsVisible(true);
                   }
@@ -341,8 +377,12 @@ export default function SurahReaderScreen() {
                       onLongPressWord={setSelectedWord}
                       onOpenMarks={setMarkAyah}
                       focusAyah={surahNumber === active ? focusAyah : 0}
+                      focusEpoch={surahNumber === active ? readerFocusEpoch : 0}
                       isActive={surahNumber === active}
-                      onVisibleAyah={(ayah) => setLastRead(surahNumber, ayah)}
+                      onVisibleAyah={(ayah) => {
+                        setLastRead(surahNumber, ayah);
+                        visibleAyahRef.current = ayah;
+                      }}
                       initialBatch={
                         surahNumber === active
                           ? Math.max(ACTIVE_INITIAL_BATCH, focusAyah > 0 ? focusAyah + 2 : 0)
@@ -364,6 +404,7 @@ export default function SurahReaderScreen() {
         key={playOptionsOpenId}
         visible={playOptionsVisible}
         surahNumber={active}
+        initialFromAyah={playFromAyah}
         onDismiss={() => setPlayOptionsVisible(false)}
         onPressReciter={() => {
           setPlayOptionsVisible(false);

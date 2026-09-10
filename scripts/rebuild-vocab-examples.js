@@ -19,9 +19,10 @@ const SURAHS_DIR = path.join(OUT_DIR, 'surahs');
 function loadStudyById() {
   const curated = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'quranic-words.json'), 'utf8'));
   const generated = JSON.parse(fs.readFileSync(path.join(OUT_DIR, 'stage-levels.json'), 'utf8')).levels;
+  const asma = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'asma-ul-husna.json'), 'utf8')).levels;
   const studyById = new Map();
   const exampleOfById = new Map();
-  for (const level of [...curated.levels, ...generated]) {
+  for (const level of [...curated.levels, ...generated, ...asma]) {
     for (const word of level.words) {
       studyById.set(word.id, word);
       if (word.exampleOf) exampleOfById.set(word.id, word.exampleOf);
@@ -97,6 +98,13 @@ function main() {
   if (onlyIds.size) {
     for (const id of onlyIds) {
       if (!vocabExamples[id]) delete written[id];
+    }
+  }
+  const overridesPath = path.join(OUT_DIR, 'vocab-example-overrides.json');
+  if (fs.existsSync(overridesPath)) {
+    const overrides = JSON.parse(fs.readFileSync(overridesPath, 'utf8'));
+    for (const [id, value] of Object.entries(overrides)) {
+      if (!onlyIds.size || onlyIds.has(id)) written[id] = value;
     }
   }
   fs.writeFileSync(existingPath, JSON.stringify(written));

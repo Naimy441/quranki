@@ -1,7 +1,7 @@
 {
   "deck": "Quranic Words",
   "levelCount": 141,
-  "wordCount": 1541,
+  "wordCount": 1542,
   "levels": [
     {
       "number": 1,
@@ -372,7 +372,12 @@
         {
           "arabic": "أَنْتِ",
           "english": "you (female)",
-          "id": "04-004"
+          "id": "04-004",
+          "note": "Does not appear as its own word in the Quran; the examples show the feminine “you” attached to another word.",
+          "exampleVerse": {
+            "s": 19,
+            "a": 21
+          }
         },
         {
           "arabic": "أَنَا",
@@ -483,9 +488,7 @@
             "s": 25,
             "a": 48
           },
-          "lemmaIds": [
-            101
-          ]
+          "phrase": true
         },
         {
           "arabic": "خَلْفَ",
@@ -645,12 +648,17 @@
           ]
         },
         {
-          "arabic": "أَنّى",
+          "arabic": "أَنَّىٰ",
           "english": "wherefrom, why, how",
           "id": "06-008",
           "lemmaIds": [
             393
-          ]
+          ],
+          "variant": "أَنّى,أَنَّى",
+          "exampleVerse": {
+            "s": 3,
+            "a": 40
+          }
         },
         {
           "arabic": "أَ، هَل",
@@ -948,7 +956,11 @@
           "id": "09-001",
           "lemmaIds": [
             3
-          ]
+          ],
+          "exampleVerse": {
+            "s": 2,
+            "a": 10
+          }
         },
         {
           "arabic": "عَمَّا",
@@ -978,7 +990,11 @@
           "id": "09-004",
           "lemmaIds": [
             3
-          ]
+          ],
+          "exampleVerse": {
+            "s": 2,
+            "a": 183
+          }
         },
         {
           "arabic": "لِمَا",
@@ -1240,7 +1256,11 @@
           "english": "let (somebody) do (imperative prefix)",
           "id": "11-007",
           "isPrefix": true,
-          "note": "Attaches to a verb to make a command: “let him do…”."
+          "note": "Attaches to a verb to make a command: “let him do…”.",
+          "exampleVerse": {
+            "s": 2,
+            "a": 186
+          }
         },
         {
           "arabic": "الْ",
@@ -1320,9 +1340,12 @@
           "id": "12-003",
           "variant": "كَأَنّ,كَأَن",
           "lemmaIds": [
-            16,
             385
-          ]
+          ],
+          "exampleVerse": {
+            "s": 7,
+            "a": 171
+          }
         },
         {
           "arabic": "لكِنَّ",
@@ -1615,7 +1638,8 @@
           "id": "14-012",
           "lemmaIds": [
             521
-          ]
+          ],
+          "note": "One Quranic word, two senses: a close/warm friend, and boiling water. Both are taught here."
         }
       ]
     },
@@ -1627,10 +1651,10 @@
         {
           "id": "15-000",
           "kind": "grammar",
-          "arabic": "أَكْبَر",
-          "english": "More / most",
-          "note": "An extra ا at the start of a describing word often means more or most. كَبِير big, أَكْبَر bigger.",
-          "exampleOf": "15-008"
+          "arabic": "أَفْعَل",
+          "english": "The أفْعَل form",
+          "note": "The pattern أفْعَل turns a describing word into “more / most”. كَبِير big → أَكْبَر bigger / biggest. أَحْسَن better / best is the same shape.",
+          "exampleOf": "15-005"
         },
         {
           "arabic": "أَشَدّ",
@@ -1665,7 +1689,7 @@
           ]
         },
         {
-          "arabic": "أََكْبَر",
+          "arabic": "أَكْبَر",
           "english": "bigger",
           "id": "15-005",
           "lemmaIds": [
@@ -1687,9 +1711,12 @@
           "english": "more entitled, more worthy",
           "id": "15-007",
           "lemmaIds": [
-            51,
             829
-          ]
+          ],
+          "exampleVerse": {
+            "s": 10,
+            "a": 35
+          }
         },
         {
           "arabic": "أَحْسَن",
@@ -1730,7 +1757,11 @@
           "id": "15-012",
           "lemmaIds": [
             775
-          ]
+          ],
+          "exampleVerse": {
+            "s": 33,
+            "a": 6
+          }
         }
       ]
     },
@@ -1934,9 +1965,7 @@
           "english": "People of Hud",
           "id": "17-007",
           "lemmaIds": [
-            447,
-            561,
-            1177
+            447
           ]
         },
         {
@@ -2350,7 +2379,7 @@
         },
         {
           "arabic": "زَكَاة",
-          "english": "poor-due, purity",
+          "english": "charity, purity",
           "id": "21-008",
           "lemmaIds": [
             363
@@ -2416,7 +2445,7 @@
         },
         {
           "arabic": "شَهَادَة",
-          "english": "witness, testemony",
+          "english": "witness, testimony",
           "id": "22-004",
           "lemmaIds": [
             463,
@@ -2561,12 +2590,15 @@
         },
         {
           "arabic": "جُنَاح",
-          "english": "sin",
+          "english": "blame, sin",
           "id": "23-008",
           "lemmaIds": [
-            438,
-            1102
-          ]
+            438
+          ],
+          "exampleVerse": {
+            "s": 2,
+            "a": 158
+          }
         },
         {
           "arabic": "حَرَام",
@@ -2611,7 +2643,7 @@
       "title": "Blessings",
       "words": [
         {
-          "arabic": "آلَاء",
+          "arabic": "ءَالَاء",
           "english": "favors",
           "id": "24-001",
           "lemmaIds": [
@@ -2680,7 +2712,11 @@
           "id": "24-009",
           "lemmaIds": [
             432
-          ]
+          ],
+          "exampleVerse": {
+            "s": 18,
+            "a": 2
+          }
         },
         {
           "arabic": "جَمِيع",
@@ -3150,7 +3186,7 @@
           ]
         },
         {
-          "arabic": "مَلَأ",
+          "arabic": "مَلَإِ",
           "english": "chiefs, leaders",
           "id": "28-011",
           "lemmaIds": [
@@ -3163,9 +3199,12 @@
           "english": "protecting friend, guardian",
           "id": "28-012",
           "lemmaIds": [
-            130,
-            1035
-          ]
+            130
+          ],
+          "exampleVerse": {
+            "s": 2,
+            "a": 257
+          }
         }
       ]
     },
@@ -3244,9 +3283,12 @@
           "english": "to enchant, to bewitch",
           "id": "29-008",
           "lemmaIds": [
-            2017,
             2018
-          ]
+          ],
+          "exampleVerse": {
+            "s": 7,
+            "a": 116
+          }
         },
         {
           "arabic": "صَلَحَ",
@@ -3560,7 +3602,11 @@
           "id": "31-023",
           "lemmaIds": [
             273
-          ]
+          ],
+          "exampleVerse": {
+            "s": 5,
+            "a": 17
+          }
         }
       ]
     },
@@ -3578,6 +3624,19 @@
             145,
             2005
           ]
+        },
+        {
+          "arabic": "عَادَ",
+          "english": "to return",
+          "id": "32-022",
+          "lemmaIds": [
+            561
+          ],
+          "exampleVerse": {
+            "s": 2,
+            "a": 275
+          },
+          "note": "Different word from عَاد, the people of Hud."
         },
         {
           "arabic": "أَحَبَّ",
@@ -3773,7 +3832,7 @@
           "kind": "grammar",
           "arabic": "رَدَّ",
           "english": "Doubled letters",
-          "note": "When the last two of the three letters are the same, they often squeeze into one with a ّ. رَدَّ (he returned) is ر + د + د.",
+          "note": "When the last two root letters are the same, they often write as one letter with a shadda (ّ). رَدَّ (he returned) is raa + daal + daal.",
           "exampleOf": "34-002"
         },
         {
@@ -3934,8 +3993,12 @@
           "english": "to bear a load",
           "id": "35-007",
           "lemmaIds": [
-            4634
-          ]
+            1141
+          ],
+          "exampleVerse": {
+            "s": 6,
+            "a": 164
+          }
         },
         {
           "arabic": "وَصَفَ",
@@ -4059,12 +4122,18 @@
           ]
         },
         {
-          "arabic": "كَادَ",
-          "english": "to plot against",
+          "arabic": "كَيْد",
+          "english": "to plot against, a plot",
+          "note": "A different word from كَادَ “to almost do”. This one is كَيْد / يَكِيدُ.",
           "id": "36-010",
           "lemmaIds": [
-            451
-          ]
+            425,
+            996
+          ],
+          "exampleVerse": {
+            "s": 12,
+            "a": 5
+          }
         },
         {
           "arabic": "زَادَ",
@@ -5146,8 +5215,8 @@
       ]
     },
     {
-      "number": 48,
-      "id": "48",
+      "number": 58,
+      "id": "58",
       "title": "Speech 1",
       "words": [
         {
@@ -5244,8 +5313,8 @@
       ]
     },
     {
-      "number": 49,
-      "id": "49",
+      "number": 59,
+      "id": "59",
       "title": "Speech 2",
       "words": [
         {
@@ -5344,8 +5413,8 @@
       ]
     },
     {
-      "number": 50,
-      "id": "50",
+      "number": 60,
+      "id": "60",
       "title": "Speech 3",
       "words": [
         {
@@ -5443,8 +5512,8 @@
       ]
     },
     {
-      "number": 51,
-      "id": "51",
+      "number": 61,
+      "id": "61",
       "title": "Speech 4",
       "words": [
         {
@@ -5540,8 +5609,8 @@
       ]
     },
     {
-      "number": 52,
-      "id": "52",
+      "number": 62,
+      "id": "62",
       "title": "Speech 5",
       "words": [
         {
@@ -5639,8 +5708,8 @@
       ]
     },
     {
-      "number": 53,
-      "id": "53",
+      "number": 63,
+      "id": "63",
       "title": "Speech 6",
       "words": [
         {
@@ -5727,8 +5796,8 @@
       ]
     },
     {
-      "number": 54,
-      "id": "54",
+      "number": 64,
+      "id": "64",
       "title": "Faith 2",
       "words": [
         {
@@ -5836,8 +5905,8 @@
       ]
     },
     {
-      "number": 55,
-      "id": "55",
+      "number": 65,
+      "id": "65",
       "title": "Faith 3",
       "words": [
         {
@@ -5940,8 +6009,8 @@
       ]
     },
     {
-      "number": 56,
-      "id": "56",
+      "number": 66,
+      "id": "66",
       "title": "The Religion 2",
       "words": [
         {
@@ -6030,8 +6099,8 @@
       ]
     },
     {
-      "number": 57,
-      "id": "57",
+      "number": 67,
+      "id": "67",
       "title": "The Religion 3",
       "words": [
         {
@@ -6110,8 +6179,8 @@
       ]
     },
     {
-      "number": 58,
-      "id": "58",
+      "number": 68,
+      "id": "68",
       "title": "Deeds 2",
       "words": [
         {
@@ -6202,8 +6271,8 @@
       ]
     },
     {
-      "number": 59,
-      "id": "59",
+      "number": 69,
+      "id": "69",
       "title": "Blessings 2",
       "words": [
         {
@@ -6293,8 +6362,8 @@
       ]
     },
     {
-      "number": 60,
-      "id": "60",
+      "number": 70,
+      "id": "70",
       "title": "Denial 1",
       "words": [
         {
@@ -6391,8 +6460,8 @@
       ]
     },
     {
-      "number": 61,
-      "id": "61",
+      "number": 71,
+      "id": "71",
       "title": "Denial 2",
       "words": [
         {
@@ -6488,8 +6557,8 @@
       ]
     },
     {
-      "number": 62,
-      "id": "62",
+      "number": 72,
+      "id": "72",
       "title": "Denial 3",
       "words": [
         {
@@ -6589,8 +6658,8 @@
       ]
     },
     {
-      "number": 63,
-      "id": "63",
+      "number": 73,
+      "id": "73",
       "title": "Denial 4",
       "words": [
         {
@@ -6680,8 +6749,8 @@
       ]
     },
     {
-      "number": 64,
-      "id": "64",
+      "number": 74,
+      "id": "74",
       "title": "Denial 5",
       "words": [
         {
@@ -6770,8 +6839,8 @@
       ]
     },
     {
-      "number": 65,
-      "id": "65",
+      "number": 75,
+      "id": "75",
       "title": "Denial 6",
       "words": [
         {
@@ -6859,8 +6928,8 @@
       ]
     },
     {
-      "number": 66,
-      "id": "66",
+      "number": 76,
+      "id": "76",
       "title": "Wrongdoing 1",
       "words": [
         {
@@ -6961,8 +7030,8 @@
       ]
     },
     {
-      "number": 67,
-      "id": "67",
+      "number": 77,
+      "id": "77",
       "title": "Wrongdoing 2",
       "words": [
         {
@@ -7061,8 +7130,8 @@
       ]
     },
     {
-      "number": 68,
-      "id": "68",
+      "number": 78,
+      "id": "78",
       "title": "Wrongdoing 3",
       "words": [
         {
@@ -7160,8 +7229,8 @@
       ]
     },
     {
-      "number": 69,
-      "id": "69",
+      "number": 79,
+      "id": "79",
       "title": "Wrongdoing 4",
       "words": [
         {
@@ -7261,8 +7330,8 @@
       ]
     },
     {
-      "number": 70,
-      "id": "70",
+      "number": 80,
+      "id": "80",
       "title": "Wrongdoing 5",
       "words": [
         {
@@ -7360,8 +7429,8 @@
       ]
     },
     {
-      "number": 71,
-      "id": "71",
+      "number": 81,
+      "id": "81",
       "title": "The Last Day 3",
       "words": [
         {
@@ -7457,8 +7526,8 @@
       ]
     },
     {
-      "number": 72,
-      "id": "72",
+      "number": 82,
+      "id": "82",
       "title": "The Last Day 4",
       "words": [
         {
@@ -7555,8 +7624,8 @@
       ]
     },
     {
-      "number": 73,
-      "id": "73",
+      "number": 83,
+      "id": "83",
       "title": "The Last Day 5",
       "words": [
         {
@@ -7651,8 +7720,8 @@
       ]
     },
     {
-      "number": 74,
-      "id": "74",
+      "number": 84,
+      "id": "84",
       "title": "The Last Day 6",
       "words": [
         {
@@ -7748,8 +7817,8 @@
       ]
     },
     {
-      "number": 75,
-      "id": "75",
+      "number": 85,
+      "id": "85",
       "title": "The Last Day 7",
       "words": [
         {
@@ -7846,8 +7915,8 @@
       ]
     },
     {
-      "number": 76,
-      "id": "76",
+      "number": 86,
+      "id": "86",
       "title": "The Last Day 8",
       "words": [
         {
@@ -7933,8 +8002,8 @@
       ]
     },
     {
-      "number": 77,
-      "id": "77",
+      "number": 87,
+      "id": "87",
       "title": "The World 2",
       "words": [
         {
@@ -8041,8 +8110,8 @@
       ]
     },
     {
-      "number": 78,
-      "id": "78",
+      "number": 88,
+      "id": "88",
       "title": "The World 3",
       "words": [
         {
@@ -8148,8 +8217,8 @@
       ]
     },
     {
-      "number": 79,
-      "id": "79",
+      "number": 89,
+      "id": "89",
       "title": "The World 4",
       "words": [
         {
@@ -8252,8 +8321,8 @@
       ]
     },
     {
-      "number": 80,
-      "id": "80",
+      "number": 90,
+      "id": "90",
       "title": "The World 5",
       "words": [
         {
@@ -8359,8 +8428,8 @@
       ]
     },
     {
-      "number": 81,
-      "id": "81",
+      "number": 91,
+      "id": "91",
       "title": "Worship 1",
       "words": [
         {
@@ -8467,8 +8536,8 @@
       ]
     },
     {
-      "number": 82,
-      "id": "82",
+      "number": 92,
+      "id": "92",
       "title": "Worship 2",
       "words": [
         {
@@ -8575,8 +8644,8 @@
       ]
     },
     {
-      "number": 83,
-      "id": "83",
+      "number": 93,
+      "id": "93",
       "title": "Worship 3",
       "words": [
         {
@@ -8680,8 +8749,8 @@
       ]
     },
     {
-      "number": 84,
-      "id": "84",
+      "number": 94,
+      "id": "94",
       "title": "The Heart 1",
       "words": [
         {
@@ -8781,8 +8850,8 @@
       ]
     },
     {
-      "number": 85,
-      "id": "85",
+      "number": 95,
+      "id": "95",
       "title": "The Heart 2",
       "words": [
         {
@@ -8873,8 +8942,8 @@
       ]
     },
     {
-      "number": 86,
-      "id": "86",
+      "number": 96,
+      "id": "96",
       "title": "The Heart 3",
       "words": [
         {
@@ -8960,8 +9029,8 @@
       ]
     },
     {
-      "number": 87,
-      "id": "87",
+      "number": 97,
+      "id": "97",
       "title": "The Heart 4",
       "words": [
         {
@@ -9049,8 +9118,8 @@
       ]
     },
     {
-      "number": 88,
-      "id": "88",
+      "number": 98,
+      "id": "98",
       "title": "The Heart 5",
       "words": [
         {
@@ -9140,8 +9209,8 @@
       ]
     },
     {
-      "number": 89,
-      "id": "89",
+      "number": 99,
+      "id": "99",
       "title": "The Heart 6",
       "words": [
         {
@@ -9228,8 +9297,8 @@
       ]
     },
     {
-      "number": 90,
-      "id": "90",
+      "number": 100,
+      "id": "100",
       "title": "People 2",
       "words": [
         {
@@ -9310,8 +9379,8 @@
       ]
     },
     {
-      "number": 91,
-      "id": "91",
+      "number": 101,
+      "id": "101",
       "title": "People 3",
       "words": [
         {
@@ -9389,8 +9458,8 @@
       ]
     },
     {
-      "number": 92,
-      "id": "92",
+      "number": 102,
+      "id": "102",
       "title": "People 4",
       "words": [
         {
@@ -9470,8 +9539,8 @@
       ]
     },
     {
-      "number": 93,
-      "id": "93",
+      "number": 103,
+      "id": "103",
       "title": "Relatives 2",
       "words": [
         {
@@ -9551,8 +9620,8 @@
       ]
     },
     {
-      "number": 94,
-      "id": "94",
+      "number": 104,
+      "id": "104",
       "title": "Relatives 3",
       "words": [
         {
@@ -9626,8 +9695,8 @@
       ]
     },
     {
-      "number": 95,
-      "id": "95",
+      "number": 105,
+      "id": "105",
       "title": "Relatives 4",
       "words": [
         {
@@ -9702,8 +9771,8 @@
       ]
     },
     {
-      "number": 96,
-      "id": "96",
+      "number": 106,
+      "id": "106",
       "title": "Allah's Signs 2",
       "words": [
         {
@@ -9808,8 +9877,8 @@
       ]
     },
     {
-      "number": 97,
-      "id": "97",
+      "number": 107,
+      "id": "107",
       "title": "Allah's Signs 3",
       "words": [
         {
@@ -9917,8 +9986,8 @@
       ]
     },
     {
-      "number": 98,
-      "id": "98",
+      "number": 108,
+      "id": "108",
       "title": "Allah's Signs 4",
       "words": [
         {
@@ -10017,8 +10086,8 @@
       ]
     },
     {
-      "number": 99,
-      "id": "99",
+      "number": 109,
+      "id": "109",
       "title": "Allah's Signs 5",
       "words": [
         {
@@ -10125,8 +10194,8 @@
       ]
     },
     {
-      "number": 100,
-      "id": "100",
+      "number": 110,
+      "id": "110",
       "title": "Allah's Signs 6",
       "words": [
         {
@@ -10223,8 +10292,8 @@
       ]
     },
     {
-      "number": 101,
-      "id": "101",
+      "number": 111,
+      "id": "111",
       "title": "Allah's Signs 7",
       "words": [
         {
@@ -10319,8 +10388,8 @@
       ]
     },
     {
-      "number": 102,
-      "id": "102",
+      "number": 112,
+      "id": "112",
       "title": "Judgment 1",
       "words": [
         {
@@ -10423,8 +10492,8 @@
       ]
     },
     {
-      "number": 103,
-      "id": "103",
+      "number": 113,
+      "id": "113",
       "title": "Judgment 2",
       "words": [
         {
@@ -10527,8 +10596,8 @@
       ]
     },
     {
-      "number": 104,
-      "id": "104",
+      "number": 114,
+      "id": "114",
       "title": "Judgment 3",
       "words": [
         {
@@ -10624,8 +10693,8 @@
       ]
     },
     {
-      "number": 105,
-      "id": "105",
+      "number": 115,
+      "id": "115",
       "title": "Judgment 4",
       "words": [
         {
@@ -10721,8 +10790,8 @@
       ]
     },
     {
-      "number": 106,
-      "id": "106",
+      "number": 116,
+      "id": "116",
       "title": "Struggle 1",
       "words": [
         {
@@ -10822,8 +10891,8 @@
       ]
     },
     {
-      "number": 107,
-      "id": "107",
+      "number": 117,
+      "id": "117",
       "title": "Struggle 2",
       "words": [
         {
@@ -10921,8 +10990,8 @@
       ]
     },
     {
-      "number": 108,
-      "id": "108",
+      "number": 118,
+      "id": "118",
       "title": "Places 1",
       "words": [
         {
@@ -11029,8 +11098,8 @@
       ]
     },
     {
-      "number": 109,
-      "id": "109",
+      "number": 119,
+      "id": "119",
       "title": "Places 2",
       "words": [
         {
@@ -11137,8 +11206,8 @@
       ]
     },
     {
-      "number": 110,
-      "id": "110",
+      "number": 120,
+      "id": "120",
       "title": "Places 3",
       "words": [
         {
@@ -11232,8 +11301,8 @@
       ]
     },
     {
-      "number": 111,
-      "id": "111",
+      "number": 121,
+      "id": "121",
       "title": "Body Parts 2",
       "words": [
         {
@@ -11332,8 +11401,8 @@
       ]
     },
     {
-      "number": 112,
-      "id": "112",
+      "number": 122,
+      "id": "122",
       "title": "Body Parts 3",
       "words": [
         {
@@ -11421,8 +11490,8 @@
       ]
     },
     {
-      "number": 113,
-      "id": "113",
+      "number": 123,
+      "id": "123",
       "title": "Body Parts 4",
       "words": [
         {
@@ -11511,8 +11580,8 @@
       ]
     },
     {
-      "number": 114,
-      "id": "114",
+      "number": 124,
+      "id": "124",
       "title": "Time Words 2",
       "words": [
         {
@@ -11604,8 +11673,8 @@
       ]
     },
     {
-      "number": 115,
-      "id": "115",
+      "number": 125,
+      "id": "125",
       "title": "Time Words 3",
       "words": [
         {
@@ -11695,8 +11764,8 @@
       ]
     },
     {
-      "number": 116,
-      "id": "116",
+      "number": 126,
+      "id": "126",
       "title": "Time Words 4",
       "words": [
         {
@@ -11773,8 +11842,8 @@
       ]
     },
     {
-      "number": 117,
-      "id": "117",
+      "number": 127,
+      "id": "127",
       "title": "Time Words 5",
       "words": [
         {
@@ -11861,8 +11930,8 @@
       ]
     },
     {
-      "number": 118,
-      "id": "118",
+      "number": 128,
+      "id": "128",
       "title": "Time Words 6",
       "words": [
         {
@@ -11933,8 +12002,8 @@
       ]
     },
     {
-      "number": 119,
-      "id": "119",
+      "number": 129,
+      "id": "129",
       "title": "Questions 2",
       "words": [
         {
@@ -11986,8 +12055,8 @@
       ]
     },
     {
-      "number": 120,
-      "id": "120",
+      "number": 130,
+      "id": "130",
       "title": "Adjectives 2",
       "words": [
         {
@@ -12081,8 +12150,8 @@
       ]
     },
     {
-      "number": 121,
-      "id": "121",
+      "number": 131,
+      "id": "131",
       "title": "Adjectives 3",
       "words": [
         {
@@ -12180,8 +12249,8 @@
       ]
     },
     {
-      "number": 122,
-      "id": "122",
+      "number": 132,
+      "id": "132",
       "title": "Adjectives 4",
       "words": [
         {
@@ -12278,8 +12347,8 @@
       ]
     },
     {
-      "number": 123,
-      "id": "123",
+      "number": 133,
+      "id": "133",
       "title": "Prophets 2",
       "words": [
         {
@@ -12383,8 +12452,8 @@
       ]
     },
     {
-      "number": 124,
-      "id": "124",
+      "number": 134,
+      "id": "134",
       "title": "Prophets 3",
       "words": [
         {
@@ -12473,8 +12542,8 @@
       ]
     },
     {
-      "number": 125,
-      "id": "125",
+      "number": 135,
+      "id": "135",
       "title": "Allah's Attributes 3",
       "words": [
         {
@@ -12491,7 +12560,11 @@
           "id": "105-005",
           "lemmaIds": [
             560
-          ]
+          ],
+          "exampleVerse": {
+            "s": 59,
+            "a": 22
+          }
         },
         {
           "arabic": "قادِر",
@@ -12577,8 +12650,8 @@
       ]
     },
     {
-      "number": 126,
-      "id": "126",
+      "number": 136,
+      "id": "136",
       "title": "Allah's Attributes 4",
       "words": [
         {
@@ -12655,7 +12728,11 @@
           "id": "127-004",
           "lemmaIds": [
             1540
-          ]
+          ],
+          "exampleVerse": {
+            "s": 5,
+            "a": 109
+          }
         },
         {
           "arabic": "مَجِيد",
@@ -12684,8 +12761,8 @@
       ]
     },
     {
-      "number": 127,
-      "id": "127",
+      "number": 137,
+      "id": "137",
       "title": "Knowing 1",
       "words": [
         {
@@ -12777,8 +12854,8 @@
       ]
     },
     {
-      "number": 128,
-      "id": "128",
+      "number": 138,
+      "id": "138",
       "title": "Knowing 2",
       "words": [
         {
@@ -12871,8 +12948,8 @@
       ]
     },
     {
-      "number": 129,
-      "id": "129",
+      "number": 139,
+      "id": "139",
       "title": "Knowing 3",
       "words": [
         {
@@ -12952,8 +13029,8 @@
       ]
     },
     {
-      "number": 130,
-      "id": "130",
+      "number": 140,
+      "id": "140",
       "title": "Coming and Going 1",
       "words": [
         {
@@ -13065,8 +13142,8 @@
       ]
     },
     {
-      "number": 131,
-      "id": "131",
+      "number": 141,
+      "id": "141",
       "title": "Coming and Going 2",
       "words": [
         {
@@ -13165,8 +13242,8 @@
       ]
     },
     {
-      "number": 132,
-      "id": "132",
+      "number": 142,
+      "id": "142",
       "title": "Coming and Going 3",
       "words": [
         {
@@ -13264,8 +13341,8 @@
       ]
     },
     {
-      "number": 133,
-      "id": "133",
+      "number": 143,
+      "id": "143",
       "title": "Coming and Going 4",
       "words": [
         {
@@ -13360,8 +13437,8 @@
       ]
     },
     {
-      "number": 134,
-      "id": "134",
+      "number": 144,
+      "id": "144",
       "title": "Coming and Going 5",
       "words": [
         {
@@ -13460,8 +13537,8 @@
       ]
     },
     {
-      "number": 135,
-      "id": "135",
+      "number": 145,
+      "id": "145",
       "title": "Coming and Going 6",
       "words": [
         {
@@ -13548,8 +13625,8 @@
       ]
     },
     {
-      "number": 136,
-      "id": "136",
+      "number": 146,
+      "id": "146",
       "title": "Giving and Taking 1",
       "words": [
         {
@@ -13639,8 +13716,8 @@
       ]
     },
     {
-      "number": 137,
-      "id": "137",
+      "number": 147,
+      "id": "147",
       "title": "Giving and Taking 2",
       "words": [
         {
@@ -13723,8 +13800,8 @@
       ]
     },
     {
-      "number": 138,
-      "id": "138",
+      "number": 148,
+      "id": "148",
       "title": "More Verbs 1",
       "words": [
         {
@@ -13825,8 +13902,8 @@
       ]
     },
     {
-      "number": 139,
-      "id": "139",
+      "number": 149,
+      "id": "149",
       "title": "More Verbs 2",
       "words": [
         {
@@ -13926,8 +14003,8 @@
       ]
     },
     {
-      "number": 140,
-      "id": "140",
+      "number": 150,
+      "id": "150",
       "title": "More Verbs 3",
       "words": [
         {
@@ -14026,8 +14103,8 @@
       ]
     },
     {
-      "number": 141,
-      "id": "141",
+      "number": 151,
+      "id": "151",
       "title": "More Verbs 4",
       "words": [
         {

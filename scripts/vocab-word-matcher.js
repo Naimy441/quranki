@@ -1398,6 +1398,8 @@ function collectAffixLocations(studyById) {
         const lemma = lemFeat ? normalizeArabic(lemFeat.slice(4)) : '';
         if (lemma === 'ل' && seg.feats.includes('EMPH')) {
           add(prefixById, '11-006', wordKey);
+        } else if (lemma === 'ل' && seg.feats.includes('IMPV')) {
+          add(prefixById, '11-007', wordKey);
         } else if (lemma === 'ي' && seg.feats.includes('VOC')) {
           add(prefixById, '12-012', wordKey);
         } else {

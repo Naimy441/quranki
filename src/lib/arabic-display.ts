@@ -151,9 +151,14 @@ export function highlightAffix(surface: string, word: Word): HighlightParts {
       if (needle.length === 0 || needle.length > surfaceLetters.length) continue;
 
       if (side === 'prefix') {
-        if (needle.every((n, i) => n.ch === surfaceLetters[i].ch)) {
-          const end = surfaceLetters[needle.length - 1].end;
-          return { before: '', hit: surface.slice(0, end), after: surface.slice(end) };
+        const lead = ['\u0648', '\u0641']; // و / ف may sit in front of another prefix
+        for (const skip of [0, 1]) {
+          if (skip === 1 && !lead.includes(surfaceLetters[0]?.ch ?? '')) continue;
+          if (needle.every((n, i) => n.ch === surfaceLetters[skip + i]?.ch)) {
+            const start = surfaceLetters[skip].start;
+            const end = surfaceLetters[skip + needle.length - 1].end;
+            return { before: surface.slice(0, start), hit: surface.slice(start, end), after: surface.slice(end) };
+          }
         }
       } else {
         const offset = surfaceLetters.length - needle.length;

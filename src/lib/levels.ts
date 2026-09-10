@@ -1,3 +1,4 @@
+import asmaUlHusnaData from '@/data/asma-ul-husna.json';
 import lemmaLevelCoverageData from '@/data/quran/lemma-level-coverage.json';
 import stageLevelsData from '@/data/quran/stage-levels.json';
 import quranicWordsData from '@/data/quranic-words.json';
@@ -8,6 +9,8 @@ export interface Word {
   id: string;
   arabic: string;
   english: string;
+  /** Latin reading, used on the 99 Names cards. */
+  transliteration?: string;
   /** Possessive/object ending taught as a clitic, not a standalone mushaf word. */
   isSuffix?: boolean;
   /** One-letter particle that the mushaf fuses onto the next word (وَ, لِ, بِ, ...). */
@@ -64,16 +67,21 @@ const generated = stageLevelsData as {
   };
   levels: Level[];
 };
+const asmaUlHusna = asmaUlHusnaData as { metadata: { firstLevel: number; lastLevel: number; wordCount: number }; levels: Level[] };
 
 export function isStudyWord(word: Word): boolean {
   return word.kind !== 'grammar';
 }
 
 export const DECK_NAME = data.deck;
-/** Curated cards first (original Stage 1, then existing Stage 2), then generated leftovers. */
-export const LEVELS: Level[] = [...data.levels, ...generated.levels];
+/** Stage 1, then the 99 names, then leftover frequency levels — sorted by level number. */
+export const LEVELS: Level[] = [...data.levels, ...generated.levels, ...asmaUlHusna.levels].sort(
+  (a, b) => a.number - b.number,
+);
 export const LEVEL_COUNT = LEVELS.length;
 export const LAST_LEVEL_NUMBER = LEVELS[LEVELS.length - 1]?.number ?? 0;
+/** Last leftover-frequency level (stage 5). Names in stage 2 do not add Quran coverage. */
+export const LAST_FREQUENCY_LEVEL = generated.metadata.stage4LastLevel;
 /** Study words only - one-shot grammar intros are not vocabulary. */
 export const WORD_COUNT = LEVELS.reduce(
   (sum, level) => sum + level.words.filter(isStudyWord).length,
@@ -88,7 +96,11 @@ export interface Stage {
   subtitle: string;
   firstLevel: number;
   lastLevel: number;
+  /** Memorization track that is not part of the frequency leftover curriculum. */
+  kind?: 'asma';
 }
+
+const STAGE1_LAST_LEVEL = generated.metadata.stage1LastLevel;
 
 export const STAGES: Stage[] = [
   {
@@ -96,25 +108,33 @@ export const STAGES: Stage[] = [
     title: 'Stage 1',
     subtitle: 'The original curated vocabulary',
     firstLevel: 1,
-    lastLevel: generated.metadata.stage1LastLevel,
+    lastLevel: STAGE1_LAST_LEVEL,
   },
   {
     id: 2,
-    title: 'Stage 2',
-    subtitle: 'Five or more occurrences',
-    firstLevel: generated.metadata.stage1LastLevel + 1,
-    lastLevel: generated.metadata.stage2LastLevel,
+    title: 'The 99 Names',
+    subtitle: 'Asma ul-Husna',
+    firstLevel: asmaUlHusna.metadata.firstLevel,
+    lastLevel: asmaUlHusna.metadata.lastLevel,
+    kind: 'asma',
   },
   {
     id: 3,
     title: 'Stage 3',
+    subtitle: 'Five or more occurrences',
+    firstLevel: asmaUlHusna.metadata.lastLevel + 1,
+    lastLevel: generated.metadata.stage2LastLevel,
+  },
+  {
+    id: 4,
+    title: 'Stage 4',
     subtitle: 'Two to four occurrences',
     firstLevel: generated.metadata.stage2LastLevel + 1,
     lastLevel: generated.metadata.stage3LastLevel,
   },
   {
-    id: 4,
-    title: 'Stage 4',
+    id: 5,
+    title: 'Stage 5',
     subtitle: 'Once in the Quran',
     firstLevel: generated.metadata.stage3LastLevel + 1,
     lastLevel: generated.metadata.stage4LastLevel,
@@ -122,6 +142,16 @@ export const STAGES: Stage[] = [
 ];
 
 export const STAGE_COUNT = STAGES.length;
+export const ASMA_FIRST_LEVEL = asmaUlHusna.metadata.firstLevel;
+export const ASMA_LAST_LEVEL = asmaUlHusna.metadata.lastLevel;
+
+export function isAsmaLevel(levelNumber: number): boolean {
+  return levelNumber >= ASMA_FIRST_LEVEL && levelNumber <= ASMA_LAST_LEVEL;
+}
+
+export function isAsmaStage(stage: Stage): boolean {
+  return stage.kind === 'asma';
+}
 
 /** Levels 1–47 are Stage 1, the original thematic curriculum. */
 export const THEMATIC_LEVEL_COUNT = STAGES[0].lastLevel;
@@ -154,6 +184,10 @@ export function getUnlockedStage(reachedLevel: number): Stage {
     if (isStageUnlocked(STAGES[i], reachedLevel)) return STAGES[i];
   }
   return STAGES[0];
+}
+
+export function isLevelUnlocked(levelNumber: number, maxUnlockedLevel: number): boolean {
+  return levelNumber <= maxUnlockedLevel;
 }
 
 export interface StageProgress {
@@ -362,14 +396,43 @@ function isLevelFullyMastered(level: Level, progressMap: ProgressMap): boolean {
   });
 }
 
-/** The learner's current level: the first level that is not yet fully mastered, after a
- *  consecutive prefix of completed levels. Isolated words (including ones marked known in the
- *  Quran reader) do not skip ahead - only finishing every study word in level 1, then 2, and
- *  so on, advances this. Display-only; levels are not a gate on new cards. */
+function isFrequencyLevel(levelNumber: number): boolean {
+  return levelNumber > STAGE1_LAST_LEVEL && !isAsmaLevel(levelNumber);
+}
+
+function hasProgressInLevels(progressMap: ProgressMap, levels: readonly Level[]): boolean {
+  return levels.some((level) =>
+    level.words.some((word) => isStudyWord(word) && Boolean(progressMap[word.id])),
+  );
+}
+
+function stage1Levels(): Level[] {
+  return LEVELS.filter((level) => level.number <= STAGE1_LAST_LEVEL);
+}
+
+function asmaLevels(): Level[] {
+  return LEVELS.filter((level) => isAsmaLevel(level.number));
+}
+
+function frequencyLevels(): Level[] {
+  return LEVELS.filter((level) => isFrequencyLevel(level.number));
+}
+
+function hasFrequencyProgress(progressMap: ProgressMap): boolean {
+  return hasProgressInLevels(progressMap, frequencyLevels());
+}
+
+/** The learner's current level: the first unmastered level in number order (stage 1, names,
+ *  then leftover frequency). Someone already studying frequency words is not pulled back
+ *  onto the names. Isolated reader marks do not skip ahead. */
 export function computeReachedLevel(progressMap: ProgressMap): number {
+  const enteredFrequency = hasFrequencyProgress(progressMap);
   for (const level of LEVELS) {
+    if (isAsmaLevel(level.number) && enteredFrequency) continue;
     if (!isLevelFullyMastered(level, progressMap)) return Math.max(level.number, 1);
   }
+  const nextName = asmaLevels().find((level) => !isLevelFullyMastered(level, progressMap));
+  if (nextName) return frequencyLevels().at(-1)?.number ?? nextName.number;
   return Math.max(LAST_LEVEL_NUMBER, 1);
 }
 
@@ -383,8 +446,15 @@ export function nextReachedLevel(progressMap: ProgressMap, currentMax: number): 
  *  introduction is currently drawing from. Grammar intros do not hold this back.
  *  LAST_LEVEL_NUMBER if the whole deck has been introduced. */
 export function getIntroductionFrontier(progressMap: ProgressMap): number {
+  const skipNames = hasFrequencyProgress(progressMap);
   for (const level of LEVELS) {
+    if (skipNames && isAsmaLevel(level.number)) continue;
     if (level.words.some((word) => isStudyWord(word) && !progressMap[word.id])) return level.number;
+  }
+  if (skipNames) {
+    for (const level of asmaLevels()) {
+      if (level.words.some((word) => isStudyWord(word) && !progressMap[word.id])) return level.number;
+    }
   }
   return LAST_LEVEL_NUMBER;
 }
@@ -503,18 +573,38 @@ export function buildGlobalSessionQueue(
   reviews.sort((a, b) => a.dueTime - b.dueTime);
   const dueReviews = shuffleInPlace(reviews.slice(0, remainingReviewSlots));
 
+  const stage1Fresh = fresh.filter((item) => item.levelNumber <= STAGE1_LAST_LEVEL);
+  const asmaFresh = fresh.filter((item) => isAsmaLevel(item.levelNumber));
+  const laterFresh = fresh.filter((item) => isFrequencyLevel(item.levelNumber));
+  const stage1Complete = stage1Levels().every((level) => isLevelFullyMastered(level, progressMap));
+  const enteredFrequency = hasFrequencyProgress(progressMap);
+  const reserveName = enteredFrequency && asmaFresh.some((item) => isStudyWord(item.word)) ? 1 : 0;
+
   const newCards: SessionWord[] = [];
-  let vocabSlots = remainingNewSlots;
-  for (const item of fresh) {
-    if (item.word.kind === 'grammar') {
-      if (vocabSlots <= 0) break;
-      newCards.push(item);
-    } else if (vocabSlots > 0) {
-      newCards.push(item);
-      vocabSlots -= 1;
-    } else {
-      break;
+  const takeFresh = (items: SessionWord[], slots: number): number => {
+    let remaining = slots;
+    for (const item of items) {
+      if (item.word.kind === 'grammar') {
+        if (remaining <= 0) break;
+        newCards.push(item);
+      } else if (remaining > 0) {
+        newCards.push(item);
+        remaining -= 1;
+      } else {
+        break;
+      }
     }
+    return remaining;
+  };
+  if (!stage1Complete) {
+    const leftover = takeFresh(stage1Fresh, remainingNewSlots);
+    takeFresh(laterFresh, leftover);
+  } else if (!enteredFrequency) {
+    const leftover = takeFresh(asmaFresh, remainingNewSlots);
+    takeFresh(laterFresh, leftover);
+  } else {
+    const leftover = takeFresh([...stage1Fresh, ...laterFresh], Math.max(0, remainingNewSlots - reserveName));
+    takeFresh(asmaFresh, leftover + reserveName);
   }
 
   return [

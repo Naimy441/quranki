@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 const WORD_AUDIO_CDN = 'https://audio.qurancdn.com/wbw';
 
 const MIN_WORD_BYTES = 800;
+const READY_TIMEOUT_MS = 4000;
 
 const inflight = new Map<string, Promise<string>>();
 
@@ -16,6 +17,7 @@ let ignoreFinishUntil = 0;
 let loadedUri: string | null = null;
 let onFinished: (() => void) | null = null;
 let onFailed: (() => void) | null = null;
+let playerOp: Promise<void> = Promise.resolve();
 
 function pad3(value: number): string {
   return String(value).padStart(3, '0');
@@ -84,8 +86,7 @@ async function getWordPlaybackUri(
   word: number,
   signal?: AbortSignal,
 ): Promise<string> {
-  const url = getWordAudioUrl(surah, ayah, word);
-  if (!canCacheToDisk()) return url;
+  if (!canCacheToDisk()) return getWordAudioUrl(surah, ayah, word);
 
   const cached = wordFile(surah, ayah, word);
   if (isValidAudioFile(cached)) return cached.uri;
@@ -94,13 +95,28 @@ async function getWordPlaybackUri(
   const pending = inflight.get(key);
   if (pending) return pending;
 
-  const request = downloadWord(surah, ayah, word, signal)
-    .catch(() => url)
-    .finally(() => {
-      inflight.delete(key);
-    });
+  const request = downloadWord(surah, ayah, word, signal).finally(() => {
+    inflight.delete(key);
+  });
   inflight.set(key, request);
   return request;
+}
+
+/** Warm the on-disk cache so the next tap does not hit the network. */
+export function prefetchWordAudio(surah: number, ayah: number, word: number): void {
+  if (!canCacheToDisk()) return;
+  void getWordPlaybackUri(surah, ayah, word).catch(() => {
+    // Prefetch is best-effort; play will retry.
+  });
+}
+
+function runPlayerOp<T>(work: () => Promise<T>): Promise<T> {
+  const run = playerOp.then(work, work);
+  playerOp = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
 }
 
 async function getPlayer(): Promise<AudioPlayer> {
@@ -113,10 +129,37 @@ async function getPlayer(): Promise<AudioPlayer> {
     audioModeReady = true;
   }
   if (!player) {
-    player = createAudioPlayer(null);
+    // Keep the session up after a short clip ends - otherwise the next card's first
+    // `play()` is ignored on iOS and only the second tap is audible.
+    player = createAudioPlayer(null, { updateInterval: 80, keepAudioSessionActive: true });
     player.addListener('playbackStatusUpdate', onPlaybackStatus);
   }
   return player;
+}
+
+function waitForReady(instance: AudioPlayer, seq: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      sub.remove();
+      resolve(ok);
+    };
+    const timer = setTimeout(() => finish(seq === requestSeq && instance.isLoaded), READY_TIMEOUT_MS);
+    const sub = instance.addListener('playbackStatusUpdate', (status: AudioStatus) => {
+      if (seq !== requestSeq) {
+        finish(false);
+        return;
+      }
+      if (status.error) {
+        finish(false);
+        return;
+      }
+      if (status.isLoaded && !status.isBuffering) finish(true);
+    });
+  });
 }
 
 function onPlaybackStatus(status: AudioStatus): void {
@@ -143,27 +186,35 @@ export async function playWordAudio(
   listeners?: { onFinished?: () => void; onFailed?: () => void },
 ): Promise<boolean> {
   const seq = ++requestSeq;
+  // Ignore the outgoing clip's `didJustFinish` before swapping listeners, or a replace
+  // would fire the new card's `onFinished` and clear the speaking state immediately.
+  ignoreFinishUntil = Date.now() + 800;
   onFinished = listeners?.onFinished ?? null;
   onFailed = listeners?.onFailed ?? null;
 
   try {
     const uri = await getWordPlaybackUri(surah, ayah, word);
     if (seq !== requestSeq) return false;
-    const instance = await getPlayer();
-    if (seq !== requestSeq) return false;
-
-    ignoreFinishUntil = Date.now() + 400;
-    if (loadedUri === uri && instance.isLoaded) {
-      await instance.seekTo(0);
+    return await runPlayerOp(async () => {
       if (seq !== requestSeq) return false;
+      const instance = await getPlayer();
+      if (seq !== requestSeq) return false;
+
+      ignoreFinishUntil = Date.now() + 400;
+      if (loadedUri === uri && instance.isLoaded) {
+        await instance.seekTo(0);
+        if (seq !== requestSeq) return false;
+        instance.play();
+        return true;
+      }
+
+      instance.replace({ uri });
+      loadedUri = uri;
+      const ready = await waitForReady(instance, seq);
+      if (!ready || seq !== requestSeq) return false;
       instance.play();
       return true;
-    }
-
-    instance.replace({ uri });
-    loadedUri = uri;
-    instance.play();
-    return true;
+    });
   } catch {
     if (seq !== requestSeq) return false;
     onFinished = null;
@@ -179,11 +230,13 @@ export function stopWordAudio(): void {
   const finished = onFinished;
   onFinished = null;
   onFailed = null;
-  try {
-    player?.pause();
-    void player?.seekTo(0);
-  } catch {
-    // Player may already be torn down.
-  }
+  void runPlayerOp(async () => {
+    try {
+      player?.pause();
+      await player?.seekTo(0);
+    } catch {
+      // Player may already be torn down.
+    }
+  });
   finished?.();
 }

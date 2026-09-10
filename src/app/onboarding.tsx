@@ -22,7 +22,7 @@ import { hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
 import {
     CURRICULUM_LEMMA_COUNT,
     getCoverageThroughLevel,
-    LAST_LEVEL_NUMBER,
+    LAST_FREQUENCY_LEVEL,
     LEVELS,
     STAGES,
     THEMATIC_WORD_COUNT,
@@ -44,7 +44,7 @@ const PACE_OPTIONS = [
 
 function coverageCopy(): { title: string; body: string } {
   const core = getCoverageThroughLevel(STAGES[0].lastLevel);
-  const full = getCoverageThroughLevel(LAST_LEVEL_NUMBER);
+  const full = getCoverageThroughLevel(LAST_FREQUENCY_LEVEL);
   return {
     title: 'The first words go a long way',
     body: `Stage 1 is ${formatCount(THEMATIC_WORD_COUNT)} words. That is about ${core.percent}% of what you read. All ${formatCount(CURRICULUM_LEMMA_COUNT)} words reach ${full.percent}%.`,
@@ -118,7 +118,6 @@ export default function OnboardingScreen() {
   const isLast = index === STEPS.length - 1;
 
   const handleSpeak = async () => {
-    stopWordPronunciation();
     setIsSpeaking(true);
     void playWordPronunciation(DEMO_WORD.id, () => setIsSpeaking(false))
       .then((played) => { if (!played) setIsSpeaking(false); })

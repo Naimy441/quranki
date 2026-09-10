@@ -129,6 +129,12 @@ function writeCoverage(curatedLevels, generatedLevels, canonicalWords, totalWord
       0,
     );
   }
+  const stage1Last = 47;
+  const asmaCount = 10;
+  const throughStage1 = levels[stage1Last];
+  if (throughStage1 !== undefined) {
+    for (let i = 1; i <= asmaCount; i += 1) levels[stage1Last + i] = throughStage1;
+  }
   return { totalWords, levels };
 }
 
@@ -291,7 +297,7 @@ async function main() {
 
   const lastCoverage = coverage.levels[String(stageEnds[4])];
   console.log(
-    `Generated ${cards.length} leftover cards (${byStage[2].length} stage 2, ${byStage[3].length} stage 3, ${byStage[4].length} stage 4) as levels 142–${stageEnds[4]}.`,
+    `Generated ${cards.length} leftover cards (${byStage[2].length} old-stage-2, ${byStage[3].length} stage 3, ${byStage[4].length} stage 4) as levels ${generatedLevels[0]?.number}–${stageEnds[4]} (48–57 reserved for the 99 names).`,
   );
   console.log(
     `Coverage through last level: ${lastCoverage} / ${coverage.totalWords} Quran words. Original curated cards were not modified.`,

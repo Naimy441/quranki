@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button } from 'react-native-paper';
 import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withTiming, ZoomIn } from 'react-native-reanimated';
@@ -12,12 +12,22 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { createNewCard, deserializeCard, formatInterval, previewGrades, State, type GradeName } from '@/lib/fsrs';
+import {
+  createNewCard,
+  deserializeCard,
+  formatInterval,
+  previewGrades,
+  serializeCard,
+  State,
+  type Card,
+  type GradeName,
+  type GradePreview,
+} from '@/lib/fsrs';
 import { hapticHeavy, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
 import { useStudySessionClock } from '@/hooks/use-study-session-clock';
-import { getStageForLevel, getUpcomingLearning, isStudyWord, type SessionWord } from '@/lib/levels';
+import { getStageForLevel, getUpcomingLearning, isStudyWord, type SessionWord, type WordProgress } from '@/lib/levels';
 import { formatStudyDuration } from '@/lib/stats';
-import { playWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
+import { playWordPronunciation, prefetchWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
 import { useProgressStore } from '@/store/progress-store';
 import { stopRecitation } from '@/store/recitation-store';
 
@@ -29,6 +39,39 @@ function hapticGrade(grade: GradeName) {
 }
 
 const EMPTY_RATING_COUNTS: Record<GradeName, number> = { again: 0, hard: 0, good: 0, easy: 0 };
+
+type QueuedEntry = SessionWord & { sessionKey: string };
+
+let nextSessionKey = 0;
+function tagEntry(entry: SessionWord): QueuedEntry {
+  nextSessionKey += 1;
+  return { ...entry, sessionKey: `q-${nextSessionKey}` };
+}
+
+/** Position in the sitting, counting a later Again/Hard copy of the same word only if
+ *  that word still appears ahead. All-Hard then back-and-Easy stays 1/10…10/10 instead of
+ *  ballooning to 20 and finishing at 10/20. */
+function cloneWordProgress(progress: WordProgress): WordProgress {
+  return { ...progress, card: { ...progress.card } };
+}
+
+function ratingCountsFromGrades(grades: Record<string, { grade: GradeName }>): Record<GradeName, number> {
+  const counts = { ...EMPTY_RATING_COUNTS };
+  for (const entry of Object.values(grades)) counts[entry.grade] += 1;
+  return counts;
+}
+
+function sessionStudyProgress(queue: QueuedEntry[], index: number, currentEntry: QueuedEntry) {
+  const studyCompleted = queue.slice(0, index).filter((entry) => isStudyWord(entry.word)).length;
+  const aheadIds = new Set<string>();
+  for (let i = index; i < queue.length; i += 1) {
+    if (isStudyWord(queue[i].word)) aheadIds.add(queue[i].word.id);
+  }
+  const studyTotal = studyCompleted + aheadIds.size;
+  const studyPosition = isStudyWord(currentEntry.word) ? studyCompleted + 1 : studyCompleted;
+  const studyProgress = studyTotal === 0 ? 0 : studyCompleted / studyTotal;
+  return { studyTotal, studyPosition, studyProgress };
+}
 
 interface SessionRunnerProps {
   /** The frozen queue of words for this session, built once by the caller. */
@@ -42,6 +85,7 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
   const progress = useProgressStore((state) => state.progress);
   const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
   const gradeWord = useProgressStore((state) => state.gradeWord);
+  const revertSessionWord = useProgressStore((state) => state.revertSessionWord);
 
   const [initialMaxUnlockedLevel] = useState(() => maxUnlockedLevel);
   const [index, setIndex] = useState(0);
@@ -55,8 +99,19 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
   // them the next time a session happens to be built, so this session's queue is a growable copy
   // of the frozen `queue` prop rather than the prop itself, letting handleGrade append a word
   // back onto the end for a second (or third...) pass this session.
-  const [sessionQueue, setSessionQueue] = useState(() => queue);
+  const [sessionQueue, setSessionQueue] = useState(() => queue.map(tagEntry));
   const { sessionMs, markInteraction, flushNow } = useStudySessionClock(phase === 'review' && queue.length > 0);
+  // Grade previews must keep using the card as it was when this queue slot first appeared.
+  // After a rating, FSRS mutates the stored card; going back would otherwise show the
+  // post-grade intervals as if they were the original Again/Hard/Good/Easy. Keyed by
+  // sessionKey so a later requeue of the same word can snapshot its post-Again state.
+  const firstSeenCards = useRef<Record<string, Card>>({});
+  const firstSeenPreviews = useRef<Record<string, GradePreview[]>>({});
+  const firstSeenByWord = useRef<Record<string, Card>>({});
+  const preSessionProgress = useRef<Record<string, WordProgress | null>>({});
+  const sessionGradesByWord = useRef<
+    Record<string, { grade: GradeName; countedAsNew: boolean; countedAsReview: boolean }>
+  >({});
 
   useEffect(
     () => () => {
@@ -68,10 +123,15 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
 
   const currentEntry = sessionQueue[index];
   const currentWordId = currentEntry?.word.id;
+  const nextWordId = sessionQueue[index + 1]?.word.id;
   useEffect(() => {
     setIsSpeaking(false);
     stopWordPronunciation();
+    if (currentWordId) prefetchWordPronunciation(currentWordId);
   }, [currentWordId]);
+  useEffect(() => {
+    if (nextWordId) prefetchWordPronunciation(nextWordId);
+  }, [nextWordId]);
   const currentProgress = currentEntry ? progress[currentEntry.word.id] : undefined;
 
   const currentCard = useMemo(() => {
@@ -80,17 +140,32 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentEntry?.word.id, currentProgress?.reviewedAt]);
 
+  if (currentEntry && currentCard && !firstSeenCards.current[currentEntry.sessionKey]) {
+    firstSeenCards.current[currentEntry.sessionKey] = deserializeCard(serializeCard(currentCard));
+  }
+  if (currentEntry && currentCard && !firstSeenByWord.current[currentEntry.word.id]) {
+    firstSeenByWord.current[currentEntry.word.id] = deserializeCard(serializeCard(currentCard));
+    preSessionProgress.current[currentEntry.word.id] = currentProgress ? cloneWordProgress(currentProgress) : null;
+  }
+
+  const previewCard = currentEntry
+    ? (firstSeenCards.current[currentEntry.sessionKey] ?? currentCard)
+    : null;
+
   const previews = useMemo(() => {
-    if (!currentCard) return [];
-    return previewGrades(currentCard, new Date());
-  }, [currentCard]);
+    if (!previewCard || !currentEntry) return [];
+    const key = currentEntry.sessionKey;
+    if (!firstSeenPreviews.current[key]) {
+      firstSeenPreviews.current[key] = previewGrades(previewCard, new Date());
+    }
+    return firstSeenPreviews.current[key];
+  }, [previewCard, currentEntry?.sessionKey]);
 
   const handleSpeak = async () => {
     if (!currentEntry) return;
     markInteraction();
     hapticSelection();
     stopRecitation();
-    stopWordPronunciation();
     setIsSpeaking(true);
     void playWordPronunciation(currentEntry.word.id, () => setIsSpeaking(false))
       .then((played) => { if (!played) setIsSpeaking(false); })
@@ -118,27 +193,83 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
     ]);
   };
 
+  const handleHideAnswer = () => {
+    markInteraction();
+    hapticLight();
+    stopRecitation();
+    setRevealed(false);
+  };
+
+  const handlePreviousWord = () => {
+    if (index <= 0) return;
+    markInteraction();
+    hapticLight();
+    stopRecitation();
+    stopWordPronunciation();
+    setIsSpeaking(false);
+    const targetIndex = index - 1;
+    const target = sessionQueue[targetIndex];
+    if (target && isStudyWord(target.word)) {
+      const wordId = target.word.id;
+      const recorded = sessionGradesByWord.current[wordId];
+      if (recorded) {
+        revertSessionWord(wordId, preSessionProgress.current[wordId] ?? undefined, {
+          countedAsNew: recorded.countedAsNew,
+          countedAsReview: recorded.countedAsReview,
+        });
+        delete sessionGradesByWord.current[wordId];
+        setRatingCounts(ratingCountsFromGrades(sessionGradesByWord.current));
+      }
+      setSessionQueue((prev) =>
+        prev.filter((entry, entryIndex) => entryIndex <= targetIndex || entry.word.id !== wordId),
+      );
+    }
+    setIndex(targetIndex);
+    setRevealed(false);
+  };
+
   const handleGrade = (grade: GradeName) => {
     if (!currentEntry) return;
     markInteraction();
     setIsSpeaking(false);
     hapticGrade(grade);
     stopRecitation();
-    const nextCard = gradeWord(currentEntry.word.id, grade);
+    const wordId = currentEntry.word.id;
+    const alreadyGraded = sessionGradesByWord.current[wordId];
+    // This slot's first-seen card: the original on first pass, or the post-Hard card on a
+    // later copy. Going back restores the word first, so a re-rate here is a fresh review.
+    const fromCard = firstSeenCards.current[currentEntry.sessionKey] ?? firstSeenByWord.current[wordId];
+    const existing = progress[wordId];
+    const baseCard = fromCard ?? (existing ? deserializeCard(existing.card) : createNewCard());
+    const countedAsReview =
+      !alreadyGraded && existing !== undefined && baseCard.state === State.Review;
+    const countedAsNew = !alreadyGraded && existing === undefined && isStudyWord(currentEntry.word);
+    const nextCard = gradeWord(wordId, grade, {
+      ...(fromCard ? { fromCard } : {}),
+      replaceSessionGrade: alreadyGraded !== undefined,
+    });
     if (isStudyWord(currentEntry.word)) {
-      setRatingCounts((prev) => ({ ...prev, [grade]: prev[grade] + 1 }));
+      sessionGradesByWord.current[wordId] = {
+        grade,
+        countedAsNew: alreadyGraded?.countedAsNew ?? countedAsNew,
+        countedAsReview: alreadyGraded?.countedAsReview ?? countedAsReview,
+      };
+      setRatingCounts(ratingCountsFromGrades(sessionGradesByWord.current));
     }
 
     // Still Learning/Relearning (not yet graduated to Review) means it's due again in minutes -
     // requeue it at the end of this session, the same "you'll see it again soon" behavior Anki
     // gives a card that hasn't graduated yet, rather than only showing it later this sitting.
     const needsRequeue = nextCard.state !== State.Review && isStudyWord(currentEntry.word);
-    const nextLength = sessionQueue.length + (needsRequeue ? 1 : 0);
+    let nextQueue = sessionQueue.filter(
+      (entry, entryIndex) => entryIndex <= index || entry.word.id !== wordId,
+    );
     if (needsRequeue) {
-      setSessionQueue((prev) => [...prev, { ...currentEntry, reason: 'due' }]);
+      nextQueue = [...nextQueue, tagEntry({ ...currentEntry, reason: 'due' })];
     }
+    if (nextQueue !== sessionQueue) setSessionQueue(nextQueue);
 
-    if (index + 1 < nextLength) {
+    if (index + 1 < nextQueue.length) {
       setIndex(index + 1);
       setRevealed(false);
     } else {
@@ -149,7 +280,9 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
   };
 
   if (phase === 'summary') {
-    const unlockedNewLevel = maxUnlockedLevel > initialMaxUnlockedLevel;
+    const unlockedNewStage =
+      getStageForLevel(maxUnlockedLevel).id > getStageForLevel(initialMaxUnlockedLevel).id;
+    const unlockedNewLevel = maxUnlockedLevel > initialMaxUnlockedLevel || unlockedNewStage;
     const reviewedCount = queue.filter((entry) => isStudyWord(entry.word)).length;
     return (
       <ThemedView style={styles.flex}>
@@ -193,8 +326,10 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
                 style={[styles.unlockBanner, { backgroundColor: theme.primary }]}>
                 <Ionicons name="flag" size={18} color={theme.onPrimary} />
                 <ThemedText themeColor="onPrimary" type="smallBold">
-                  {getStageForLevel(maxUnlockedLevel).id > getStageForLevel(initialMaxUnlockedLevel).id
-                    ? `Stage ${getStageForLevel(maxUnlockedLevel).id} unlocked`
+                  {unlockedNewStage
+                    ? getStageForLevel(maxUnlockedLevel).kind === 'asma'
+                      ? 'The 99 Names unlocked'
+                      : `Stage ${getStageForLevel(maxUnlockedLevel).id} unlocked`
                     : `Now studying level ${maxUnlockedLevel}`}
                 </ThemedText>
               </Animated.View>
@@ -220,10 +355,15 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
     return <ThemedView style={styles.flex} />;
   }
 
-  const studyTotal = sessionQueue.filter((entry) => isStudyWord(entry.word)).length;
-  const studyCompleted = sessionQueue.slice(0, index).filter((entry) => isStudyWord(entry.word)).length;
-  const studyPosition = isStudyWord(currentEntry.word) ? studyCompleted + 1 : studyCompleted;
-  const studyProgress = studyTotal === 0 ? 0 : studyCompleted / studyTotal;
+  const { studyTotal, studyPosition, studyProgress } = sessionStudyProgress(sessionQueue, index, currentEntry);
+  const studyKindLabel =
+    currentEntry.word.kind === 'grammar'
+      ? 'Lesson'
+      : currentEntry.reason === 'new'
+        ? 'New'
+        : previewCard && (previewCard.state === State.Learning || previewCard.state === State.Relearning)
+          ? 'Learn'
+          : 'Review';
 
   return (
     <ThemedView style={styles.flex}>
@@ -235,26 +375,35 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
                 hapticLight();
                 handleClose();
               }}
-              hitSlop={12}
-              style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={theme.textSecondary} />
+              hitSlop={8}
+              accessibilityLabel="End session"
+              style={styles.chromeButton}>
+              <Ionicons name="close" size={22} color={theme.textSecondary} />
             </Pressable>
           </View>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.progressLabel}>
-            {studyTotal === 0 ? '' : `${Math.max(studyPosition, 1)}/${studyTotal}`}
-          </ThemedText>
-          <View style={[styles.topBarSide, styles.topBarSideEnd]}>
-            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-              Level {currentEntry.levelNumber}
-              {' · '}
-              {currentEntry.word.kind === 'grammar'
-                ? 'Lesson'
-                : currentEntry.reason === 'new'
-                  ? 'New'
-                  : currentCard.state === State.Learning || currentCard.state === State.Relearning
-                    ? 'Learn'
-                    : 'Review'}
+          <View style={styles.topBarCenter}>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.progressLabel}>
+              {studyTotal === 0 ? '' : `${Math.max(studyPosition, 1)}/${studyTotal}`}
             </ThemedText>
+          </View>
+          <View style={[styles.topBarSide, styles.topBarSideEnd]}>
+            {currentEntry.word.kind !== 'grammar' && revealed ? (
+              <Pressable
+                onPress={handleHideAnswer}
+                hitSlop={8}
+                accessibilityLabel="Hide answer"
+                style={({ pressed }) => [styles.chromeButton, pressed && styles.chromePressed]}>
+                <Ionicons name="eye-off-outline" size={20} color={theme.textSecondary} />
+              </Pressable>
+            ) : index > 0 ? (
+              <Pressable
+                onPress={handlePreviousWord}
+                hitSlop={8}
+                accessibilityLabel="Previous word"
+                style={({ pressed }) => [styles.chromeButton, pressed && styles.chromePressed]}>
+                <Ionicons name="chevron-back" size={22} color={theme.textSecondary} />
+              </Pressable>
+            ) : null}
           </View>
         </View>
         <SessionProgressBar progress={studyProgress} color={theme.primary} trackColor={theme.backgroundElement} />
@@ -275,29 +424,41 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
         </ScrollView>
 
         <View style={styles.actions}>
-          {currentEntry.word.kind === 'grammar' ? (
-            <Button
-              mode="contained"
-              style={styles.showAnswerButton}
-              contentStyle={styles.showAnswerContent}
-              onPress={() => handleGrade('easy')}>
-              Got it
-            </Button>
-          ) : revealed ? (
-            <GradeButtonRow previews={previews} onGrade={handleGrade} />
-          ) : (
-            <Button
-              mode="contained"
-              style={styles.showAnswerButton}
-              contentStyle={styles.showAnswerContent}
-              onPress={() => {
-                markInteraction();
-                hapticLight();
-                setRevealed(true);
-              }}>
-              Show answer
-            </Button>
-          )}
+          <View style={styles.actionStage}>
+            <ThemedText
+              type="small"
+              themeColor="textMuted"
+              numberOfLines={1}
+              pointerEvents="none"
+              style={styles.actionMeta}>
+              Level {currentEntry.levelNumber}
+              {' · '}
+              {studyKindLabel}
+            </ThemedText>
+            {currentEntry.word.kind === 'grammar' ? (
+              <Button
+                mode="contained"
+                style={styles.showAnswerButton}
+                contentStyle={styles.showAnswerContent}
+                onPress={() => handleGrade('easy')}>
+                Got it
+              </Button>
+            ) : revealed ? (
+              <GradeButtonRow previews={previews} onGrade={handleGrade} />
+            ) : (
+              <Button
+                mode="contained"
+                style={styles.showAnswerButton}
+                contentStyle={styles.showAnswerContent}
+                onPress={() => {
+                  markInteraction();
+                  hapticLight();
+                  setRevealed(true);
+                }}>
+                Show answer
+              </Button>
+            )}
+          </View>
         </View>
       </SafeAreaView>
     </ThemedView>
@@ -310,22 +471,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.two,
-    paddingBottom: Spacing.two,
+    paddingTop: Spacing.one,
+    paddingBottom: Spacing.one,
   },
   topBarSide: {
-    width: 120,
-    justifyContent: 'center',
+    minWidth: 72,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   topBarSideEnd: {
-    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
   },
-  closeButton: {
-    padding: Spacing.one,
-    marginLeft: -Spacing.one,
+  topBarCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.one,
+  },
+  chromeButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chromePressed: {
+    opacity: 0.55,
   },
   progressLabel: {
-    flex: 1,
     textAlign: 'center',
   },
   progressTrack: {
@@ -333,6 +505,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     overflow: 'hidden',
     marginHorizontal: Spacing.four,
+    marginTop: 2,
   },
   progressFill: {
     height: '100%',
@@ -357,7 +530,18 @@ const styles = StyleSheet.create({
   actions: {
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
-    paddingBottom: Spacing.two,
+    paddingBottom: Spacing.five,
+  },
+  actionStage: {
+    position: 'relative',
+  },
+  actionMeta: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: '100%',
+    marginTop: Spacing.two,
+    textAlign: 'center',
   },
   showAnswerButton: {
     borderRadius: Radius.medium,
