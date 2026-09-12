@@ -41,7 +41,7 @@ export function LevelCard({ status, isCurrent }: LevelCardProps) {
           {level.title}
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {introduced === 0 ? `${totalCount} words · not started` : `${masteredCount} of ${totalCount} mastered`}
+          {introduced === 0 ? `${totalCount} words - not started` : `${masteredCount} of ${totalCount} mastered`}
         </ThemedText>
       </View>
 

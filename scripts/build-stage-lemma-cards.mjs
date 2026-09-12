@@ -93,6 +93,10 @@ function ayahTranslation(ayah) {
     .slice(0, 180);
 }
 
+function maxLevelNumber(levels) {
+  return levels.reduce((max, level) => Math.max(max, Number(level.number) || 0), 0);
+}
+
 function packStage(cards, startLevel, title) {
   if (cards.length === 0) return [];
   const levelCount = Math.ceil(cards.length / WORDS_PER_LEVEL);
@@ -116,7 +120,7 @@ function packStage(cards, startLevel, title) {
   return levels;
 }
 
-function writeCoverage(curatedLevels, generatedLevels, canonicalWords, totalWords) {
+function writeCoverage(curatedLevels, generatedLevels, canonicalWords, totalWords, asmaLastLevel) {
   const recognizedLemmaIds = new Set();
   const levels = {};
   for (const level of [...curatedLevels, ...generatedLevels]) {
@@ -130,10 +134,11 @@ function writeCoverage(curatedLevels, generatedLevels, canonicalWords, totalWord
     );
   }
   const stage1Last = 47;
-  const asmaCount = 10;
   const throughStage1 = levels[stage1Last];
   if (throughStage1 !== undefined) {
-    for (let i = 1; i <= asmaCount; i += 1) levels[stage1Last + i] = throughStage1;
+    for (let number = stage1Last + 1; number <= asmaLastLevel; number += 1) {
+      levels[number] = throughStage1;
+    }
   }
   return { totalWords, levels };
 }
@@ -149,12 +154,14 @@ async function loadSurahs() {
 }
 
 async function main() {
-  const [lemmaData, studyWords, wordLemmas, surahs] = await Promise.all([
+  const [lemmaData, studyWords, wordLemmas, surahs, asmaUlHusna] = await Promise.all([
     readFile(join(dataDir, 'quran-lemmas.json'), 'utf8').then(JSON.parse),
     readFile(join(dataDir, 'quranic-words.json'), 'utf8').then(JSON.parse),
     readFile(join(dataDir, 'quran-word-lemmas.json'), 'utf8').then(JSON.parse),
     loadSurahs(),
+    readFile(join(dataDir, 'asma-ul-husna.json'), 'utf8').then(JSON.parse),
   ]);
+  const asmaLastLevel = asmaUlHusna.metadata.lastLevel;
 
   const covered = new Set();
   for (const level of studyWords.levels) {
@@ -237,9 +244,17 @@ async function main() {
   for (const card of cards) byStage[card.stage].push(card);
   for (const list of Object.values(byStage)) list.sort((a, b) => a.id - b.id);
 
-  let nextLevel = (studyWords.levels.at(-1)?.number ?? 0) + 1;
+  const lastAssignedLevel = Math.max(
+    maxLevelNumber(studyWords.levels),
+    maxLevelNumber(asmaUlHusna.levels),
+    asmaUlHusna.metadata.lastLevel,
+  );
+  if (lastAssignedLevel < 1) {
+    throw new Error('Cannot pack leftover cards: curated and Asma decks have no level numbers.');
+  }
+  let nextLevel = lastAssignedLevel + 1;
   const generatedLevels = [];
-  const stageEnds = { 2: studyWords.levels.at(-1)?.number ?? 141, 3: 0, 4: 0 };
+  const stageEnds = { 2: lastAssignedLevel, 3: lastAssignedLevel, 4: lastAssignedLevel };
   let existingParts = existingPartsFromLevels(studyWords.levels);
 
   const leftoverStage2 = packStage(byStage[2], nextLevel, STAGE_TITLES[2]);
@@ -272,6 +287,7 @@ async function main() {
     generatedLevels,
     canonicalWords,
     wordLemmas.metadata.wordCount,
+    asmaLastLevel,
   );
 
   const payload = {
@@ -297,7 +313,7 @@ async function main() {
 
   const lastCoverage = coverage.levels[String(stageEnds[4])];
   console.log(
-    `Generated ${cards.length} leftover cards (${byStage[2].length} old-stage-2, ${byStage[3].length} stage 3, ${byStage[4].length} stage 4) as levels ${generatedLevels[0]?.number}–${stageEnds[4]} (48–57 reserved for the 99 names).`,
+    `Generated ${cards.length} leftover cards (${byStage[2].length} old-stage-2, ${byStage[3].length} stage 3, ${byStage[4].length} stage 4) as levels ${generatedLevels[0]?.number}–${stageEnds[4]} (48–${asmaLastLevel} reserved for the 99 names and Arabic digits).`,
   );
   console.log(
     `Coverage through last level: ${lastCoverage} / ${coverage.totalWords} Quran words. Original curated cards were not modified.`,

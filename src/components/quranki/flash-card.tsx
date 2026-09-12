@@ -33,22 +33,24 @@ export function FlashCard({ word, revealed, onSpeak, isSpeaking }: FlashCardProp
         <ArabicText style={[styles.arabicText, revealed && styles.arabicTextRevealed, showSpoken && { color: theme.primary }]}>
           {showSpoken ? spokenSurface : displayArabic(word)}
         </ArabicText>
-        <Pressable
-          onPress={onSpeak}
-          hitSlop={12}
-          accessibilityLabel="Play pronunciation"
-          style={({ pressed }) => [
-            styles.speakerButton,
-            revealed && styles.speakerButtonBeside,
-            { backgroundColor: theme.backgroundElement },
-            pressed && styles.pressed,
-          ]}>
-          <Ionicons
-            name={isSpeaking ? 'volume-high' : 'volume-medium-outline'}
-            size={revealed ? 18 : 20}
-            color={theme.primary}
-          />
-        </Pressable>
+        {examples.length > 0 ? (
+          <Pressable
+            onPress={onSpeak}
+            hitSlop={12}
+            accessibilityLabel="Play pronunciation"
+            style={({ pressed }) => [
+              styles.speakerButton,
+              revealed && styles.speakerButtonBeside,
+              { backgroundColor: theme.backgroundElement },
+              pressed && styles.pressed,
+            ]}>
+            <Ionicons
+              name={isSpeaking ? 'volume-high' : 'volume-medium-outline'}
+              size={revealed ? 18 : 20}
+              color={theme.primary}
+            />
+          </Pressable>
+        ) : null}
       </View>
 
       {revealed ? (

@@ -135,7 +135,7 @@ export default function LearnScreen() {
       : 'All caught up';
 
   const heroSubtitle = hasWorkToday
-    ? [dueCount > 0 ? `${dueCount} due` : null, newCount > 0 ? `${newCount} new` : null].filter(Boolean).join(' · ')
+    ? [dueCount > 0 ? `${dueCount} due` : null, newCount > 0 ? `${newCount} new` : null].filter(Boolean).join(' - ')
     : extraSession.length > 0
       ? 'Study ahead if you want more.'
       : upcoming

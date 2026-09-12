@@ -7,9 +7,10 @@ import { GrammarIntroRow } from '@/components/quranki/grammar-intro-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { useAppDigits } from '@/hooks/use-mastered-arabic-digits';
 import { useTheme } from '@/hooks/use-theme';
 import { displayArabic } from '@/lib/arabic-display';
-import { getCoverageThroughLevel, getGrammarIntro, getLevel, getLevelStatus, isAsmaLevel, type WordState } from '@/lib/levels';
+import { getCoverageThroughLevel, getGrammarIntro, getLevel, getLevelStatus, isAsmaDigitLevel, isAsmaLevel, type WordState } from '@/lib/levels';
 import { formatCount } from '@/lib/stats';
 import { useProgressStore } from '@/store/progress-store';
 
@@ -27,6 +28,7 @@ export default function LevelDetailScreen() {
 
   const theme = useTheme();
   const progress = useProgressStore((state) => state.progress);
+  const levelTitle = useAppDigits(level ? `Level ${level.number}` : 'Level');
 
   const now = new Date();
   const status = level ? getLevelStatus(level, progress, now) : null;
@@ -39,7 +41,7 @@ export default function LevelDetailScreen() {
 
   return (
     <ThemedView style={styles.flex}>
-      <Stack.Screen options={{ title: `Level ${level.number}` }} />
+      <Stack.Screen options={{ title: levelTitle }} />
       <SafeAreaView style={styles.flex} edges={['bottom']}>
         <FlatList
           data={status.wordStates}
@@ -50,7 +52,13 @@ export default function LevelDetailScreen() {
               <ThemedText type="title" style={styles.title}>
                 {level.title}
               </ThemedText>
-              {isAsmaLevel(level.number) ? (
+              {isAsmaDigitLevel(level) ? (
+                <ThemedText type="small" themeColor="textSecondary" convertDigits={false}>
+                  These ten Arabic digits sit with the 99 names. Master a digit and matching
+                  numbers across the app switch to it. 1 becomes ١ as soon as you know 1. 19
+                  becomes ١٩ only after you know both 1 and 9.
+                </ThemedText>
+              ) : isAsmaLevel(level.number) ? (
                 <ThemedText type="small" themeColor="textSecondary">
                   These names unlock after Stage 1 and are studied as their own stage. When the
                   Quran uses the name itself, that verse is the example; otherwise the verse shows

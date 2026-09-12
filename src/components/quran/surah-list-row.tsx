@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { SurahNameText } from '@/components/quran/surah-name-text';
@@ -8,7 +9,19 @@ import { useTheme } from '@/hooks/use-theme';
 import { openQuranLocation } from '@/lib/quran-nav';
 import type { SurahIndexEntry } from '@/lib/quran-reader-types';
 
-export function SurahListRow({ surah }: { surah: SurahIndexEntry }) {
+export function SurahListRow({
+  surah,
+  unlockedRukus = 0,
+  rukusOpen = false,
+  onToggleRukus,
+  children,
+}: {
+  surah: SurahIndexEntry;
+  unlockedRukus?: number;
+  rukusOpen?: boolean;
+  onToggleRukus?: () => void;
+  children?: ReactNode;
+}) {
   const theme = useTheme();
 
   const handlePress = () => {
@@ -17,59 +30,86 @@ export function SurahListRow({ surah }: { surah: SurahIndexEntry }) {
 
   const revelation = surah.rp === 'meccan' ? 'Meccan' : 'Medinan';
   const ayahsLabel = `${surah.ac} ${surah.ac === 1 ? 'ayah' : 'ayahs'}`;
+  const rukusLabel =
+    unlockedRukus > 0 ? `${unlockedRukus} ${unlockedRukus === 1 ? 'ruku' : 'rukus'}` : null;
 
   return (
-    <Pressable
-      onPress={handlePress}
-      accessibilityRole="button"
-      accessibilityLabel={`${surah.n}, ${surah.tr}, ${surah.nt}, ${surah.ar}, ${ayahsLabel}, ${revelation}`}
-      style={({ pressed }) => [
-        styles.row,
+    <View
+      style={[
+        styles.card,
         { backgroundColor: theme.card, borderColor: theme.border },
-        pressed && styles.pressed,
       ]}>
-      <View style={styles.lead}>
-        <View style={[styles.numberBadge, { backgroundColor: theme.backgroundSelected }]}>
-          <ThemedText type="smallBold" themeColor="primary">
-            {surah.n}
+      <Pressable
+        onPress={handlePress}
+        accessibilityRole="button"
+        accessibilityLabel={`${surah.n}, ${surah.tr}, ${surah.nt}, ${surah.ar}, ${ayahsLabel}, ${revelation}${rukusLabel ? `, ${rukusLabel}` : ''}`}
+        style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+        <View style={styles.lead}>
+          <View style={[styles.numberBadge, { backgroundColor: theme.backgroundSelected }]}>
+            <ThemedText type="smallBold" themeColor="primary">
+              {surah.n}
+            </ThemedText>
+          </View>
+          <ThemedText type="small" themeColor="textMuted" style={styles.ayahCount}>
+            {surah.ac}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textMuted" style={styles.ayahUnit}>
+            {surah.ac === 1 ? 'ayah' : 'ayahs'}
           </ThemedText>
         </View>
-        <ThemedText type="small" themeColor="textMuted" style={styles.ayahCount}>
-          {surah.ac}
-        </ThemedText>
-        <ThemedText type="small" themeColor="textMuted" style={styles.ayahUnit}>
-          {surah.ac === 1 ? 'ayah' : 'ayahs'}
-        </ThemedText>
-      </View>
 
-      <View style={styles.info}>
-        <ThemedText type="smallBold" numberOfLines={1}>
-          {surah.en}
-        </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {surah.nt}
-        </ThemedText>
-      </View>
-
-      <View style={styles.trailing}>
-        <View style={styles.arabicNameWrap}>
-          <SurahNameText surahNumber={surah.n} style={styles.arabicName} />
+        <View style={styles.info}>
+          <ThemedText type="smallBold" numberOfLines={1}>
+            {surah.en}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {surah.nt}
+          </ThemedText>
+          {rukusLabel && onToggleRukus ? (
+            <Pressable
+              onPress={onToggleRukus}
+              hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel={rukusOpen ? `Hide ${rukusLabel}` : `Show ${rukusLabel}`}
+              style={({ pressed }) => [styles.rukuChip, pressed && styles.pressed]}>
+              <ThemedText type="small" themeColor="primary">
+                {rukusLabel}
+              </ThemedText>
+              <Ionicons
+                name={rukusOpen ? 'chevron-up' : 'chevron-down'}
+                size={12}
+                color={theme.primary}
+              />
+            </Pressable>
+          ) : null}
         </View>
-        <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
-      </View>
-    </Pressable>
+
+        <View style={styles.trailing}>
+          <View style={styles.arabicNameWrap}>
+            <SurahNameText
+              surahNumber={surah.n}
+              style={[styles.arabicName, surah.n === 60 && styles.arabicNameCompact]}
+            />
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
+        </View>
+      </Pressable>
+      {children}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  card: {
+    borderRadius: Radius.large,
+    borderWidth: 1,
+    overflow: 'visible',
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
     padding: Spacing.three,
-    borderRadius: Radius.large,
-    borderWidth: 1,
-    overflow: 'visible',
   },
   pressed: {
     opacity: 0.75,
@@ -101,6 +141,13 @@ const styles = StyleSheet.create({
     minWidth: 0,
     gap: 2,
   },
+  rukuChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    marginTop: 2,
+  },
   trailing: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -110,7 +157,6 @@ const styles = StyleSheet.create({
   arabicNameWrap: {
     justifyContent: 'center',
     overflow: 'visible',
-    // Room for the downward shift so flourishes stay inside the row, not clipped.
     paddingBottom: 12,
   },
   arabicName: {
@@ -119,5 +165,9 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     textAlign: 'right',
     transform: [{ translateY: 12 }],
+  },
+  arabicNameCompact: {
+    fontSize: 24,
+    lineHeight: 48,
   },
 });

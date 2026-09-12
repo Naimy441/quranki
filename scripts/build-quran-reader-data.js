@@ -327,6 +327,7 @@ function main() {
 
   const studyWords = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'quranic-words.json'), 'utf8'));
   const generatedLevels = JSON.parse(fs.readFileSync(path.join(OUT_DIR, 'stage-levels.json'), 'utf8')).levels;
+  const asmaLastLevel = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'asma-ul-husna.json'), 'utf8')).metadata.lastLevel;
   const allStudyLevels = [...studyWords.levels, ...generatedLevels];
   const studyById = new Map();
   const exampleOfById = new Map();
@@ -351,10 +352,11 @@ function main() {
     );
   }
   const stage1Last = 47;
-  const asmaCount = 10;
   const throughStage1 = levelCoverage[stage1Last];
   if (throughStage1 !== undefined) {
-    for (let i = 1; i <= asmaCount; i += 1) levelCoverage[stage1Last + i] = throughStage1;
+    for (let number = stage1Last + 1; number <= asmaLastLevel; number += 1) {
+      levelCoverage[number] = throughStage1;
+    }
   }
   fs.writeFileSync(
     path.join(OUT_DIR, 'lemma-level-coverage.json'),

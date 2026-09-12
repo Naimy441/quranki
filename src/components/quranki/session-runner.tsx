@@ -11,20 +11,20 @@ import { GradeButtonRow } from '@/components/quranki/grade-button-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Radius, Spacing } from '@/constants/theme';
+import { useStudySessionClock } from '@/hooks/use-study-session-clock';
 import { useTheme } from '@/hooks/use-theme';
 import {
-  createNewCard,
-  deserializeCard,
-  formatInterval,
-  previewGrades,
-  serializeCard,
-  State,
-  type Card,
-  type GradeName,
-  type GradePreview,
+    createNewCard,
+    deserializeCard,
+    formatInterval,
+    previewGrades,
+    serializeCard,
+    State,
+    type Card,
+    type GradeName,
+    type GradePreview,
 } from '@/lib/fsrs';
 import { hapticHeavy, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
-import { useStudySessionClock } from '@/hooks/use-study-session-clock';
 import { getStageForLevel, getUpcomingLearning, isStudyWord, type SessionWord, type WordProgress } from '@/lib/levels';
 import { formatStudyDuration } from '@/lib/stats';
 import { playWordPronunciation, prefetchWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
@@ -405,8 +405,8 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
               </Pressable>
             ) : null}
           </View>
+          <SessionProgressBar progress={studyProgress} color={theme.primary} trackColor={theme.backgroundElement} />
         </View>
-        <SessionProgressBar progress={studyProgress} color={theme.primary} trackColor={theme.backgroundElement} />
 
         <ScrollView
           style={styles.content}
@@ -432,7 +432,7 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
               pointerEvents="none"
               style={styles.actionMeta}>
               Level {currentEntry.levelNumber}
-              {' · '}
+              {' - '}
               {studyKindLabel}
             </ThemedText>
             {currentEntry.word.kind === 'grammar' ? (
@@ -468,6 +468,7 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   topBar: {
+    position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.four,
@@ -501,15 +502,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   progressTrack: {
-    height: 6,
-    borderRadius: Radius.pill,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 4,
     overflow: 'hidden',
-    marginHorizontal: Spacing.four,
-    marginTop: 2,
   },
   progressFill: {
     height: '100%',
-    borderRadius: Radius.pill,
   },
   content: {
     flex: 1,

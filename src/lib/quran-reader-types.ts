@@ -42,6 +42,8 @@ export interface ReaderWordRef {
   surah: number;
   ayah: number;
   word: ReaderWord;
+  /** Word-by-word gloss is on screen: never hidden, or tapped open. */
+  translationRevealed: boolean;
 }
 
 /** A run of the full ayah translation: either plain text, or a footnote marker with its body. */

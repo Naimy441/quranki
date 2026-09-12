@@ -7,14 +7,15 @@ import { ArabicText } from '@/components/arabic-text';
 import { ThemedText } from '@/components/themed-text';
 import { ArabicTextStyle, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { displayMorphologyArabic } from '@/lib/arabic-display';
+import { displayArabic, displayMorphologyArabic } from '@/lib/arabic-display';
 import { hapticLight, hapticSelection, hapticSuccess, hapticWarning } from '@/lib/haptics';
-import type { Level } from '@/lib/levels';
+import { getTaughtStudyWordsForLemmas, type Level } from '@/lib/levels';
 import { getQuranLemma, getWordLemmaIds } from '@/lib/quran-lemmas';
 import { getRootEntry, posLabel } from '@/lib/quran-morphology';
 import type { ReaderMorphSegment, ReaderWord, ReaderWordRef } from '@/lib/quran-reader-types';
 import { formatCount } from '@/lib/stats';
 import { playWordAudio, stopWordAudio } from '@/lib/word-audio';
+import { useProgressStore } from '@/store/progress-store';
 import { pauseRecitation } from '@/store/recitation-store';
 
 interface WordDetailSheetProps {
@@ -88,17 +89,35 @@ function titleCase(value: string): string {
   return value.replace(/(^|\s)([a-z])/g, (_, boundary: string, letter: string) => `${boundary}${letter.toUpperCase()}`);
 }
 
-function morphologyParts(segment: ReaderMorphSegment): string[] {
+const VERB_FORM_ROMAN: Record<string, string> = {
+  '1': 'I',
+  '2': 'II',
+  '3': 'III',
+  '4': 'IV',
+  '5': 'V',
+  '6': 'VI',
+  '7': 'VII',
+  '8': 'VIII',
+  '9': 'IX',
+  '10': 'X',
+};
+
+function verbFormLabel(tag: string): string {
+  const n = tag.slice(3);
+  return `form ${VERB_FORM_ROMAN[n] ?? n}`;
+}
+
+function morphologyParts(segment: ReaderMorphSegment): string {
   const tags = segment.f;
   const first =
     tags.includes('FUT') ? 'future particle' :
     segment.k === 'prefix' && tags.includes('EMPH') ? 'emphatic lām' :
     segment.k === 'prefix' && tags.includes('IMPV') ? 'command lām' :
-    tags.map((tag) => FEATURE_LABELS[tag] ?? (tag.startsWith('VF:') ? `form ${tag.slice(3)}` : '')).find(Boolean) ??
+    tags.map((tag) => FEATURE_LABELS[tag] ?? (tag.startsWith('VF:') ? verbFormLabel(tag) : '')).find(Boolean) ??
     (segment.p === 'V' ? 'verb' : segment.p === 'N' ? 'noun' : 'particle');
   const form = tags.find((tag) => tag.startsWith('VF:'));
-  const parts = form && !first.startsWith('form ') ? [first, `form ${form.slice(3)}`] : [first];
-  return parts.map(titleCase);
+  const parts = form && !first.startsWith('form ') ? [first, verbFormLabel(form)] : [first];
+  return parts.map(titleCase).join(' - ');
 }
 
 function RootLetters({ root }: { root: string }) {
@@ -131,8 +150,13 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
   }, [wordKey]);
 
   const shown = { word, isKnown, masteredLevel };
+  const progress = useProgressStore((state) => state.progress);
   const arabic = shown.word?.ar.map((seg) => seg.t).join('') ?? '';
   const lemmaIds = getWordLemmaIds(shown.word);
+  const taughtWords =
+    shown.word && selection?.translationRevealed
+      ? getTaughtStudyWordsForLemmas(lemmaIds, progress)
+      : [];
   const lemmaEntries = lemmaIds.map((id) => getQuranLemma(id)).filter((lemma) => lemma !== undefined);
   const rootEntry = getRootEntry(shown.word?.rt);
   const pos = posLabel(shown.word?.ps);
@@ -220,6 +244,40 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
             </Pressable>
           </View>
 
+          {taughtWords.length > 0 ? (
+            <View style={[styles.taught, { backgroundColor: theme.backgroundElement }]}>
+              <ThemedText type="small" themeColor="textMuted" style={styles.taughtLabel}>
+                Taught as
+              </ThemedText>
+              {taughtWords.map(({ word: taught, level }) => (
+                <View key={taught.id} style={styles.taughtCard}>
+                  <ArabicText style={styles.taughtArabic}>{displayArabic(taught)}</ArabicText>
+                  <ThemedText type="smallBold" style={styles.taughtEnglish}>
+                    {taught.english}
+                  </ThemedText>
+                  {taught.transliteration ? (
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {taught.transliteration}
+                    </ThemedText>
+                  ) : null}
+                  {taught.contractionOf ? (
+                    <View style={styles.taughtComposition}>
+                      <ArabicText style={styles.taughtCompositionArabic}>{taught.contractionOf}</ArabicText>
+                      {taught.contractionEnglish ? (
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {taught.contractionEnglish}
+                        </ThemedText>
+                      ) : null}
+                    </View>
+                  ) : null}
+                  <ThemedText type="small" themeColor="textMuted">
+                    {`Level ${level.number} - ${level.title}`}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
           <ScrollView bounces={false} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
             {!hasMorphology ? <ArabicText style={styles.arabic}>{arabic}</ArabicText> : null}
 
@@ -241,13 +299,9 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
                     return (
                       <View key={`${segment.t}-${index}`} style={styles.morphologyKeyRow}>
                         <View style={[styles.morphologyDot, { backgroundColor: color }]} />
-                        <View style={styles.morphTags}>
-                          {morphologyParts(segment).map((part) => (
-                            <ThemedText key={part} type="small" style={[styles.morphTag, { color }]}>
-                              {part}
-                            </ThemedText>
-                          ))}
-                        </View>
+                        <ThemedText type="small" convertDigits={false} style={[styles.morphTag, { color }]}>
+                          {morphologyParts(segment)}
+                        </ThemedText>
                       </View>
                     );
                   })}
@@ -333,7 +387,7 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     paddingBottom: Spacing.six,
     gap: Spacing.three,
-    maxHeight: '70%',
+    maxHeight: '80%',
     overflow: 'hidden',
     // Arabic in the sheet must not flip chrome (header, buttons) to RTL.
     direction: 'ltr',
@@ -356,6 +410,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flexGrow: 0,
+    flexShrink: 1,
   },
   scrollContent: {
     gap: Spacing.three,
@@ -388,15 +443,40 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: Radius.pill,
   },
-  morphTags: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    columnGap: Spacing.three,
-    rowGap: 2,
-  },
   morphTag: {
+    flex: 1,
     fontWeight: '500',
+  },
+  taught: {
+    gap: Spacing.one,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Radius.medium,
+  },
+  taughtLabel: {
+    textAlign: 'center',
+  },
+  taughtCard: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  taughtArabic: {
+    fontSize: 28,
+    lineHeight: 56,
+    textAlign: 'center',
+    paddingVertical: Spacing.one,
+  },
+  taughtEnglish: {
+    textAlign: 'center',
+  },
+  taughtComposition: {
+    alignItems: 'center',
+    gap: 1,
+  },
+  taughtCompositionArabic: {
+    fontSize: 20,
+    lineHeight: 34,
+    textAlign: 'center',
   },
   stats: {
     flexDirection: 'row',

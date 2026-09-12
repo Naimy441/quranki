@@ -1,15 +1,38 @@
+import { type ReactNode } from 'react';
 import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
 
 import { Fonts, ThemeColor } from '@/constants/theme';
+import { useMasteredArabicDigits } from '@/hooks/use-mastered-arabic-digits';
 import { useTheme } from '@/hooks/use-theme';
+import { formatAppDigits } from '@/lib/arabic-digits';
 
 export type ThemedTextProps = TextProps & {
   type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code';
   themeColor?: ThemeColor;
+  /** Keep Western digits (teaching copy). Default converts once each digit is mastered. */
+  convertDigits?: boolean;
 };
 
-export function ThemedText({ style, type = 'default', themeColor, ...rest }: ThemedTextProps) {
+function applyMasteredDigitChildren(node: ReactNode, mastered: ReadonlySet<number>): ReactNode {
+  if (typeof node === 'string' || typeof node === 'number') {
+    return formatAppDigits(String(node), mastered);
+  }
+  if (Array.isArray(node)) {
+    return node.map((child) => applyMasteredDigitChildren(child, mastered));
+  }
+  return node;
+}
+
+export function ThemedText({
+  style,
+  type = 'default',
+  themeColor,
+  children,
+  convertDigits = true,
+  ...rest
+}: ThemedTextProps) {
   const theme = useTheme();
+  const mastered = useMasteredArabicDigits();
 
   return (
     <Text
@@ -25,8 +48,9 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
         type === 'code' && styles.code,
         style,
       ]}
-      {...rest}
-    />
+      {...rest}>
+      {convertDigits ? applyMasteredDigitChildren(children, mastered) : children}
+    </Text>
   );
 }
 

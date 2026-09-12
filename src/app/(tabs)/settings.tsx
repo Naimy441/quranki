@@ -20,6 +20,7 @@ import { hapticSelection } from '@/lib/haptics';
 import { formatReminderTime } from '@/lib/practice-reminder';
 import { clampWordsPerSession, WORDS_PER_SESSION_MAX, WORDS_PER_SESSION_MIN } from '@/lib/storage';
 import { useAccountStore } from '@/store/account-store';
+import { useHifzStore } from '@/store/hifz-store';
 import { useProgressStore } from '@/store/progress-store';
 
 const THEME_OPTIONS = [
@@ -107,7 +108,7 @@ export default function SettingsScreen() {
     }
     Alert.alert(
       'Reset all progress?',
-      'This clears review history, known-word marks, and Quran bookmarks, and starts the deck over from the first word. This cannot be undone.',
+      'This clears review history, known-word marks, Quran bookmarks, and the memorization deck, and starts vocabulary over from the first word. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Reset', style: 'destructive', onPress: () => resetProgress() },
@@ -265,6 +266,16 @@ export default function SettingsScreen() {
                 icon="newspaper-outline"
                 label="Show what's new"
                 onPress={() => void previewWhatsNew()}
+              />
+            )}
+            {__DEV__ && (
+              <ActionRow
+                icon="book-outline"
+                label="Replay ruku intro"
+                onPress={() => {
+                  useHifzStore.getState().resetIntroSeen();
+                  router.push('/hifz-intro');
+                }}
               />
             )}
           </SettingsSection>

@@ -22,6 +22,7 @@ import { getStreakReclaimOpportunity } from '@/lib/stats';
 import { useAccountStore } from '@/store/account-store';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
+import { useHifzStore } from '@/store/hifz-store';
 import { useQuranMarksStore } from '@/store/quran-marks-store';
 
 SplashScreen.preventAutoHideAsync();
@@ -39,6 +40,8 @@ export default function RootLayout() {
   const knownWordsHydrated = useKnownWordsStore((state) => state.hydrated);
   const hydrateQuranMarks = useQuranMarksStore((state) => state.hydrate);
   const quranMarksHydrated = useQuranMarksStore((state) => state.hydrated);
+  const hydrateHifz = useHifzStore((state) => state.hydrate);
+  const hifzHydrated = useHifzStore((state) => state.hydrated);
   const hydrateAccount = useAccountStore((state) => state.hydrate);
   const accountHydrated = useAccountStore((state) => state.hydrated);
   const themePreference = useProgressStore((state) => state.settings.themePreference);
@@ -58,8 +61,9 @@ export default function RootLayout() {
     void hydrate();
     void hydrateKnownWords();
     void hydrateQuranMarks();
+    void hydrateHifz();
     void hydrateAccount();
-  }, [hydrate, hydrateKnownWords, hydrateQuranMarks, hydrateAccount]);
+  }, [hydrate, hydrateKnownWords, hydrateQuranMarks, hydrateHifz, hydrateAccount]);
 
   useEffect(() => {
     if (!hydrated || !knownWordsHydrated || !accountHydrated) return;
@@ -84,12 +88,12 @@ export default function RootLayout() {
   }, [scheme]);
 
   useEffect(() => {
-    if (fontsLoaded && hydrated && knownWordsHydrated && quranMarksHydrated && themeReady) {
+    if (fontsLoaded && hydrated && knownWordsHydrated && quranMarksHydrated && hifzHydrated && themeReady) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, hydrated, knownWordsHydrated, quranMarksHydrated, themeReady]);
+  }, [fontsLoaded, hydrated, knownWordsHydrated, quranMarksHydrated, hifzHydrated, themeReady]);
 
-  if (!fontsLoaded || !hydrated || !knownWordsHydrated || !quranMarksHydrated || !themeReady) {
+  if (!fontsLoaded || !hydrated || !knownWordsHydrated || !quranMarksHydrated || !hifzHydrated || !themeReady) {
     return null;
   }
 
@@ -136,6 +140,14 @@ export default function RootLayout() {
               <Stack.Screen name="translation-picker" options={{ title: 'Translation' }} />
               <Stack.Screen
                 name="session/review"
+                options={{ headerShown: false, gestureEnabled: false, animation: 'fade' }}
+              />
+              <Stack.Screen
+                name="session/hifz"
+                options={{ headerShown: false, gestureEnabled: false, animation: 'fade' }}
+              />
+              <Stack.Screen
+                name="hifz-intro"
                 options={{ headerShown: false, gestureEnabled: false, animation: 'fade' }}
               />
             </Stack.Protected>

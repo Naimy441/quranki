@@ -1,0 +1,10 @@
+---
+description: Use ASCII hyphen for separators, never a middle dot or em dash
+alwaysApply: true
+---
+
+# Separators
+
+Never use `·` (middle dot) or `—` (em dash) in UI copy, labels, or joined strings.
+
+Use a spaced hyphen instead: ` - `

@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { GradeColors, Radius, Spacing } from '@/constants/theme';
+import { useAppDigits } from '@/hooks/use-mastered-arabic-digits';
 import { useAppColorScheme } from '@/hooks/use-theme';
 import type { GradeName, GradePreview } from '@/lib/fsrs';
 
@@ -29,12 +30,16 @@ export function GradeButtonRow({ previews, onGrade }: GradeButtonRowProps) {
             onPress={() => onGrade(preview.grade)}
             style={({ pressed }) => [styles.button, { backgroundColor: color }, pressed && styles.pressed]}>
             <Text style={styles.label}>{LABELS[preview.grade]}</Text>
-            <Text style={styles.interval}>{preview.label}</Text>
+            <GradeInterval label={preview.label} />
           </Pressable>
         );
       })}
     </View>
   );
+}
+
+function GradeInterval({ label }: { label: string }) {
+  return <Text style={styles.interval}>{useAppDigits(label)}</Text>;
 }
 
 const styles = StyleSheet.create({

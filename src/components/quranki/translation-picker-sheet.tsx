@@ -132,13 +132,13 @@ function captionFor(state: OptionState, hasFootnotes: boolean): string {
     case 'error':
       return 'Couldn’t download. Try again';
     case 'selected':
-      return hasFootnotes ? 'Selected · Has footnotes' : 'Selected';
+      return hasFootnotes ? 'Selected - Has footnotes' : 'Selected';
     case 'downloading':
       return 'Downloading…';
     case 'downloaded':
-      return hasFootnotes ? 'Downloaded · Has footnotes' : 'Downloaded';
+      return hasFootnotes ? 'Downloaded - Has footnotes' : 'Downloaded';
     case 'idle':
-      return hasFootnotes ? 'Not downloaded · Has footnotes' : 'Not downloaded';
+      return hasFootnotes ? 'Not downloaded - Has footnotes' : 'Not downloaded';
   }
 }
 

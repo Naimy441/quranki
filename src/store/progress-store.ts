@@ -406,6 +406,9 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     void import('@/store/quran-marks-store').then(({ useQuranMarksStore }) => {
       useQuranMarksStore.getState().clearAllMarks();
     });
+    void import('@/store/hifz-store').then(({ useHifzStore }) => {
+      useHifzStore.getState().clearAll();
+    });
     void import('@/lib/account-sync').then(({ pushCloudSnapshot }) => pushCloudSnapshot());
   },
 

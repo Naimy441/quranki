@@ -14,7 +14,7 @@ import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
 
 const glueJoins = Platform.OS === 'android';
-interface WordCellProps { word: ReaderWord; showTranslation: boolean; hideMeaning?: boolean; showTransliteration: boolean; arabicSize: number; glossSize: number; transliterationSize: number; hiddenLemmaIds: Set<LemmaId>; knownLemmaIds: Set<LemmaId>; onLongPressWord?: (word: ReaderWord) => void; speaking?: boolean; onSpeakingLayout?: (top: number, height: number) => void; measureToken?: number; }
+interface WordCellProps { word: ReaderWord; showTranslation: boolean; hideMeaning?: boolean; showTransliteration: boolean; arabicSize: number; glossSize: number; transliterationSize: number; hiddenLemmaIds: Set<LemmaId>; knownLemmaIds: Set<LemmaId>; onLongPressWord?: (word: ReaderWord, translationRevealed: boolean) => void; speaking?: boolean; onSpeakingLayout?: (top: number, height: number) => void; measureToken?: number; }
 
 export const WordCell = memo(function WordCell({ word, showTranslation, hideMeaning = false, showTransliteration, arabicSize, glossSize, transliterationSize, hiddenLemmaIds, knownLemmaIds, onLongPressWord, speaking = false, onSpeakingLayout, measureToken = 0 }: WordCellProps) {
   const theme = useTheme();
@@ -49,6 +49,7 @@ export const WordCell = memo(function WordCell({ word, showTranslation, hideMean
   const keepJoined = /[\u06EA\u06EC]/.test(joinedArabic);
   const segments = keepJoined ? [{ t: joinedArabic }] : attachLeadingCombiningMarks(word.ar);
   const showGloss = showTranslation && !hideMeaning && !isHidden && word.en.length > 0;
+  const translationRevealed = showTranslation && !hideMeaning && !isHidden;
   const handlePress = () => {
     if (!isHideEligible || !showTranslation) return;
     if (revealed) { setRevealed(false); return; }
@@ -61,7 +62,7 @@ export const WordCell = memo(function WordCell({ word, showTranslation, hideMean
     if (studyWordId) gradeWord(studyWordId, 'again');
     if (lemmaIds.some((id) => knownLemmaIds.has(id))) unmarkKnown(lemmaIds);
   };
-  return <Pressable ref={cellRef} style={({ pressed }) => [styles.cell, pressed && { backgroundColor: theme.backgroundSelected }]} onPress={handlePress} onLongPress={() => { if (onLongPressWord) { hapticLongPress(); onLongPressWord(word); } }} delayLongPress={350} hitSlop={4}>
+  return <Pressable ref={cellRef} style={({ pressed }) => [styles.cell, pressed && { backgroundColor: theme.backgroundSelected }]} onPress={handlePress} onLongPress={() => { if (onLongPressWord) { hapticLongPress(); onLongPressWord(word, translationRevealed); } }} delayLongPress={350} hitSlop={4}>
     <Text style={[styles.arabic, ArabicTextStyle, { color: theme.text, fontSize: arabicSize, lineHeight: arabicSize * 1.9, includeFontPadding: false }]}>{keepJoined ? joinedArabic : segments.map((segment, index) => <Text key={index} style={{ color: tajweedColor(segment.c, scheme, theme.text) }}>{glueJoins && index > 0 && '\u200D'}{segment.t}{glueJoins && index < segments.length - 1 && '\u200D'}</Text>)}</Text>
     {showTransliteration && word.tl ? <Text style={[styles.transliteration, { color: theme.primary, fontSize: transliterationSize, lineHeight: transliterationSize * 1.3 }]} numberOfLines={2}>{word.tl}</Text> : null}
     {(showGloss || speaking) && <View style={[styles.divider, { backgroundColor: speaking ? theme.primary : theme.border }]} />}

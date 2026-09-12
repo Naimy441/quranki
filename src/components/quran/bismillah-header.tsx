@@ -54,7 +54,7 @@ export function BismillahHeader({
           knownLemmaIds={knownLemmaIds}
           speaking={speakingWord === word.p}
           onLongPressWord={
-            onLongPressWord ? (pressed) => onLongPressWord({ surah: 1, ayah: 1, word: pressed }) : undefined
+            onLongPressWord ? (pressed, translationRevealed) => onLongPressWord({ surah: 1, ayah: 1, word: pressed, translationRevealed }) : undefined
           }
         />
       ))}

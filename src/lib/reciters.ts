@@ -68,7 +68,7 @@ export function styleLabel(style: RecitationStyle): string {
 export function reciterLabel(key: string): string {
   const option = findReciterOption(key);
   if (!option) return 'Unknown reciter';
-  return `${option.reciterName} · ${styleLabel(option.style)}`;
+  return `${option.reciterName} - ${styleLabel(option.style)}`;
 }
 
 /** Path of this reciter's per-ayah dataset in Firebase Storage (see `lib/remote-dataset-cache.ts`). */

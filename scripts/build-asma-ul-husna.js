@@ -189,12 +189,38 @@ for (let i = 0; i < words.length; i += perLevel) {
   });
 }
 
+const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩';
+const DIGIT_ENGLISH = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+const DIGIT_TRANSLITERATION = ['ṣifr', 'wāḥid', 'ithnān', 'thalātha', 'arbaʿa', 'khamsa', 'sitta', 'sabʿa', 'thamāniya', 'tisʿa'];
+levels.push({
+  number: startLevel + levels.length,
+  id: 'digits-1',
+  title: 'Arabic digits',
+  words: [
+    {
+      id: 'digit-intro',
+      kind: 'grammar',
+      arabic: ARABIC_INDIC,
+      english: 'Arabic digits',
+      note: 'These ten signs are 0–9. Master a digit and every matching number in the app switches to it. 1 becomes ١ as soon as you know 1. 19 becomes ١٩ only after you know both 1 and 9.',
+    },
+    ...DIGIT_ENGLISH.map((english, digit) => ({
+      id: `digit-${digit}`,
+      kind: 'digit',
+      arabic: ARABIC_INDIC[digit],
+      english,
+      transliteration: DIGIT_TRANSLITERATION[digit],
+      note: String(digit),
+    })),
+  ],
+});
+
 const out = {
   metadata: {
     source: 'Traditional Asma ul-Husna list, with Quran examples',
     firstLevel: startLevel,
     lastLevel: startLevel + levels.length - 1,
-    wordCount: words.length,
+    wordCount: words.length + DIGIT_ENGLISH.length,
   },
   levels,
 };
@@ -211,7 +237,7 @@ const examples = JSON.parse(fs.readFileSync(examplesPath, 'utf8'));
 for (const word of words) examples[word.id] = [word.example];
 fs.writeFileSync(examplesPath, JSON.stringify(examples));
 
-console.log(`Wrote ${levels.length} levels (${words.length} names), ${startLevel}–${out.metadata.lastLevel}.`);
+console.log(`Wrote ${levels.length} levels (${words.length} names + ${DIGIT_ENGLISH.length} digits), ${startLevel}–${out.metadata.lastLevel}.`);
 if (unmatched.length) {
   console.log('Unmatched needles (fell back to first word):');
   for (const word of unmatched) console.log(' ', word.id, word.arabic, `${word.example.s}:${word.example.a}`, word.hit);

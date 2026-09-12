@@ -1,5 +1,5 @@
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type NativeScrollEvent, type NativeSyntheticEvent, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -41,6 +41,15 @@ interface SurahPageProps {
   /** Retained for callers while virtualization owns the actual render window. */
   initialBatch: number;
   extraBottomPadding?: number;
+  /** Inclusive ayah range. When set, the list is only this slice of the surah. */
+  fromAyah?: number;
+  toAyah?: number;
+  /** Replaces the default "N ayahs" line under the surah title. */
+  headerMeta?: string;
+  /** Leave space for the tab bar. Off on stacked session screens that already pad themselves. */
+  includeTabInset?: boolean;
+  /** Renders after the last ayah, inside the list (not pinned to the screen). */
+  footer?: ReactNode;
 }
 
 /**
@@ -66,9 +75,21 @@ export function SurahPage({
   isActive = false,
   onVisibleAyah,
   extraBottomPadding = 0,
+  fromAyah,
+  toAyah,
+  headerMeta,
+  includeTabInset = true,
+  footer,
 }: SurahPageProps) {
   const meta = getSurahMeta(surahNumber);
-  const ayahs = getSurahAyahs(surahNumber);
+  const allAyahs = getSurahAyahs(surahNumber);
+  const rangeStart = fromAyah && fromAyah > 0 ? fromAyah : 1;
+  const rangeEnd = toAyah && toAyah > 0 ? toAyah : allAyahs.length;
+  const ayahs = useMemo(() => {
+    if (rangeStart === 1 && rangeEnd === allAyahs.length) return allAyahs;
+    return allAyahs.filter((ayah) => ayah.a >= rangeStart && ayah.a <= rangeEnd);
+  }, [allAyahs, rangeEnd, rangeStart]);
+  const showBismillah = Boolean(meta?.b && rangeStart === 1);
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlashListRef<ReaderAyah>>(null);
@@ -147,11 +168,11 @@ export function SurahPage({
 
   const scrollToAyah = useCallback(
     (ayahNumber: number, animated: boolean, viewPosition = 0.12) => {
-      const index = ayahNumber - 1;
-      if (index < 0 || index >= ayahs.length) return;
+      const index = ayahs.findIndex((ayah) => ayah.a === ayahNumber);
+      if (index < 0) return;
       listRef.current?.scrollToIndex({ index, animated, viewPosition });
     },
-    [ayahs.length],
+    [ayahs],
   );
 
   const scrollToSurahStart = useCallback((animated = false) => {
@@ -266,9 +287,11 @@ export function SurahPage({
         settleEpoch={settleEpoch}
         measureToken={measureToken}
         onSpeakingWordLayout={handleSpeakingWordLayout}
+        playbackFromAyah={rangeStart}
+        playbackToAyah={rangeEnd}
       />
     ),
-    [arabicSize, focusAyah, glossSize, handleSpeakingWordLayout, hiddenLemmaIds, knownLemmaIds, measureToken, meta, onLongPressWord, onOpenMarks, openActionsAyah, recognizedLemmaIds, scrollEpoch, settleEpoch, showAyahCoverage, showTranslation, showTransliteration, surahNumber, transliterationSize],
+    [arabicSize, focusAyah, glossSize, handleSpeakingWordLayout, hiddenLemmaIds, knownLemmaIds, measureToken, meta, onLongPressWord, onOpenMarks, openActionsAyah, rangeEnd, rangeStart, recognizedLemmaIds, scrollEpoch, settleEpoch, showAyahCoverage, showTranslation, showTransliteration, surahNumber, transliterationSize],
   );
 
   const onViewableItemsChanged = useCallback(
@@ -290,15 +313,20 @@ export function SurahPage({
     <FlashList
       ref={listRef}
       data={ayahs}
-      initialScrollIndex={initialFocusAyah > 1 ? initialFocusAyah - 1 : undefined}
+      initialScrollIndex={
+        initialFocusAyah > rangeStart
+          ? Math.max(0, ayahs.findIndex((ayah) => ayah.a === initialFocusAyah))
+          : undefined
+      }
       renderItem={renderItem}
       keyExtractor={(ayah) => String(ayah.a)}
       style={{ ...styles.list, opacity: contentReady ? 1 : 0 }}
-      contentContainerStyle={[styles.listContent, { paddingBottom: BottomTabInset + Spacing.four + extraBottomPadding }]}
+      contentContainerStyle={[styles.listContent, { paddingBottom: (includeTabInset ? BottomTabInset : 0) + Spacing.four + extraBottomPadding }]}
       maintainVisibleContentPosition={{ disabled: true }}
       onLoad={() => {
         if (initialFocusAyah > 0) requestAnimationFrame(() => setContentReady(true));
       }}
+      ListFooterComponent={footer ?? undefined}
       ListHeaderComponent={
         <View style={styles.header}>
           <View style={styles.titleRow}>
@@ -306,7 +334,7 @@ export function SurahPage({
               <ThemedText type="smallBold" style={styles.transliteration}>{meta.en}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.meaning}>{meta.nt}</ThemedText>
               <ThemedText type="small" themeColor="textMuted" style={styles.metaLine}>
-                {`${meta.ac} ${meta.ac === 1 ? 'ayah' : 'ayahs'}`}
+                {headerMeta ?? `${ayahs.length} ${ayahs.length === 1 ? 'ayah' : 'ayahs'}`}
               </ThemedText>
               <ThemedText type="small" themeColor="textMuted" style={styles.metaLine}>
                 {meta.rp === 'meccan' ? 'Meccan' : 'Medinan'}
@@ -316,7 +344,7 @@ export function SurahPage({
               <SurahNameText surahNumber={surahNumber} style={styles.arabicTitle} />
             </View>
           </View>
-          {meta.b && (
+          {showBismillah && (
             <BismillahHeader
               surahNumber={surahNumber}
               showTranslation={showTranslation}

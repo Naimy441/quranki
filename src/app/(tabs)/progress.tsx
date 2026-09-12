@@ -14,6 +14,7 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useFocusedComputation } from '@/hooks/use-focused-computation';
 import { useFocusedProgressValue } from '@/hooks/use-focused-meter';
+import { useAppDigits } from '@/hooks/use-mastered-arabic-digits';
 import { useTheme } from '@/hooks/use-theme';
 import {
   getIntroductionFrontier,
@@ -52,10 +53,11 @@ function LevelCell({
   const labelStyle = useAnimatedStyle(() => ({
     color: interpolateColor(ratio.value, [0, 0.45, 0.55, 1], [text, text, onPrimary, onPrimary]),
   }));
+  const label = useAppDigits(String(status.level.number));
 
   return (
     <Animated.View style={[styles.gridCell, { borderColor: theme.border }, cellStyle]}>
-      <Animated.Text style={[styles.cellLabel, labelStyle]}>{status.level.number}</Animated.Text>
+      <Animated.Text style={[styles.cellLabel, labelStyle]}>{label}</Animated.Text>
     </Animated.View>
   );
 }

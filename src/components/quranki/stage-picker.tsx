@@ -79,11 +79,11 @@ export function StagePicker({ entries, selectedStageId, wordsPerDay, onSelect }:
         <ThemedText type="small" themeColor="textSecondary">
           {isAsmaStage(stage)
             ? unlocked
-              ? `${formatCount(mastered)} of ${formatCount(total)} mastered · ${stage.subtitle}`
-              : `${stage.subtitle} · ${formatCount(total)} names · unlocks after Stage 1`
+              ? `${formatCount(mastered)} of ${formatCount(total)} mastered - ${stage.subtitle}`
+              : `${stage.subtitle} - ${formatCount(total)} cards - unlocks after Stage 1`
             : unlocked
-              ? `${formatCount(mastered)} of ${formatCount(total)} mastered · ${coverage.percent}% of the Quran`
-              : `${stage.subtitle} · ${formatCount(total)} words · unlocks as you progress`}
+              ? `${formatCount(mastered)} of ${formatCount(total)} mastered - ${coverage.percent}% of the Quran`
+              : `${stage.subtitle} - ${formatCount(total)} words - unlocks as you progress`}
         </ThemedText>
         {daysLabel ? (
           <ThemedText type="small" themeColor="textMuted">

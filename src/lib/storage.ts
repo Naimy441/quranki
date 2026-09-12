@@ -9,6 +9,7 @@ import { DEFAULT_ACCENT, isAccentId, type AccentId } from '@/constants/theme';
 import { clampReminderHour, clampReminderMinute, DEFAULT_REMINDER_HOUR, DEFAULT_REMINDER_MINUTE } from '@/lib/practice-reminder';
 import type { KnownWordsMap } from '@/lib/known-words';
 import type { ProgressMap } from '@/lib/levels';
+import { sanitizeHifzData, type HifzData } from '@/lib/hifz';
 import { EMPTY_QURAN_MARKS, sanitizeQuranMarks, type QuranMarksData } from '@/lib/quran-marks';
 import { DEFAULT_RECITER_KEY, isReciterKey } from '@/lib/reciters';
 import { accountStorageKeys } from '@/lib/account-auth';
@@ -22,6 +23,7 @@ const META_KEY = 'quranki:meta:v1';
 const KNOWN_WORDS_KEY = 'quranki:known-words:v2';
 const LEGACY_KNOWN_WORDS_KEY = 'quranki:known-words:v1';
 const QURAN_MARKS_KEY = 'quranki:quran-marks:v1';
+const HIFZ_KEY = 'quranki:hifz:v1';
 
 export interface Settings {
   wordsPerSession: number;
@@ -234,6 +236,20 @@ export function saveQuranMarksAsync(data: QuranMarksData): Promise<void> {
   return AsyncStorage.setItem(QURAN_MARKS_KEY, JSON.stringify(data));
 }
 
+export async function loadHifzAsync(): Promise<HifzData> {
+  const raw = await AsyncStorage.getItem(HIFZ_KEY);
+  if (!raw) return sanitizeHifzData(null);
+  try {
+    return sanitizeHifzData(JSON.parse(raw));
+  } catch {
+    return sanitizeHifzData(null);
+  }
+}
+
+export function saveHifzAsync(data: HifzData): Promise<void> {
+  return AsyncStorage.setItem(HIFZ_KEY, JSON.stringify(data));
+}
+
 export async function resetAllAsync(): Promise<void> {
   await AsyncStorage.multiRemove([
     PROGRESS_KEY,
@@ -242,6 +258,7 @@ export async function resetAllAsync(): Promise<void> {
     KNOWN_WORDS_KEY,
     LEGACY_KNOWN_WORDS_KEY,
     QURAN_MARKS_KEY,
+    HIFZ_KEY,
     ...REMOTE_CONFIG_STORAGE_KEYS,
     ...accountStorageKeys(),
   ]);

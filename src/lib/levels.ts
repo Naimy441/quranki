@@ -16,7 +16,7 @@ export interface Word {
   /** One-letter particle that the mushaf fuses onto the next word (وَ, لِ, بِ, ...). */
   isPrefix?: boolean;
   /** A one-time explanation card, not a vocabulary item. */
-  kind?: 'grammar';
+  kind?: 'grammar' | 'digit';
   note?: string;
   variant?: string;
   forms?: string[];
@@ -74,7 +74,7 @@ export function isStudyWord(word: Word): boolean {
 }
 
 export const DECK_NAME = data.deck;
-/** Stage 1, then the 99 names, then leftover frequency levels — sorted by level number. */
+/** Stage 1, then the 99 names and Arabic digits, then the rest of the curriculum — sorted by level number. */
 export const LEVELS: Level[] = [...data.levels, ...generated.levels, ...asmaUlHusna.levels].sort(
   (a, b) => a.number - b.number,
 );
@@ -112,8 +112,8 @@ export const STAGES: Stage[] = [
   },
   {
     id: 2,
-    title: 'The 99 Names',
-    subtitle: 'Asma ul-Husna',
+    title: 'Stage 2',
+    subtitle: 'Asma ul-Husna - Arabic digits',
     firstLevel: asmaUlHusna.metadata.firstLevel,
     lastLevel: asmaUlHusna.metadata.lastLevel,
     kind: 'asma',
@@ -151,6 +151,10 @@ export function isAsmaLevel(levelNumber: number): boolean {
 
 export function isAsmaStage(stage: Stage): boolean {
   return stage.kind === 'asma';
+}
+
+export function isAsmaDigitLevel(level: Level): boolean {
+  return level.words.some((word) => word.kind === 'digit');
 }
 
 /** Levels 1–47 are Stage 1, the original thematic curriculum. */
@@ -234,8 +238,12 @@ export interface LevelCoverage {
 
 const levelCoverage = lemmaLevelCoverageData as { totalWords: number; levels: Record<string, number> };
 const coverageThroughLevel: LevelCoverage[] = [];
+let lastFrequencyCoverage = 0;
 for (const level of LEVELS) {
-  const quranWords = levelCoverage.levels[String(level.number)] ?? 0;
+  const quranWords = isAsmaLevel(level.number)
+    ? lastFrequencyCoverage
+    : (levelCoverage.levels[String(level.number)] ?? lastFrequencyCoverage);
+  if (!isAsmaLevel(level.number)) lastFrequencyCoverage = quranWords;
   const percent = TOTAL_QURAN_WORDS === 0 ? 0 : Math.round((quranWords / TOTAL_QURAN_WORDS) * 100);
   coverageThroughLevel[level.number] = { quranWords, percent };
 }
@@ -282,6 +290,34 @@ export function getHiddenStudyWordIdForLemmas(
     if (progress && shouldHideInReader(deserializeCard(progress.card))) return wordId;
   }
   return undefined;
+}
+
+export interface TaughtStudyWord {
+  word: Word;
+  level: Level;
+}
+
+function taughtAffixRank(word: Word): number {
+  if (word.isPrefix) return 0;
+  if (word.isSuffix) return 2;
+  return 1;
+}
+
+/** Flashcards the learner has already met that cover these Quran lemmas, prefixes first. */
+export function getTaughtStudyWordsForLemmas(
+  lemmaIds: readonly LemmaId[],
+  progressMap: ProgressMap,
+): TaughtStudyWord[] {
+  const result: TaughtStudyWord[] = [];
+  for (const wordId of getStudyWordIdsForLemmas(lemmaIds)) {
+    if (!progressMap[wordId]) continue;
+    const word = getWord(wordId);
+    const level = getLevelForWord(wordId);
+    if (!word || !level || !isStudyWord(word)) continue;
+    result.push({ word, level });
+  }
+  result.sort((a, b) => taughtAffixRank(a.word) - taughtAffixRank(b.word));
+  return result;
 }
 
 export interface WordState {

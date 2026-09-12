@@ -2,8 +2,8 @@
   "metadata": {
     "source": "Traditional Asma ul-Husna list, with Quran examples",
     "firstLevel": 48,
-    "lastLevel": 57,
-    "wordCount": 99
+    "lastLevel": 58,
+    "wordCount": 109
   },
   "levels": [
     {
@@ -1071,6 +1071,100 @@
             "s": 2,
             "a": 153
           }
+        }
+      ]
+    },
+    {
+      "number": 58,
+      "id": "digits-1",
+      "title": "Arabic digits",
+      "words": [
+        {
+          "id": "digit-intro",
+          "kind": "grammar",
+          "arabic": "٠١٢٣٤٥٦٧٨٩",
+          "english": "Arabic digits",
+          "note": "These ten signs are 0–9. Master a digit and every matching number in the app switches to it. 1 becomes ١ as soon as you know 1. 19 becomes ١٩ only after you know both 1 and 9."
+        },
+        {
+          "id": "digit-0",
+          "kind": "digit",
+          "arabic": "٠",
+          "english": "Zero",
+          "transliteration": "ṣifr",
+          "note": "0"
+        },
+        {
+          "id": "digit-1",
+          "kind": "digit",
+          "arabic": "١",
+          "english": "One",
+          "transliteration": "wāḥid",
+          "note": "1"
+        },
+        {
+          "id": "digit-2",
+          "kind": "digit",
+          "arabic": "٢",
+          "english": "Two",
+          "transliteration": "ithnān",
+          "note": "2"
+        },
+        {
+          "id": "digit-3",
+          "kind": "digit",
+          "arabic": "٣",
+          "english": "Three",
+          "transliteration": "thalātha",
+          "note": "3"
+        },
+        {
+          "id": "digit-4",
+          "kind": "digit",
+          "arabic": "٤",
+          "english": "Four",
+          "transliteration": "arbaʿa",
+          "note": "4"
+        },
+        {
+          "id": "digit-5",
+          "kind": "digit",
+          "arabic": "٥",
+          "english": "Five",
+          "transliteration": "khamsa",
+          "note": "5"
+        },
+        {
+          "id": "digit-6",
+          "kind": "digit",
+          "arabic": "٦",
+          "english": "Six",
+          "transliteration": "sitta",
+          "note": "6"
+        },
+        {
+          "id": "digit-7",
+          "kind": "digit",
+          "arabic": "٧",
+          "english": "Seven",
+          "transliteration": "sabʿa",
+          "note": "7"
+        },
+        {
+          "id": "digit-8",
+          "kind": "digit",
+          "arabic": "٨",
+          "english": "Eight",
+          "transliteration": "thamāniya",
+          "note": "8"
+        },
+        {
+          "id": "digit-9",
+          "kind": "digit",
+          "arabic": "٩",
+          "english": "Nine",
+          "transliteration": "tisʿa",
+          "note": "9"
         }
       ]
     }

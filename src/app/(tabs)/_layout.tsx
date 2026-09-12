@@ -1,6 +1,8 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
+import { useMasteredArabicDigits } from '@/hooks/use-mastered-arabic-digits';
 import { useTheme } from '@/hooks/use-theme';
+import { formatAppDigits } from '@/lib/arabic-digits';
 import { hapticSelection } from '@/lib/haptics';
 import { totalDueWords } from '@/lib/levels';
 import { useProgressStore } from '@/store/progress-store';
@@ -8,7 +10,9 @@ import { useProgressStore } from '@/store/progress-store';
 export default function TabLayout() {
   const theme = useTheme();
   const progress = useProgressStore((s) => s.progress);
+  const masteredDigits = useMasteredArabicDigits();
   const dueCount = totalDueWords(progress, new Date());
+  const dueBadge = dueCount > 99 ? formatAppDigits('99+', masteredDigits) : formatAppDigits(String(dueCount), masteredDigits);
   const screenStyle = { backgroundColor: theme.background };
 
   return (
@@ -22,7 +26,7 @@ export default function TabLayout() {
         <NativeTabs.Trigger.Label>Learn</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="book.fill" md="menu_book" />
         {dueCount > 0 && (
-          <NativeTabs.Trigger.Badge>{dueCount > 99 ? '99+' : String(dueCount)}</NativeTabs.Trigger.Badge>
+          <NativeTabs.Trigger.Badge>{dueBadge}</NativeTabs.Trigger.Badge>
         )}
       </NativeTabs.Trigger>
 

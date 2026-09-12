@@ -590,7 +590,13 @@ export async function playSurah(surahNumber: number, fromAyah = 1, toAyah?: numb
   await loadCurrent(seq);
 }
 
-export async function playAyah(surahNumber: number, ayahNumber: number): Promise<void> {
+/** @param bounds Inclusive skip/prev window. Defaults to the whole surah. The hifz reader
+ *  passes the ruku so next/prev cannot walk into neighboring passages. */
+export async function playAyah(
+  surahNumber: number,
+  ayahNumber: number,
+  bounds?: { fromAyah?: number; toAyah?: number },
+): Promise<void> {
   const meta = getSurahMeta(surahNumber);
   if (!meta) return;
   const current = useRecitationStore.getState();
@@ -604,15 +610,16 @@ export async function playAyah(surahNumber: number, ayahNumber: number): Promise
     return;
   }
 
+  const rangeStartAyah = Math.min(Math.max(bounds?.fromAyah ?? 1, 1), meta.ac);
+  const rangeEndAyah = Math.min(Math.max(bounds?.toAyah ?? meta.ac, rangeStartAyah), meta.ac);
+
   const seq = beginSession({
     mode: 'ayah',
     surahNumber,
     ayahNumber,
     ayahCount: meta.ac,
-    // Ayah mode has no custom range - bound skip/prev by the whole surah, same as before this
-    // existed (see `rangeStartAyah`/`rangeEndAyah`, otherwise left at the `Infinity` sentinel).
-    rangeStartAyah: 1,
-    rangeEndAyah: meta.ac,
+    rangeStartAyah,
+    rangeEndAyah,
   });
   await loadCurrent(seq);
 }
