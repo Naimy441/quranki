@@ -38,7 +38,7 @@ interface ProgressState {
   reviewCountDate: string;
   reviewsToday: number;
   newCardsToday: number;
-  /** Milliseconds in memorization sessions, keyed by local calendar day. */
+  /** Milliseconds in vocab or hifz sessions, keyed by local calendar day. */
   studyMsByDate: Record<string, number>;
   onboardingCompleted: boolean;
   /** In-memory peek counts for the Quran reader (not persisted). A hidden word's first reveal
@@ -46,8 +46,10 @@ interface ProgressState {
    *  is graded in a real review. */
   readerPeeks: Record<string, number>;
   hydrate: () => Promise<void>;
-  /** Adds elapsed memorization-session time to the current local calendar day. */
+  /** Adds elapsed study-session time (vocab or hifz) to the current local calendar day. */
   recordStudyMs: (ms: number) => void;
+  /** Marks today as a study day for the streak. Vocab and hifz grades both call this. */
+  noteReviewDay: () => void;
   /** Returns the resulting (post-grade) card so callers - see session-runner.tsx - can tell
    *  whether it graduated to the long-term Review state or is still Learning/Relearning (due
    *  again within minutes, per ts-fsrs's learning_steps/relearning_steps), the same distinction
@@ -86,6 +88,22 @@ interface ProgressState {
 
 function todayKey(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+function nextReviewDayMeta(
+  reviewDates: string[],
+  streakGraceDates: string[],
+  now: Date,
+): { reviewDates: string[]; streakGraceDates: string[] } {
+  const key = todayKey(now);
+  const nextReviewDates = reviewDates.includes(key) ? reviewDates : [...reviewDates, key];
+  const reclaimableStreak = getStreakReclaimOpportunity(reviewDates, streakGraceDates, now);
+  const missedDay = todayKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+  const nextStreakGraceDates =
+    reclaimableStreak > 0 && !streakGraceDates.includes(missedDay)
+      ? [...streakGraceDates, missedDay]
+      : streakGraceDates;
+  return { reviewDates: nextReviewDates, streakGraceDates: nextStreakGraceDates };
 }
 
 /** Varied last-seven-days sample, oldest → today, in minutes. */
@@ -220,6 +238,16 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     persistMeta({ ...state, studyMsByDate });
   },
 
+  noteReviewDay: () => {
+    const now = new Date();
+    const state = get();
+    const next = nextReviewDayMeta(state.reviewDates, state.streakGraceDates, now);
+    if (next.reviewDates === state.reviewDates && next.streakGraceDates === state.streakGraceDates) return;
+    set(next);
+    persistMeta({ ...state, ...next });
+    queueCloudSync();
+  },
+
   gradeWord: (wordId, grade, options) => {
     const now = new Date();
     const state = get();
@@ -236,13 +264,11 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
 
     const nextProgress: ProgressMap = { ...state.progress, [wordId]: nextWordProgress };
     const key = todayKey(now);
-    const nextReviewDates = state.reviewDates.includes(key) ? state.reviewDates : [...state.reviewDates, key];
-    const reclaimableStreak = getStreakReclaimOpportunity(state.reviewDates, state.streakGraceDates, now);
-    const missedDay = todayKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
-    const nextStreakGraceDates =
-      reclaimableStreak > 0 && !state.streakGraceDates.includes(missedDay)
-        ? [...state.streakGraceDates, missedDay]
-        : state.streakGraceDates;
+    const { reviewDates: nextReviewDates, streakGraceDates: nextStreakGraceDates } = nextReviewDayMeta(
+      state.reviewDates,
+      state.streakGraceDates,
+      now,
+    );
     const nextMaxUnlockedLevel = nextReachedLevel(nextProgress, state.maxUnlockedLevel);
     const countsAsDailyReview =
       !options?.replaceSessionGrade && existing !== undefined && card.state === State.Review;

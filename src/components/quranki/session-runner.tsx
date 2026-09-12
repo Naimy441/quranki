@@ -55,9 +55,11 @@ function cloneWordProgress(progress: WordProgress): WordProgress {
   return { ...progress, card: { ...progress.card } };
 }
 
-function ratingCountsFromGrades(grades: Record<string, { grade: GradeName }>): Record<GradeName, number> {
+function ratingCountsFromGrades(grades: Record<string, { grades: GradeName[] }>): Record<GradeName, number> {
   const counts = { ...EMPTY_RATING_COUNTS };
-  for (const entry of Object.values(grades)) counts[entry.grade] += 1;
+  for (const entry of Object.values(grades)) {
+    for (const grade of entry.grades) counts[grade] += 1;
+  }
   return counts;
 }
 
@@ -110,7 +112,7 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
   const firstSeenByWord = useRef<Record<string, Card>>({});
   const preSessionProgress = useRef<Record<string, WordProgress | null>>({});
   const sessionGradesByWord = useRef<
-    Record<string, { grade: GradeName; countedAsNew: boolean; countedAsReview: boolean }>
+    Record<string, { grades: GradeName[]; countedAsNew: boolean; countedAsReview: boolean }>
   >({});
 
   useEffect(
@@ -250,7 +252,7 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
     });
     if (isStudyWord(currentEntry.word)) {
       sessionGradesByWord.current[wordId] = {
-        grade,
+        grades: [...(alreadyGraded?.grades ?? []), grade],
         countedAsNew: alreadyGraded?.countedAsNew ?? countedAsNew,
         countedAsReview: alreadyGraded?.countedAsReview ?? countedAsReview,
       };

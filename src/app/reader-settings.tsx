@@ -1,23 +1,23 @@
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ReaderDisplaySettings } from '@/components/quran/reader-display-settings';
-import { ReciterSettingsRow } from '@/components/quranki/reciter-picker-sheet';
-import { TranslationSettingsRow } from '@/components/quranki/translation-picker-sheet';
+import { ReciterPickerSheet, ReciterSettingsRow } from '@/components/quranki/reciter-picker-sheet';
+import { TranslationPickerSheet, TranslationSettingsRow } from '@/components/quranki/translation-picker-sheet';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useProgressStore } from '@/store/progress-store';
 
-/** A real pushed screen rather than a `Modal` sheet - same reasoning as `/reciter-picker` and
- *  `/translation-picker`: the reciter/translation rows below need to push further screens of
- *  their own, and iOS refuses to present a second `Modal` on a view controller that's already
- *  presenting one. Reads settings straight from the store instead of taking them as props, so
- *  the Quran reader just needs to push this route rather than manage a sheet's visibility and
- *  thread every display setting through it. */
+/** A real pushed screen rather than a sheet of display controls - the Quran reader just needs
+ *  to push this route rather than manage visibility and thread every display setting through it.
+ *  Reciter and Translation open native sheets from here so they can expand to full screen. */
 export default function ReaderSettingsScreen() {
   const settings = useProgressStore((s) => s.settings);
   const updateSettings = useProgressStore((s) => s.updateSettings);
+  const [reciterVisible, setReciterVisible] = useState(false);
+  const [translationVisible, setTranslationVisible] = useState(false);
 
   return (
     <ThemedView style={styles.flex}>
@@ -26,11 +26,11 @@ export default function ReaderSettingsScreen() {
         <ScrollView style={styles.list} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <ReciterSettingsRow
             selectedKey={settings.selectedReciterKey}
-            onPress={() => router.push('/reciter-picker')}
+            onPress={() => setReciterVisible(true)}
           />
           <TranslationSettingsRow
             selectedKey={settings.selectedTranslationKey}
-            onPress={() => router.push('/translation-picker')}
+            onPress={() => setTranslationVisible(true)}
           />
           <ReaderDisplaySettings
             arabicSize={settings.readerArabicSize}
@@ -52,6 +52,8 @@ export default function ReaderSettingsScreen() {
           />
         </ScrollView>
       </SafeAreaView>
+      <ReciterPickerSheet visible={reciterVisible} onDismiss={() => setReciterVisible(false)} />
+      <TranslationPickerSheet visible={translationVisible} onDismiss={() => setTranslationVisible(false)} />
     </ThemedView>
   );
 }

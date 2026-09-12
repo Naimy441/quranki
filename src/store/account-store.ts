@@ -43,9 +43,10 @@ async function finishAuth(
     await mergeAccountCloud();
   } catch (error) {
     set({
-      busy: false,
       error: error instanceof Error ? error.message : 'Could not sign in.',
     });
+  } finally {
+    set({ busy: false });
   }
 }
 

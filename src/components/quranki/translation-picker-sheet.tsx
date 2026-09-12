@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState, type ReactNode } from 'react';
+import { BottomSheetModal, BottomSheetScrollView, type BottomSheetMethods } from '@expo/ui/community/bottom-sheet';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
@@ -7,6 +8,8 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticSelection, hapticSuccess, hapticWarning } from '@/lib/haptics';
+import { useProgressStore } from '@/store/progress-store';
+import { ensureTranslationDatasetLoaded } from '@/store/translation-store';
 import { deleteTranslationDataset, downloadTranslationDataset, isTranslationDatasetDownloaded } from '@/lib/translation-dataset';
 import { DEFAULT_TRANSLATION_KEY, TRANSLATION_OPTIONS, translationLabel, type TranslationOption } from '@/lib/translations';
 
@@ -272,7 +275,75 @@ export function TranslationPickerInline({ selectedKey, onSelect }: { selectedKey
   );
 }
 
+/** Native sheet over reader Settings so Translation can expand to full screen the same way Reciter does. */
+export function TranslationPickerSheet({ visible, onDismiss }: { visible: boolean; onDismiss: () => void }) {
+  const theme = useTheme();
+  const sheetRef = useRef<BottomSheetMethods>(null);
+  const opened = useRef(false);
+  const [expanded, setExpanded] = useState(false);
+  const selectedTranslationKey = useProgressStore((state) => state.settings.selectedTranslationKey);
+  const updateSettings = useProgressStore((state) => state.updateSettings);
+
+  useEffect(() => {
+    if (visible) {
+      opened.current = true;
+      setExpanded(false);
+      sheetRef.current?.present();
+      return;
+    }
+    if (opened.current) sheetRef.current?.dismiss();
+  }, [visible]);
+
+  const finishClose = () => {
+    if (!opened.current) return;
+    opened.current = false;
+    setExpanded(false);
+    onDismiss();
+  };
+
+  return (
+    <BottomSheetModal
+      ref={sheetRef}
+      enablePanDownToClose
+      enableDynamicSizing={false}
+      snapPoints={['65%', '100%']}
+      backgroundStyle={{ backgroundColor: theme.card }}
+      onChange={(index) => {
+        if (index >= 0) setExpanded(index > 0);
+      }}
+      onClose={finishClose}>
+      <BottomSheetScrollView
+        style={styles.sheetScroll}
+        scrollEnabled={expanded}
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.sheet}>
+        <ThemedText type="smallBold" style={styles.sheetTitle}>Translation</ThemedText>
+        <TranslationPickerInline
+          selectedKey={selectedTranslationKey}
+          onSelect={(key) => {
+            updateSettings({ selectedTranslationKey: key });
+            ensureTranslationDatasetLoaded(key);
+          }}
+        />
+      </BottomSheetScrollView>
+    </BottomSheetModal>
+  );
+}
+
 const styles = StyleSheet.create({
+  sheet: {
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.six,
+    gap: Spacing.three,
+  },
+  sheetTitle: {
+    textAlign: 'center',
+  },
+  sheetScroll: {
+    flex: 1,
+  },
   settingsRow: {
     flexDirection: 'row',
     alignItems: 'center',

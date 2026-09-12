@@ -1,5 +1,6 @@
-import { createAudioPlayer, setAudioModeAsync, type AudioPlayer, type AudioStatus } from 'expo-audio';
-import type { DownloadProgress } from 'expo-file-system';
+import { Asset } from 'expo-asset';
+import { createAudioPlayer, setAudioModeAsync, type AudioMetadata, type AudioPlayer, type AudioStatus } from 'expo-audio';
+import { File, Paths, type DownloadProgress } from 'expo-file-system';
 import { create } from 'zustand';
 
 import { getSurahMeta } from '@/lib/quran-reader';
@@ -124,7 +125,91 @@ function bumpProgressEpoch(): void {
   useRecitationStore.setState({ progressEpoch: progressEpoch + 1 });
 }
 
-function lockScreenMetadata(state: RecitationState): { title: string; artist: string; albumTitle: string } {
+const PLAYER_OPTIONS = {
+  updateInterval: 40,
+  keepAudioSessionActive: true,
+  preferredForwardBufferDuration: 20,
+} as const;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Warm the decoder so the later audible `play()` is not the player's first start. */
+async function primePlayer(instance: AudioPlayer, startAt: number): Promise<void> {
+  try {
+    instance.muted = true;
+    instance.volume = 0;
+    instance.play();
+    await delay(24);
+    instance.pause();
+    await instance.seekTo(startAt, 0, 0);
+  } catch {
+    // Still usable; handoff will just pay a little more start latency.
+  } finally {
+    try {
+      instance.muted = false;
+      instance.volume = 1;
+    } catch {
+      // ignore
+    }
+  }
+}
+
+function waitForLoaded(instance: AudioPlayer, timeoutMs = 5000): Promise<boolean> {
+  if (instance.isLoaded && Number.isFinite(instance.duration) && instance.duration > 0.05) {
+    return Promise.resolve(true);
+  }
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      sub.remove();
+      clearTimeout(timer);
+      resolve(ok);
+    };
+    const sub = instance.addListener('playbackStatusUpdate', (status) => {
+      if (status.isLoaded && status.duration > 0.05) finish(true);
+    });
+    const timer = setTimeout(() => finish(instance.isLoaded), timeoutMs);
+  });
+}
+
+/** iOS Now Playing loads artwork with URLSession. Metro/`asset:` URIs fail on a device, so this
+ *  copies the app icon into the cache as a real `file://` path once and reuses it. */
+let lockScreenArtworkUrl: string | undefined;
+let lockScreenArtworkReady: Promise<string | undefined> | null = null;
+
+function asFileUrl(uri: string): string {
+  if (uri.startsWith('file:') || uri.startsWith('http')) return uri;
+  return uri.startsWith('/') ? `file://${uri}` : uri;
+}
+
+function ensureLockScreenArtworkUrl(): Promise<string | undefined> {
+  if (lockScreenArtworkUrl) return Promise.resolve(lockScreenArtworkUrl);
+  if (!lockScreenArtworkReady) {
+    lockScreenArtworkReady = (async () => {
+      try {
+        const dest = new File(Paths.cache, 'quranki-now-playing.png');
+        if (!dest.exists) {
+          const asset = Asset.fromModule(require('@/assets/images/icon.png'));
+          await asset.downloadAsync();
+          const srcUri = asset.localUri ?? asset.uri;
+          if (!srcUri) return undefined;
+          new File(srcUri).copySync(dest);
+        }
+        lockScreenArtworkUrl = dest.uri;
+        return lockScreenArtworkUrl;
+      } catch {
+        return undefined;
+      }
+    })();
+  }
+  return lockScreenArtworkReady;
+}
+
+function lockScreenMetadata(state: RecitationState): AudioMetadata {
   const meta = state.surahNumber ? getSurahMeta(state.surahNumber) : undefined;
   const chapter = meta?.en ?? 'Quranki';
   const verse = state.playingBismillah ? 'Bismillah' : `Ayah ${state.ayahNumber}`;
@@ -132,24 +217,39 @@ function lockScreenMetadata(state: RecitationState): { title: string; artist: st
     title: `${chapter}: ${verse}`,
     artist: getActiveReciter().reciterName,
     albumTitle: 'Quranki',
+    artworkUrl: lockScreenArtworkUrl ? asFileUrl(lockScreenArtworkUrl) : undefined,
   };
 }
 
 let lockScreenActive = false;
 
+function applyLockScreenMetadata(): void {
+  if (!player) return;
+  const meta = lockScreenMetadata(useRecitationStore.getState());
+  if (!lockScreenActive) {
+    player.setActiveForLockScreen(true, meta);
+    lockScreenActive = true;
+    return;
+  }
+  player.updateLockScreenMetadata(meta);
+}
+
 function activateLockScreen(): void {
   if (!player) return;
   try {
-    const meta = lockScreenMetadata(useRecitationStore.getState());
-    if (!lockScreenActive) {
-      player.setActiveForLockScreen(true, meta);
-      lockScreenActive = true;
-    } else {
-      player.updateLockScreenMetadata(meta);
-    }
+    applyLockScreenMetadata();
   } catch {
     // Lock screen controls are unavailable on web.
   }
+  if (lockScreenArtworkUrl) return;
+  void ensureLockScreenArtworkUrl().then((url) => {
+    if (!url || !player || !lockScreenActive) return;
+    try {
+      applyLockScreenMetadata();
+    } catch {
+      // ignore
+    }
+  });
 }
 
 function deactivateLockScreen(): void {
@@ -182,8 +282,7 @@ let holdPositionSeconds: number | null = null;
 let holdPositionUntil = 0;
 /** Second player used only for `'surah'` sessions: while `player` plays the current ayah, this
  *  one is silently pre-loaded with the next ayah's clip (`preloadNextChainedAyah`) so the
- *  natural-finish handler in `onPlaybackStatus` can promote it (`trySwapToStandby`) with just a
- *  `.play()` call - no replace round-trip, which is what caused the audible blip between ayahs. */
+ *  natural finish can promote it with a plain `.play()` instead of a replace round-trip. */
 let standbyPlayer: AudioPlayer | null = null;
 let standbyReady = false;
 let standbyAyahNumber: number | null = null;
@@ -215,8 +314,9 @@ async function ensurePlayer(): Promise<AudioPlayer> {
         abortError.name = 'AbortError';
         throw abortError;
       }
+      void ensureLockScreenArtworkUrl();
       if (!player) {
-        player = createAudioPlayer(null, { updateInterval: 80, keepAudioSessionActive: true });
+        player = createAudioPlayer(null, PLAYER_OPTIONS);
         statusSub = player.addListener('playbackStatusUpdate', onPlaybackStatus);
       }
       return player;
@@ -228,7 +328,7 @@ async function ensurePlayer(): Promise<AudioPlayer> {
 async function ensureStandbyPlayer(): Promise<AudioPlayer> {
   if (standbyPlayer) return standbyPlayer;
   await ensurePlayer();
-  standbyPlayer = createAudioPlayer(null, { updateInterval: 80, keepAudioSessionActive: true });
+  standbyPlayer = createAudioPlayer(null, PLAYER_OPTIONS);
   return standbyPlayer;
 }
 
@@ -243,7 +343,10 @@ function onPlaybackStatus(status: AudioStatus): void {
     return;
   }
 
+  const duration = Number.isFinite(status.duration) && status.duration > 0 ? status.duration : 0;
+  const rawPosition = Number.isFinite(status.currentTime) ? Math.max(0, status.currentTime) : 0;
   const finished = useRecitationStore.getState();
+
   const justFinished = Date.now() >= ignoreFinishUntil && status.didJustFinish && status.duration > 0.25;
   if (justFinished && !finishHandled) {
     finishHandled = true;
@@ -273,8 +376,6 @@ function onPlaybackStatus(status: AudioStatus): void {
     return;
   }
 
-  const duration = Number.isFinite(status.duration) && status.duration > 0 ? status.duration : 0;
-  const rawPosition = Number.isFinite(status.currentTime) ? Math.max(0, status.currentTime) : 0;
   let position = rawPosition;
   if (holdPositionSeconds != null && Date.now() < holdPositionUntil) {
     if (Math.abs(position - holdPositionSeconds) > 0.75) {
@@ -328,8 +429,10 @@ function beginSession(partial: Partial<RecitationState>): number {
  *  replace round-trip. A no-op past the chosen range. */
 async function preloadNextChainedAyah(seq: number, ayahNumber: number): Promise<void> {
   const token = ++preloadToken;
-  standbyReady = false;
-  standbyAyahNumber = null;
+  if (standbyAyahNumber !== ayahNumber) {
+    standbyReady = false;
+    standbyAyahNumber = null;
+  }
   const { surahNumber, rangeEndAyah, mode } = useRecitationStore.getState();
   if (mode !== 'surah' || !surahNumber || ayahNumber > rangeEndAyah) return;
   try {
@@ -339,9 +442,18 @@ async function preloadNextChainedAyah(seq: number, ayahNumber: number): Promise<
     const instance = await ensureStandbyPlayer();
     if (seq !== requestSeq || token !== preloadToken) return;
     instance.replace({ uri });
+    try {
+      await instance.seekTo(0);
+    } catch {
+      // Replace may still be buffering; waitForLoaded covers readiness.
+    }
+    const loaded = await waitForLoaded(instance);
+    if (seq !== requestSeq || token !== preloadToken) return;
+    await primePlayer(instance, 0);
+    if (seq !== requestSeq || token !== preloadToken) return;
     standbyWordTimings = wordTimings;
     standbyAyahNumber = ayahNumber;
-    standbyReady = true;
+    standbyReady = loaded || instance.isLoaded;
   } catch (error) {
     if (seq !== requestSeq || isAbortError(error)) return;
     // Leave standbyReady false - the caller falls back to a normal (small-gap) load instead.
@@ -357,24 +469,29 @@ function trySwapToStandby(targetAyahNumber: number): boolean {
   if (!standbyReady || !standbyPlayer || standbyAyahNumber !== targetAyahNumber) return false;
   const promoted = standbyPlayer;
   const demoted = player;
+  finishHandled = true;
+  wantPlaying = true;
+  // Start the next clip before any lock-screen / listener bookkeeping so that work cannot
+  // open a hole between ayahs. Then stop the outgoing player so two voices never overlap.
+  try {
+    promoted.play();
+  } catch {
+    finishHandled = false;
+    return false;
+  }
   statusSub?.remove();
-  if (lockScreenActive && demoted) {
+  try {
+    demoted?.pause();
+  } catch {
+    // ignore
+  }
+  if (demoted && lockScreenActive) {
     try {
       demoted.setActiveForLockScreen(false);
     } catch {
       // ignore
     }
     lockScreenActive = false;
-  }
-  // On a natural end-of-clip swap, `demoted` already finished on its own - this is a no-op. On
-  // a manual skip, though, it can still be mid-playback: without this, it silently keeps playing
-  // its old ayah in the background as the new "standby" until the next `preloadNextChainedAyah`
-  // call happens to reuse it and replaces its source - audibly overlapping with the
-  // newly-promoted player. That's the "two ayahs at once" on a fast skip.
-  try {
-    demoted?.pause();
-  } catch {
-    // ignore
   }
   player = promoted;
   standbyPlayer = demoted;
@@ -383,19 +500,19 @@ function trySwapToStandby(targetAyahNumber: number): boolean {
   const words = standbyWordTimings;
   standbyWordTimings = [];
   statusSub = player.addListener('playbackStatusUpdate', onPlaybackStatus);
-  ignoreFinishUntil = Date.now() + 500;
+  ignoreFinishUntil = Date.now() + 400;
   finishHandled = false;
   suppressStatus = false;
-  wantPlaying = true;
+  holdClock(0);
   useRecitationStore.setState({
     ayahNumber: targetAyahNumber,
+    playingBismillah: false,
     awaitingAudio: false,
     positionSeconds: 0,
     durationSeconds: 0,
     wordTimings: words,
     wordNumber: words[0]?.[0] ?? 0,
   });
-  player.play();
   activateLockScreen();
   bumpProgressEpoch();
   void preloadNextChainedAyah(requestSeq, targetAyahNumber + 1);
@@ -509,6 +626,7 @@ async function loadBismillah(seq: number): Promise<void> {
     bumpProgressEpoch();
     if (wantPlaying) instance.play();
     activateLockScreen();
+    void preloadNextChainedAyah(seq, 1);
   } catch (error) {
     if (seq !== requestSeq || isAbortError(error)) return;
     useRecitationStore.setState({ playingBismillah: false, ayahNumber: 1 });
@@ -519,6 +637,7 @@ async function loadBismillah(seq: number): Promise<void> {
 /** Transitions from the opening Bismillah into ayah 1's clip. */
 async function afterBismillah(seq: number): Promise<void> {
   if (seq !== requestSeq) return;
+  if (trySwapToStandby(1)) return;
   suppressStatus = true;
   try {
     player?.pause();

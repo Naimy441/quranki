@@ -16,6 +16,7 @@ import { QuranJumpSheet } from '@/components/quran/quran-jump-sheet';
 import { RecitationPlayer } from '@/components/quran/recitation-player';
 import { SurahPage } from '@/components/quran/surah-page';
 import { WordDetailSheet } from '@/components/quran/word-detail-sheet';
+import { ReciterPickerSheet } from '@/components/quranki/reciter-picker-sheet';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -23,7 +24,7 @@ import { hapticLight, hapticSelection } from '@/lib/haptics';
 import { getKnownLemmaIds } from '@/lib/known-words';
 import { getHiddenLemmaIds, getMasteredLemmaIds, getMasteredStudyWordForLemmas } from '@/lib/levels';
 import { getWordLemmaIds, hasEveryLemma } from '@/lib/quran-lemmas';
-import { getPendingReaderTarget, noteQuranReaderMounted } from '@/lib/quran-nav';
+import { consumePendingReaderTarget, noteQuranReaderMounted } from '@/lib/quran-nav';
 import { getSurahMeta, SURAH_COUNT } from '@/lib/quran-reader';
 import type { ReaderWordRef } from '@/lib/quran-reader-types';
 import { useKnownWordsStore } from '@/store/known-words-store';
@@ -96,16 +97,22 @@ export default function SurahReaderScreen() {
   const [markAyah, setMarkAyah] = useState<number | null>(null);
   const [jumpVisible, setJumpVisible] = useState(false);
   const [playOptionsVisible, setPlayOptionsVisible] = useState(false);
+  const [reciterVisible, setReciterVisible] = useState(false);
   // Bumped only on a genuinely fresh play-button press (not when reopening after a reciter-picker
   // round trip below) - keyed onto `PlayOptionsSheet` to force a fresh range selection then, while
   // leaving the in-progress range alone when the reader just went to switch reciters.
   const [playOptionsOpenId, setPlayOptionsOpenId] = useState(0);
   const [playFromAyah, setPlayFromAyah] = useState(1);
+  /** Play sheet asked to open the reciter sheet - wait until play has fully dismissed first so
+   *  iOS is not asked to present two native sheets at once. */
+  const pendingReciterRef = useRef(false);
+  /** Reciter was opened from Play audio - when it closes, put that sheet back. */
   const returningToPlayOptionsRef = useRef(false);
   // Latest ayah at the top of the viewport - snapshotted into `playFromAyah` when the header
   // play button opens a fresh range picker, so the start wheel matches where the reader is.
   const visibleAyahRef = useRef(1);
   const lastAppliedNavToken = useRef(0);
+  const pendingPlayRef = useRef<{ surah: number; ayah: number } | null>(null);
   const [readerFocusEpoch, setReaderFocusEpoch] = useState(0);
   const noteOpenedSurah = useQuranMarksStore((s) => s.noteOpenedSurah);
   const setLastRead = useQuranMarksStore((s) => s.setLastRead);
@@ -138,28 +145,22 @@ export default function SurahReaderScreen() {
   // lose the session if React remounts the effect (the blur path calls `stopRecitation`).
   useEffect(() => {
     if (readerFocusEpoch === 0) return;
-    const target = getPendingReaderTarget();
-    if (!target || target.token !== readerFocusEpoch || !target.play) return;
+    const play = pendingPlayRef.current;
+    pendingPlayRef.current = null;
+    if (!play) return;
     setAutoScrollSuspended(false);
-    void playSurah(target.surah, target.ayah);
+    void playSurah(play.surah, play.ayah);
   }, [readerFocusEpoch]);
 
   useFocusEffect(
     useCallback(() => {
-      // Coming back from `/reciter-picker` after tapping "Reciter" inside `PlayOptionsSheet`
-      // (see its `onPressReciter` below) - reopen that sheet. The reciter list can't be embedded
-      // inline in it: wrapping a sheet's content in a `Pressable` (needed to swallow backdrop
-      // taps) also swallows a nested scrollable's drag before it becomes the touch responder, so
-      // it's a real pushed screen instead.
-      if (returningToPlayOptionsRef.current) {
-        returningToPlayOptionsRef.current = false;
-        setPlayOptionsVisible(true);
-      }
       // Saved stashes a jump here so we update this same reader instead of pushing
       // another `/quran/[surah]`. Applied on focus so `setParams` hits this route.
-      const target = getPendingReaderTarget();
+      // Consumed immediately so a later search / list tap cannot replay this bookmark.
+      const target = consumePendingReaderTarget();
       if (target && target.token !== lastAppliedNavToken.current) {
         lastAppliedNavToken.current = target.token;
+        if (target.play) pendingPlayRef.current = { surah: target.surah, ayah: target.ayah };
         setReaderFocusEpoch(target.token);
         router.setParams({ surah: String(target.surah), ayah: String(target.ayah) });
       }
@@ -405,15 +406,32 @@ export default function SurahReaderScreen() {
         visible={playOptionsVisible}
         surahNumber={active}
         initialFromAyah={playFromAyah}
-        onDismiss={() => setPlayOptionsVisible(false)}
-        onPressReciter={() => {
+        onDismiss={() => {
           setPlayOptionsVisible(false);
+          if (pendingReciterRef.current) {
+            pendingReciterRef.current = false;
+            setReciterVisible(true);
+          }
+        }}
+        onPressReciter={() => {
+          pendingReciterRef.current = true;
           returningToPlayOptionsRef.current = true;
-          router.push('/reciter-picker');
+          setPlayOptionsVisible(false);
         }}
         onPlay={(fromAyah, toAyah) => {
           setPlayOptionsVisible(false);
           void playSurah(active, fromAyah, toAyah);
+        }}
+      />
+
+      <ReciterPickerSheet
+        visible={reciterVisible}
+        onDismiss={() => {
+          setReciterVisible(false);
+          if (returningToPlayOptionsRef.current) {
+            returningToPlayOptionsRef.current = false;
+            setPlayOptionsVisible(true);
+          }
         }}
       />
 

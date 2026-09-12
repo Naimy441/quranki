@@ -27,9 +27,11 @@ export type ReaderOpenTarget = {
 
 let pendingTarget: ReaderOpenTarget | null = null;
 
-/** Latest open request for the mounted reader to apply on focus (`setParams` + optional play). */
-export function getPendingReaderTarget(): ReaderOpenTarget | null {
-  return pendingTarget;
+/** Take the pending jump so a later search or list tap cannot reuse a leftover bookmark. */
+export function consumePendingReaderTarget(): ReaderOpenTarget | null {
+  const target = pendingTarget;
+  pendingTarget = null;
+  return target;
 }
 
 export type OpenQuranLocationOptions = {
@@ -65,6 +67,8 @@ export function openQuranLocation(surah: number, ayah?: number, options?: OpenQu
       play: Boolean(options?.play),
       token: now,
     };
+  } else {
+    pendingTarget = null;
   }
 
   // Saved (and similar) sit on top of the reader. Pop back so the same screen instance picks

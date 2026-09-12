@@ -17,6 +17,7 @@ import {
 } from '@/lib/hifz';
 import { getRuku } from '@/lib/ruku';
 import { loadHifzAsync, saveHifzAsync } from '@/lib/storage';
+import { useProgressStore } from '@/store/progress-store';
 
 function persist(data: HifzData) {
   void saveHifzAsync(data);
@@ -94,6 +95,7 @@ export const useHifzStore = create<HifzState>((set, get) => ({
     const next = { enrolledRukuIds, cards, introSeen: get().introSeen };
     set(next);
     persist(next);
+    useProgressStore.getState().noteReviewDay();
     return result.card;
   },
 

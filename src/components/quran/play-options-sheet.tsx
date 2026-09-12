@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useRef, useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { BottomSheetModal, BottomSheetView, type BottomSheetMethods } from '@expo/ui/community/bottom-sheet';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ReciterSettingsRow } from '@/components/quranki/reciter-picker-sheet';
 import { ThemedText } from '@/components/themed-text';
@@ -20,12 +21,8 @@ interface PlayOptionsSheetProps {
    *  header play button opened this sheet. End still defaults to the last ayah. */
   initialFromAyah?: number;
   onDismiss: () => void;
-  /** Dismisses this sheet and pushes `/reciter-picker` - see `[surah].tsx`, which reopens this
-   *  sheet when the reader comes back. The list can't be embedded inline here: unlike a plain
-   *  `View`, wrapping this sheet's content in a `Pressable` (needed elsewhere to swallow
-   *  backdrop taps) also swallows a nested scrollable's drag before it ever becomes the touch
-   *  responder, which is exactly why the ayah wheels below use a bare `View` + a separate
-   *  absolute-fill `Pressable` behind them instead of wrapping the sheet itself. */
+  /** Dismisses this sheet and opens the reciter picker - see `[surah].tsx`, which reopens this
+   *  sheet when that picker closes. */
   onPressReciter: () => void;
   onPlay: (fromAyah: number, toAyah: number) => void;
 }
@@ -43,6 +40,8 @@ export function PlayOptionsSheet({
 }: PlayOptionsSheetProps) {
   const theme = useTheme();
   const { height: windowHeight } = useWindowDimensions();
+  const sheetRef = useRef<BottomSheetMethods>(null);
+  const opened = useRef(false);
   const meta = getSurahMeta(surahNumber);
   const ayahCount = meta?.ac ?? 1;
   const ayahs = useMemo(() => Array.from({ length: ayahCount }, (_, index) => index + 1), [ayahCount]);
@@ -76,8 +75,18 @@ export function PlayOptionsSheet({
     }
   };
 
-  const close = () => {
-    hapticSelection();
+  useEffect(() => {
+    if (visible) {
+      opened.current = true;
+      sheetRef.current?.present();
+      return;
+    }
+    if (opened.current) sheetRef.current?.dismiss();
+  }, [visible]);
+
+  const finishClose = () => {
+    if (!opened.current) return;
+    opened.current = false;
     onDismiss();
   };
 
@@ -85,18 +94,16 @@ export function PlayOptionsSheet({
   const wholeSurah = fromAyah === 1 && toAyah === ayahCount;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onDismiss}>
-      <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} />
-        <View style={[styles.sheet, { backgroundColor: theme.card, maxHeight: Math.round(windowHeight * 0.85) }]}>
-          <View style={styles.headerRow}>
-            <ThemedText type="smallBold" numberOfLines={1} style={styles.title}>
-              Play {meta.en}
-            </ThemedText>
-            <Pressable onPress={close} hitSlop={10} accessibilityRole="button" accessibilityLabel="Close">
-              <Ionicons name="close" size={20} color={theme.textMuted} />
-            </Pressable>
-          </View>
+    <BottomSheetModal
+      ref={sheetRef}
+      enablePanDownToClose
+      enableDynamicSizing
+      backgroundStyle={{ backgroundColor: theme.card }}
+      onClose={finishClose}>
+      <BottomSheetView style={[styles.sheet, { maxHeight: Math.round(windowHeight * 0.85) }]}>
+          <ThemedText type="smallBold" numberOfLines={1} style={styles.title}>
+            Play {meta.en}
+          </ThemedText>
 
           <ReciterSettingsRow selectedKey={selectedReciterKey} onPress={onPressReciter} />
 
@@ -160,12 +167,11 @@ export function PlayOptionsSheet({
             style={({ pressed }) => [styles.go, { backgroundColor: theme.primary }, pressed && styles.pressed]}>
             <Ionicons name="play" size={18} color={theme.onPrimary} />
             <ThemedText type="smallBold" themeColor="onPrimary">
-              {wholeSurah ? `Play ${meta.en}` : `Play ayahs ${fromAyah}\u2013${toAyah}`}
+              {wholeSurah ? `Play ${meta.en}` : `Play ayahs ${fromAyah} - ${toAyah}`}
             </ThemedText>
           </Pressable>
-        </View>
-      </View>
-    </Modal>
+      </BottomSheetView>
+    </BottomSheetModal>
   );
 }
 
@@ -184,16 +190,13 @@ function WheelOverlay({ color }: { color: string }) {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   sheet: {
-    borderTopLeftRadius: Radius.large,
-    borderTopRightRadius: Radius.large,
-    padding: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.four,
     paddingBottom: Spacing.six,
     gap: Spacing.three,
   },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { flex: 1, marginRight: Spacing.two },
+  title: { textAlign: 'center' },
   rangeSection: { gap: Spacing.two },
   wheels: {
     height: WHEEL_HEIGHT,

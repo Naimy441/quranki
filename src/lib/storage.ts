@@ -78,7 +78,7 @@ export interface Meta {
    *  new-card batch at the Settings "new words per day" value so finishing a session does not
    *  immediately deal another. The learner can still start another session by hand. */
   newCardsToday: number;
-  /** Milliseconds spent in word-memorization sessions, keyed by local calendar day. */
+  /** Milliseconds spent in vocab or hifz sessions, keyed by local calendar day. */
   studyMsByDate: Record<string, number>;
   /** True once the first-launch explainer has been finished. Absent on older installs - hydrate
    *  infers it from existing progress so an update doesn't replay onboarding for current users. */

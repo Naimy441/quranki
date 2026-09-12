@@ -8,16 +8,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ReaderDisplaySettings } from '@/components/quran/reader-display-settings';
 import { AccountSessionCard } from '@/components/quranki/account-card';
 import { ChoiceGrid } from '@/components/quranki/choice-grid';
-import { ReciterSettingsRow } from '@/components/quranki/reciter-picker-sheet';
+import { ReciterPickerSheet, ReciterSettingsRow } from '@/components/quranki/reciter-picker-sheet';
 import { ReminderTimePicker } from '@/components/quranki/reminder-time-picker';
-import { TranslationSettingsRow } from '@/components/quranki/translation-picker-sheet';
+import { TranslationPickerSheet, TranslationSettingsRow } from '@/components/quranki/translation-picker-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ACCENTS, BottomTabInset, MaxContentWidth, Radius, Spacing, type AccentId } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
 import { previewWhatsNew } from '@/lib/firebase-remote-config';
 import { hapticSelection } from '@/lib/haptics';
-import { formatReminderTime } from '@/lib/practice-reminder';
 import { clampWordsPerSession, WORDS_PER_SESSION_MAX, WORDS_PER_SESSION_MIN } from '@/lib/storage';
 import { useAccountStore } from '@/store/account-store';
 import { useHifzStore } from '@/store/hifz-store';
@@ -72,6 +71,8 @@ export default function SettingsScreen() {
   const seedDemoStudyTime = useProgressStore((state) => state.seedDemoStudyTime);
   const setOnboardingCompleted = useProgressStore((state) => state.setOnboardingCompleted);
   const accountUid = useAccountStore((state) => state.uid);
+  const [reciterVisible, setReciterVisible] = useState(false);
+  const [translationVisible, setTranslationVisible] = useState(false);
   const [openingKnownWords, setOpeningKnownWords] = useState(false);
   const openingKnownWordsRef = useRef(false);
   const knownWordsNavigationFrame = useRef<number | null>(null);
@@ -205,11 +206,11 @@ export default function SettingsScreen() {
           <SettingsSection title="Quran">
             <ReciterSettingsRow
               selectedKey={settings.selectedReciterKey}
-              onPress={() => router.push('/reciter-picker')}
+              onPress={() => setReciterVisible(true)}
             />
             <TranslationSettingsRow
               selectedKey={settings.selectedTranslationKey}
-              onPress={() => router.push('/translation-picker')}
+              onPress={() => setTranslationVisible(true)}
             />
             <ReaderDisplaySettings
               arabicSize={settings.readerArabicSize}
@@ -281,6 +282,8 @@ export default function SettingsScreen() {
           </SettingsSection>
         </ScrollView>
       </SafeAreaView>
+      <ReciterPickerSheet visible={reciterVisible} onDismiss={() => setReciterVisible(false)} />
+      <TranslationPickerSheet visible={translationVisible} onDismiss={() => setTranslationVisible(false)} />
     </ThemedView>
   );
 }

@@ -1,6 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  BottomSheetModal,
+  BottomSheetScrollView,
+  BottomSheetView,
+  type BottomSheetMethods,
+} from '@expo/ui/community/bottom-sheet';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Button } from 'react-native-paper';
 
 import { ArabicText } from '@/components/arabic-text';
@@ -8,7 +14,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ArabicTextStyle, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { displayArabic, displayMorphologyArabic } from '@/lib/arabic-display';
-import { hapticLight, hapticSelection, hapticSuccess, hapticWarning } from '@/lib/haptics';
+import { hapticLight, hapticSuccess, hapticWarning } from '@/lib/haptics';
 import { getTaughtStudyWordsForLemmas, type Level } from '@/lib/levels';
 import { getQuranLemma, getWordLemmaIds } from '@/lib/quran-lemmas';
 import { getRootEntry, posLabel } from '@/lib/quran-morphology';
@@ -139,9 +145,22 @@ type WordAudioStatus = 'idle' | 'loading' | 'playing' | 'error';
  *  canonical lemma ids as known - hiding translations everywhere those lemmas appear. */
 export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, onMarkKnown, onForget }: WordDetailSheetProps) {
   const theme = useTheme();
-  const word = selection?.word ?? null;
+  const { height: windowHeight } = useWindowDimensions();
+  const sheetRef = useRef<BottomSheetMethods>(null);
+  const pendingWork = useRef<(() => void) | undefined>(undefined);
+  const opened = useRef(false);
+  const lastSelection = useRef<ReaderWordRef | null>(null);
+  const lastKnown = useRef({ isKnown, masteredLevel });
+  if (selection) {
+    lastSelection.current = selection;
+    lastKnown.current = { isKnown, masteredLevel };
+  }
+  const active = selection ?? lastSelection.current;
+  const word = active?.word ?? null;
+  const known = selection ? isKnown : lastKnown.current.isKnown;
+  const level = selection ? masteredLevel : lastKnown.current.masteredLevel;
   const [audioStatus, setAudioStatus] = useState<WordAudioStatus>('idle');
-  const wordKey = selection ? `${selection.surah}:${selection.ayah}:${selection.word.p}` : '';
+  const wordKey = active ? `${active.surah}:${active.ayah}:${active.word.p}` : '';
 
   useEffect(() => {
     stopWordAudio();
@@ -149,12 +168,12 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
     return () => stopWordAudio();
   }, [wordKey]);
 
-  const shown = { word, isKnown, masteredLevel };
+  const shown = { word, isKnown: known, masteredLevel: level };
   const progress = useProgressStore((state) => state.progress);
   const arabic = shown.word?.ar.map((seg) => seg.t).join('') ?? '';
   const lemmaIds = getWordLemmaIds(shown.word);
   const taughtWords =
-    shown.word && selection?.translationRevealed
+    shown.word && active?.translationRevealed
       ? getTaughtStudyWordsForLemmas(lemmaIds, progress)
       : [];
   const lemmaEntries = lemmaIds.map((id) => getQuranLemma(id)).filter((lemma) => lemma !== undefined);
@@ -165,19 +184,39 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
   const morphology = shown.word?.m ?? [];
   const hasMorphology = morphology.length > 0;
 
-  const closeThen = (work?: () => void) => {
+  useEffect(() => {
+    if (selection) {
+      opened.current = true;
+      sheetRef.current?.present();
+      return;
+    }
+    if (opened.current) sheetRef.current?.dismiss();
+  }, [selection]);
+
+  const finishClose = () => {
+    if (!opened.current && !pendingWork.current) return;
+    opened.current = false;
     stopWordAudio();
+    const work = pendingWork.current;
+    pendingWork.current = undefined;
     onDismiss();
     if (work) setTimeout(work, 0);
   };
 
+  const closeThen = (work?: () => void) => {
+    stopWordAudio();
+    pendingWork.current = work;
+    if (opened.current) sheetRef.current?.dismiss();
+    else finishClose();
+  };
+
   const replayWord = () => {
-    if (!selection) return;
+    if (!active) return;
     hapticLight();
     let settled = false;
     setAudioStatus('loading');
     pauseRecitation();
-    void playWordAudio(selection.surah, selection.ayah, selection.word.p, {
+    void playWordAudio(active.surah, active.ayah, active.word.p, {
       onFinished: () => {
         if (settled) return;
         settled = true;
@@ -226,24 +265,13 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
   };
 
   return (
-    // "fade" (not "slide") to match the other reader sheets: RN's iOS "slide" transition
-    // briefly paints the modal host opaque black before the transparent backdrop shows.
-    <Modal visible={selection !== null} transparent animationType="fade" onRequestClose={() => closeThen()}>
-      <Pressable style={styles.backdrop} onPress={() => closeThen()}>
-        <Pressable style={[styles.sheet, { backgroundColor: theme.card }]} onPress={(e) => e.stopPropagation()}>
-          <View style={styles.headerRow}>
-            <ThemedText type="smallBold">{pos ?? 'Word'}</ThemedText>
-            <Pressable
-              onPress={() => {
-                hapticSelection();
-                closeThen();
-              }}
-              hitSlop={10}
-              accessibilityLabel="Close">
-              <Ionicons name="close" size={20} color={theme.textMuted} />
-            </Pressable>
-          </View>
-
+    <BottomSheetModal
+      ref={sheetRef}
+      enablePanDownToClose
+      enableDynamicSizing
+      backgroundStyle={{ backgroundColor: theme.card }}
+      onClose={finishClose}>
+      <BottomSheetView style={[styles.sheet, { maxHeight: Math.round(windowHeight * 0.8) }]}>
           {taughtWords.length > 0 ? (
             <View style={[styles.taught, { backgroundColor: theme.backgroundElement }]}>
               <ThemedText type="small" themeColor="textMuted" style={styles.taughtLabel}>
@@ -278,7 +306,7 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
             </View>
           ) : null}
 
-          <ScrollView bounces={false} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+          <BottomSheetScrollView bounces={false} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
             {!hasMorphology ? <ArabicText style={styles.arabic}>{arabic}</ArabicText> : null}
 
             {hasMorphology ? (
@@ -309,25 +337,28 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
               </View>
             ) : null}
 
-            <Pressable
-              onPress={replayWord}
-              hitSlop={8}
-              accessibilityLabel={audioStatus === 'playing' ? 'Playing this word' : 'Play this word'}
-              style={({ pressed }) => [
-                styles.voiceButton,
-                { backgroundColor: theme.backgroundElement },
-                pressed && styles.pressed,
-              ]}>
-              {audioStatus === 'loading' ? (
-                <ActivityIndicator size="small" color={theme.primary} />
-              ) : (
-                <Ionicons
-                  name={audioStatus === 'playing' ? 'volume-high' : 'volume-medium-outline'}
-                  size={22}
-                  color={audioStatus === 'error' ? theme.textMuted : theme.primary}
-                />
-              )}
-            </Pressable>
+            <View style={styles.voiceRow}>
+              <ThemedText type="smallBold">{pos ?? 'Word'}</ThemedText>
+              <Pressable
+                onPress={replayWord}
+                hitSlop={8}
+                accessibilityLabel={audioStatus === 'playing' ? 'Playing this word' : 'Play this word'}
+                style={({ pressed }) => [
+                  styles.voiceButton,
+                  { backgroundColor: theme.backgroundElement },
+                  pressed && styles.pressed,
+                ]}>
+                {audioStatus === 'loading' ? (
+                  <ActivityIndicator size="small" color={theme.primary} />
+                ) : (
+                  <Ionicons
+                    name={audioStatus === 'playing' ? 'volume-high' : 'volume-medium-outline'}
+                    size={22}
+                    color={audioStatus === 'error' ? theme.textMuted : theme.primary}
+                  />
+                )}
+              </Pressable>
+            </View>
             {audioStatus === 'error' ? (
               <ThemedText type="small" themeColor="textMuted" style={styles.description}>
                 Couldn’t play this word. Check your connection and try again.
@@ -362,40 +393,32 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
                     : 'Marking it known hides its translation everywhere it appears.'}
               </ThemedText>
             ) : null}
-          </ScrollView>
+          </BottomSheetScrollView>
 
           {canMarkKnown && !shown.masteredLevel ? (
             <Button mode={shown.isKnown ? 'outlined' : 'contained'} onPress={handlePress}>
               {shown.isKnown ? 'Forget this word' : 'I already know this word'}
             </Button>
           ) : null}
-        </Pressable>
-      </Pressable>
-    </Modal>
+      </BottomSheetView>
+    </BottomSheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
   sheet: {
-    borderTopLeftRadius: Radius.large,
-    borderTopRightRadius: Radius.large,
-    padding: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.four,
     paddingBottom: Spacing.six,
     gap: Spacing.three,
-    maxHeight: '80%',
-    overflow: 'hidden',
     // Arabic in the sheet must not flip chrome (header, buttons) to RTL.
     direction: 'ltr',
   },
-  headerRow: {
+  voiceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: Spacing.two,
   },
   voiceButton: {
     width: 44,
@@ -403,7 +426,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'center',
   },
   pressed: {
     opacity: 0.7,

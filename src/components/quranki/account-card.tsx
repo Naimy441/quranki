@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Keyboard, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -8,11 +8,14 @@ import { hapticSelection, hapticSuccess } from '@/lib/haptics';
 import { isValidEmail, isValidPassword } from '@/lib/account-auth';
 import { useAccountStore } from '@/store/account-store';
 
-function applyInputTextColor(input: TextInput | null, color: string) {
-  if (!input) return;
-  input.setNativeProps({
-    style: Platform.OS === 'web' ? { color, WebkitTextFillColor: color } : { color },
-  });
+/** iOS Strong Password / Autofill writes UITextField.textColor to black after RN has already
+ *  committed `theme.text`. Fabric then skips a same-color update, so the field stays black in
+ *  dark mode. Nudging the last hex digit forces a real style commit; delayed ticks catch the
+ *  Strong Password animation finishing after `onChangeText`. */
+function nudgeTextColor(color: string): string {
+  if (!color.startsWith('#') || color.length < 7) return color;
+  const last = color[color.length - 1];
+  return `${color.slice(0, -1)}${last === '2' ? '3' : '2'}`;
 }
 
 function AuthField({
@@ -34,22 +37,21 @@ function AuthField({
 }) {
   const theme = useTheme();
   const scheme = useAppColorScheme();
-  const inputRef = useRef<TextInput>(null);
+  const [colorEpoch, setColorEpoch] = useState(0);
 
-  const recolor = () => {
-    applyInputTextColor(inputRef.current, theme.text);
-    requestAnimationFrame(() => applyInputTextColor(inputRef.current, theme.text));
-  };
+  useEffect(() => {
+    if (!value) return;
+    setColorEpoch((n) => n + 1);
+    const ticks = [80, 280, 700].map((ms) => setTimeout(() => setColorEpoch((n) => n + 1), ms));
+    return () => ticks.forEach(clearTimeout);
+  }, [value, theme.text]);
+
+  const color = colorEpoch % 2 === 0 ? theme.text : nudgeTextColor(theme.text);
 
   return (
     <TextInput
-      ref={inputRef}
       value={value}
-      onChangeText={(next) => {
-        onChangeText(next);
-        recolor();
-      }}
-      onFocus={recolor}
+      onChangeText={onChangeText}
       placeholder={placeholder}
       placeholderTextColor={theme.textMuted}
       autoCapitalize="none"
@@ -59,15 +61,22 @@ function AuthField({
       textContentType={email ? 'username' : newPassword ? 'newPassword' : 'password'}
       keyboardType={email ? 'email-address' : 'default'}
       keyboardAppearance={scheme}
+      cursorColor={theme.text}
+      selectionColor={theme.primary}
       secureTextEntry={secure}
       editable={editable}
       style={[
         styles.input,
         {
           backgroundColor: theme.background,
-          color: theme.text,
+          color,
           borderColor: theme.border,
-          ...(Platform.OS === 'web' ? { WebkitTextFillColor: theme.text } : null),
+          ...(Platform.OS === 'web'
+            ? {
+                WebkitTextFillColor: color,
+                WebkitBoxShadow: `0 0 0 1000px ${theme.background} inset`,
+              }
+            : null),
         },
       ]}
     />
