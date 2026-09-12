@@ -13,6 +13,7 @@ import { SurahListRow } from '@/components/quran/surah-list-row';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useHifzAvailable } from '@/hooks/use-hifz-tab';
+import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { formatInterval } from '@/lib/fsrs';
 import { hapticLight, hapticSelection } from '@/lib/haptics';
@@ -96,7 +97,7 @@ export default function QuranScreen() {
   const [query, setQuery] = useState('');
   const [jumpVisible, setJumpVisible] = useState(false);
   const [openSurah, setOpenSurah] = useState<number | null>(null);
-  const [now] = useState(() => Date.now());
+  const now = useNow().getTime();
   const hasSaved = useQuranMarksStore((s) => s.pinPlacements.length > 0 || s.bookmarks.length > 0);
   const hifzAvailable = useHifzAvailable();
   const hifzHydrated = useHifzStore((state) => state.hydrated);

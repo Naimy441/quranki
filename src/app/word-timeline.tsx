@@ -6,6 +6,7 @@ import { ArabicText } from '@/components/arabic-text';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { displayArabic } from '@/lib/arabic-display';
 import { formatInterval } from '@/lib/fsrs';
@@ -22,7 +23,8 @@ function rowDueLabel(item: TimelineWord): string | null {
 export default function WordTimelineScreen() {
   const theme = useTheme();
   const progress = useProgressStore((state) => state.progress);
-  const buckets = getWordReviewTimeline(progress, new Date());
+  const now = useNow();
+  const buckets = getWordReviewTimeline(progress, now);
   const sections = buckets.map((bucket) => ({
     key: bucket.key,
     title: bucket.title,

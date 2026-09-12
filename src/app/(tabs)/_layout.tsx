@@ -1,6 +1,7 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 import { useMasteredArabicDigits } from '@/hooks/use-mastered-arabic-digits';
+import { useNowClock } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { formatAppDigits } from '@/lib/arabic-digits';
 import { hapticSelection } from '@/lib/haptics';
@@ -11,7 +12,8 @@ export default function TabLayout() {
   const theme = useTheme();
   const progress = useProgressStore((s) => s.progress);
   const masteredDigits = useMasteredArabicDigits();
-  const dueCount = totalDueWords(progress, new Date());
+  const now = useNowClock();
+  const dueCount = totalDueWords(progress, now);
   const dueBadge = dueCount > 99 ? formatAppDigits('99+', masteredDigits) : formatAppDigits(String(dueCount), masteredDigits);
   const screenStyle = { backgroundColor: theme.background };
 

@@ -15,7 +15,7 @@ import { ArabicTextStyle, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { displayArabic, displayMorphologyArabic } from '@/lib/arabic-display';
 import { hapticLight, hapticSuccess, hapticWarning } from '@/lib/haptics';
-import { getTaughtStudyWordsForLemmas, type Level } from '@/lib/levels';
+import { formatLevelLabel, getTaughtStudyWordsForLemmas, type Level } from '@/lib/levels';
 import { getQuranLemma, getWordLemmaIds } from '@/lib/quran-lemmas';
 import { getRootEntry, posLabel } from '@/lib/quran-morphology';
 import type { ReaderMorphSegment, ReaderWord, ReaderWordRef } from '@/lib/quran-reader-types';
@@ -170,6 +170,7 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
 
   const shown = { word, isKnown: known, masteredLevel: level };
   const progress = useProgressStore((state) => state.progress);
+  const learnToRead = useProgressStore((state) => state.settings.canReadQuran === false);
   const arabic = shown.word?.ar.map((seg) => seg.t).join('') ?? '';
   const lemmaIds = getWordLemmaIds(shown.word);
   const taughtWords =
@@ -299,7 +300,7 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
                     </View>
                   ) : null}
                   <ThemedText type="small" themeColor="textMuted">
-                    {`Level ${level.number} - ${level.title}`}
+                    {`${formatLevelLabel(level.number, learnToRead)} - ${level.title}`}
                   </ThemedText>
                 </View>
               ))}
@@ -387,7 +388,7 @@ export function WordDetailSheet({ selection, isKnown, masteredLevel, onDismiss, 
             {canMarkKnown ? (
               <ThemedText type="small" themeColor="textSecondary" style={styles.description}>
                 {shown.masteredLevel
-                  ? `You\u2019ve already mastered this word in Level ${shown.masteredLevel.number} (${shown.masteredLevel.title}). That\u2019s why its translation is hidden.`
+                  ? `You\u2019ve already mastered this word in ${formatLevelLabel(shown.masteredLevel.number, learnToRead)} (${shown.masteredLevel.title}). That\u2019s why its translation is hidden.`
                   : shown.isKnown
                     ? 'Marked as known. Its translation is hidden everywhere this word appears in the Qur\u2019an.'
                     : 'Marking it known hides its translation everywhere it appears.'}

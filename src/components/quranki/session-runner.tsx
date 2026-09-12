@@ -25,7 +25,7 @@ import {
     type GradePreview,
 } from '@/lib/fsrs';
 import { hapticHeavy, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
-import { getStageForLevel, getUpcomingLearning, hidesPromptArabic, isStudyWord, usesListeningOverlay, type SessionWord, type WordProgress } from '@/lib/levels';
+import { computeReachedQaidaLevel, formatLevelLabel, getStageForLevel, getUpcomingLearning, hidesPromptArabic, isQaidaComplete, isStudyWord, stageDisplayNumber, usesListeningOverlay, type SessionWord, type WordProgress } from '@/lib/levels';
 import { formatStudyDuration } from '@/lib/stats';
 import { playWordPronunciation, prefetchWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
 import { useProgressStore } from '@/store/progress-store';
@@ -87,10 +87,13 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
   const progress = useProgressStore((state) => state.progress);
   const hideNextSessionPrompts = useProgressStore((state) => state.hideNextSessionPrompts);
   const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
+  const learnToRead = useProgressStore((state) => state.settings.canReadQuran === false);
   const gradeWord = useProgressStore((state) => state.gradeWord);
   const revertSessionWord = useProgressStore((state) => state.revertSessionWord);
 
   const [initialMaxUnlockedLevel] = useState(() => maxUnlockedLevel);
+  const [initialQaidaComplete] = useState(() => isQaidaComplete(progress));
+  const [initialQaidaLevel] = useState(() => computeReachedQaidaLevel(progress));
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -317,9 +320,27 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
   };
 
   if (phase === 'summary') {
+    const qaidaJustFinished = !initialQaidaComplete && isQaidaComplete(progress);
+    const qaidaLevelNow = computeReachedQaidaLevel(progress);
     const unlockedNewStage =
       getStageForLevel(maxUnlockedLevel).id > getStageForLevel(initialMaxUnlockedLevel).id;
-    const unlockedNewLevel = maxUnlockedLevel > initialMaxUnlockedLevel || unlockedNewStage;
+    const unlockedNewLevel =
+      maxUnlockedLevel > initialMaxUnlockedLevel ||
+      unlockedNewStage ||
+      qaidaJustFinished ||
+      qaidaLevelNow > initialQaidaLevel;
+    const unlockedStage = getStageForLevel(maxUnlockedLevel);
+    let unlockMessage = `Now studying ${formatLevelLabel(maxUnlockedLevel, learnToRead)}`;
+    if (qaidaJustFinished) {
+      unlockMessage = 'Stage 1 is complete - Stage 2 is open';
+    } else if (unlockedNewStage) {
+      unlockMessage =
+        unlockedStage.kind === 'asma'
+          ? 'The 99 Names unlocked'
+          : `Stage ${stageDisplayNumber(unlockedStage, learnToRead)} unlocked`;
+    } else if (qaidaLevelNow > initialQaidaLevel) {
+      unlockMessage = `Now studying ${formatLevelLabel(qaidaLevelNow, learnToRead)}`;
+    }
     const reviewedCount = queue.filter((entry) => isStudyWord(entry.word)).length;
     return (
       <ThemedView style={styles.flex}>
@@ -363,11 +384,7 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
                 style={[styles.unlockBanner, { backgroundColor: theme.primary }]}>
                 <Ionicons name="flag" size={18} color={theme.onPrimary} />
                 <ThemedText themeColor="onPrimary" type="smallBold">
-                  {unlockedNewStage
-                    ? getStageForLevel(maxUnlockedLevel).kind === 'asma'
-                      ? 'The 99 Names unlocked'
-                      : `Stage ${getStageForLevel(maxUnlockedLevel).id} unlocked`
-                    : `Now studying level ${maxUnlockedLevel}`}
+                  {unlockMessage}
                 </ThemedText>
               </Animated.View>
             )}
@@ -473,7 +490,7 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
               numberOfLines={1}
               pointerEvents="none"
               style={styles.actionMeta}>
-              Level {currentEntry.levelNumber}
+              {formatLevelLabel(currentEntry.levelNumber, learnToRead)}
               {' - '}
               {studyKindLabel}
             </ThemedText>

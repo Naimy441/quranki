@@ -4695,7 +4695,7 @@
           ]
         },
         {
-          "arabic": "أَنْبَتَ",
+          "arabic": "أَنۢبَتَ",
           "english": "to make grow",
           "id": "42-005",
           "lemmaIds": [
@@ -4747,8 +4747,14 @@
           "english": "to not recognize, to deny",
           "id": "42-011",
           "lemmaIds": [
-            3063
-          ]
+            2119,
+            1952
+          ],
+          "exampleVerse": {
+            "s": 12,
+            "a": 58
+          },
+          "note": "The Quran uses يُنكِرُ and مُنكِرُون. أَنكَرَ in Luqman 31:19 means most disagreeable - a different word."
         },
         {
           "arabic": "أَهْلَكَ",

@@ -21,6 +21,13 @@ service firebase.storage {
       allow write: if false;
     }
 
+    // Qaida letter-name / syllable MP3s, stored gzipped (see `scripts/upload-qaida-audio.js`
+    // and `lib/qaida-audio.ts`). Same public-read, admin-only-write shape.
+    match /qaida-audio/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Deny everything else by default.
     match /{allPaths=**} {
       allow read, write: if false;

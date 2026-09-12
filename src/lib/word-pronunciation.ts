@@ -1,15 +1,21 @@
+import { playQaidaAudio, prefetchQaidaAudio } from '@/lib/qaida-audio';
 import { getWord } from '@/lib/levels';
 import { exampleAudioPositions, getVocabExample } from '@/lib/vocab-examples';
 import { playWordAudio, prefetchWordAudio, stopWordAudio } from '@/lib/word-audio';
 
 function exampleForWord(id: string) {
   const word = getWord(id);
-  if (!word || word.kind === 'digit') return undefined;
+  if (!word || word.kind === 'digit' || word.kind === 'qaida') return undefined;
   return getVocabExample(word);
 }
 
-/** Download this card's Quran word clip so the speaker tap does not wait on the network. */
+/** Download this card's clip so the speaker tap does not wait on the network. */
 export function prefetchWordPronunciation(id: string): void {
+  const word = getWord(id);
+  if (word?.kind === 'qaida') {
+    prefetchQaidaAudio(id);
+    return;
+  }
   const example = exampleForWord(id);
   if (!example) return;
   for (const position of exampleAudioPositions(example)) {
@@ -17,8 +23,13 @@ export function prefetchWordPronunciation(id: string): void {
   }
 }
 
-/** Plays the tagged Quran example for this vocab card. Phrase cards play each tagged word. */
+/** Plays Qaida TTS from Firebase, or the tagged Quran example for a vocab card. */
 export async function playWordPronunciation(id: string, finished?: () => void): Promise<boolean> {
+  const word = getWord(id);
+  if (word?.kind === 'qaida') {
+    return playQaidaAudio(id, { onFinished: finished, onFailed: finished });
+  }
+
   const example = exampleForWord(id);
   if (!example) {
     finished?.();

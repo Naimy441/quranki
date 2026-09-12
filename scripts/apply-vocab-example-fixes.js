@@ -154,6 +154,11 @@ const overrides = {
     { s: 9, a: 78, p: 10 },
     { s: 34, a: 48, p: 6 },
   ],
+  '42-011': [
+    { s: 12, a: 58, p: 9 },
+    { s: 16, a: 83, p: 5 },
+    { s: 40, a: 81, p: 6 },
+  ],
 };
 
 function patchWord(deck, id, patch) {
@@ -272,6 +277,13 @@ patchWord(deck, '36-010', {
 
 patchWord(deck, '105-005', { exampleVerse: { s: 59, a: 22 } });
 patchWord(deck, '127-004', { exampleVerse: { s: 5, a: 109 } });
+
+patchWord(deck, '42-005', { arabic: 'أَنۢبَتَ' });
+patchWord(deck, '42-011', {
+  lemmaIds: [2119, 1952],
+  exampleVerse: { s: 12, a: 58 },
+  note: 'The Quran uses يُنكِرُ and مُنكِرُون. أَنكَرَ in Luqman 31:19 means most disagreeable - a different word.',
+});
 
 const leftoverSenseCards = [
   {

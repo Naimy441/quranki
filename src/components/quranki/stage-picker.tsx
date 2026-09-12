@@ -5,7 +5,8 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticSelection } from '@/lib/haptics';
-import { getCoverageThroughLevel, isAsmaStage, type Stage, type StageProgress } from '@/lib/levels';
+import { getCoverageThroughLevel, isAsmaStage, isQaidaStage, stageDisplayTitle, stagePillLabel, type ProgressMap, type Stage, type StageProgress } from '@/lib/levels';
+import { getQaidaReadableCoverage } from '@/lib/qaida-readable';
 import { daysAtPace, formatCount, formatDaysAtPace } from '@/lib/stats';
 
 export interface StageEntry {
@@ -18,6 +19,8 @@ interface StagePickerProps {
   entries: StageEntry[];
   selectedStageId: number;
   wordsPerDay: number;
+  learnToRead: boolean;
+  progressMap: ProgressMap;
   onSelect: (stageId: number) => void;
 }
 
@@ -27,7 +30,14 @@ interface StagePickerProps {
  * number. The selected stage's progress collapses into a single detail line below, instead of
  * repeating mastered/coverage/pace on every row like the old stacked stage list.
  */
-export function StagePicker({ entries, selectedStageId, wordsPerDay, onSelect }: StagePickerProps) {
+export function StagePicker({
+  entries,
+  selectedStageId,
+  wordsPerDay,
+  learnToRead,
+  progressMap,
+  onSelect,
+}: StagePickerProps) {
   const theme = useTheme();
   const selected = entries.find((entry) => entry.stage.id === selectedStageId) ?? entries[0];
 
@@ -36,7 +46,29 @@ export function StagePicker({ entries, selectedStageId, wordsPerDay, onSelect }:
   const { stage, progress, unlocked } = selected;
   const { mastered, total } = progress;
   const coverage = getCoverageThroughLevel(stage.lastLevel);
+  const qaidaReadable = isQaidaStage(stage) ? getQaidaReadableCoverage(progressMap) : null;
+  const qaidaPercent =
+    qaidaReadable && qaidaReadable.total > 0
+      ? Math.round((qaidaReadable.readable / qaidaReadable.total) * 100)
+      : 0;
   const daysLabel = unlocked ? formatDaysAtPace(daysAtPace(total - mastered, wordsPerDay)) : undefined;
+
+  let detailText: string;
+  if (isQaidaStage(stage)) {
+    detailText = unlocked
+      ? `${formatCount(mastered)} of ${formatCount(total)} mastered - ${qaidaPercent}% of the Quran`
+      : `${formatCount(total)} cards`;
+  } else if (isAsmaStage(stage)) {
+    detailText = unlocked
+      ? `${formatCount(mastered)} of ${formatCount(total)} mastered - ${stage.subtitle}`
+      : `${stage.subtitle} - ${formatCount(total)} cards - unlocks after Stage ${learnToRead ? 2 : 1}`;
+  } else if (unlocked) {
+    detailText = `${formatCount(mastered)} of ${formatCount(total)} mastered - ${coverage.percent}% of the Quran`;
+  } else if (stage.id === 1) {
+    detailText = `${stage.subtitle} - ${formatCount(total)} words - unlocks after Stage 1`;
+  } else {
+    detailText = `${stage.subtitle} - ${formatCount(total)} words - unlocks as you progress`;
+  }
 
   return (
     <View style={styles.wrap}>
@@ -48,7 +80,11 @@ export function StagePicker({ entries, selectedStageId, wordsPerDay, onSelect }:
               key={entryStage.id}
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected, disabled: !entryUnlocked }}
-              accessibilityLabel={entryUnlocked ? entryStage.title : `${entryStage.title}, locked`}
+              accessibilityLabel={
+                entryUnlocked
+                  ? stageDisplayTitle(entryStage, learnToRead)
+                  : `${stageDisplayTitle(entryStage, learnToRead)}, locked`
+              }
               accessibilityHint={entryUnlocked ? "Show this stage's levels" : undefined}
               disabled={!entryUnlocked}
               onPress={() => {
@@ -62,7 +98,7 @@ export function StagePicker({ entries, selectedStageId, wordsPerDay, onSelect }:
               ]}>
               {entryUnlocked ? (
                 <ThemedText type="smallBold" themeColor={isSelected ? 'primary' : 'textSecondary'}>
-                  {entryStage.id}
+                  {stagePillLabel(entryStage, learnToRead)}
                 </ThemedText>
               ) : (
                 <Ionicons name="lock-closed" size={13} color={theme.textMuted} />
@@ -74,16 +110,10 @@ export function StagePicker({ entries, selectedStageId, wordsPerDay, onSelect }:
 
       <View style={styles.detail}>
         <ThemedText type="smallBold" style={styles.detailTitle}>
-          {stage.title}
+          {stageDisplayTitle(stage, learnToRead)}
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {isAsmaStage(stage)
-            ? unlocked
-              ? `${formatCount(mastered)} of ${formatCount(total)} mastered - ${stage.subtitle}`
-              : `${stage.subtitle} - ${formatCount(total)} cards - unlocks after Stage 1`
-            : unlocked
-              ? `${formatCount(mastered)} of ${formatCount(total)} mastered - ${coverage.percent}% of the Quran`
-              : `${stage.subtitle} - ${formatCount(total)} words - unlocks as you progress`}
+          {detailText}
         </ThemedText>
         {daysLabel ? (
           <ThemedText type="small" themeColor="textMuted">

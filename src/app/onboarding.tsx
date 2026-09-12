@@ -12,6 +12,7 @@ import {
     OnboardingCoveragePreview,
     OnboardingFlashPreview,
     OnboardingIntentionPreview,
+    OnboardingReadingPreview,
     OnboardingTapHint,
     OnboardingWelcomePreview,
 } from '@/components/quranki/onboarding-visuals';
@@ -88,6 +89,11 @@ const STEPS = [
     body: 'A little each day is enough. Keep your intention for the sake of Allah.',
   },
   {
+    id: 'reading',
+    title: 'Do you want to learn how to read the Quran?',
+    body: 'If the letters and vowels are still new, we will start with the Qaida.',
+  },
+  {
     id: 'pace',
     title: 'How many new words today?',
     body: 'Start with what you can keep. You can change this later in Settings.',
@@ -101,21 +107,26 @@ const STEPS = [
 
 type StepId = (typeof STEPS)[number]['id'];
 
+const READING_OPTIONS = [
+  { value: 'yes', label: 'I already know how to.' },
+  { value: 'no', label: "Sure, let's go!" },
+] as const;
+
 export default function OnboardingScreen() {
   const theme = useTheme();
   const completeOnboarding = useProgressStore((state) => state.completeOnboarding);
   const [index, setIndex] = useState(0);
   const [wordsPerDay, setWordsPerDay] = useState(String(DEFAULT_SETTINGS.wordsPerSession));
+  const [canReadQuran, setCanReadQuran] = useState(true);
   const [reminderHour, setReminderHour] = useState(DEFAULT_REMINDER_HOUR);
   const [reminderMinute, setReminderMinute] = useState(DEFAULT_REMINDER_MINUTE);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [finishing, setFinishing] = useState(false);
-
   useEffect(() => () => {
     stopWordPronunciation();
   }, []);
 
-  const step = STEPS[index];
+  const step = STEPS[index] ?? STEPS[0];
   const isLast = index === STEPS.length - 1;
 
   const handleSpeak = async () => {
@@ -131,11 +142,15 @@ export default function OnboardingScreen() {
     hapticSuccess();
     stopWordPronunciation();
     const allowed = remind ? await requestReminderPermission() : false;
-    await completeOnboarding(Number(wordsPerDay), {
-      enabled: allowed,
-      hour: reminderHour,
-      minute: reminderMinute,
-    });
+    await completeOnboarding(
+      Number(wordsPerDay),
+      {
+        enabled: allowed,
+        hour: reminderHour,
+        minute: reminderMinute,
+      },
+      { canReadQuran },
+    );
   };
 
   const goNext = () => {
@@ -186,6 +201,16 @@ export default function OnboardingScreen() {
               <ThemedText themeColor="textSecondary" style={styles.subtitle}>
                 {step.body}
               </ThemedText>
+              {step.id === 'reading' && (
+                <View style={styles.paceGrid}>
+                  <ChoiceGrid
+                    options={[...READING_OPTIONS]}
+                    value={canReadQuran ? 'yes' : 'no'}
+                    onChange={(value) => setCanReadQuran(value === 'yes')}
+                    columns={1}
+                  />
+                </View>
+              )}
               {step.id === 'pace' && (
                 <View style={styles.paceGrid}>
                   <ChoiceGrid
@@ -289,6 +314,8 @@ function renderVisual(
       return <OnboardingCoveragePreview />;
     case 'intention':
       return <OnboardingIntentionPreview />;
+    case 'reading':
+      return <OnboardingReadingPreview />;
     case 'pace':
     case 'reminder':
       return null;

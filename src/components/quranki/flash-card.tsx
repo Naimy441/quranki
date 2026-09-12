@@ -34,7 +34,7 @@ export function FlashCard({
 }: FlashCardProps) {
   const theme = useTheme();
   const examples = useMemo(
-    () => (word.kind === 'digit' ? [] : getVocabExamples(word)),
+    () => (word.kind === 'digit' || word.kind === 'qaida' ? [] : getVocabExamples(word)),
     [word.id, word.kind],
   );
   const [covered, setCovered] = useState(hideArabic);
@@ -85,7 +85,7 @@ export function FlashCard({
             </Animated.View>
           ) : null}
         </View>
-        {examples.length > 0 ? (
+        {examples.length > 0 || word.kind === 'qaida' ? (
           <Pressable
             onPress={onSpeak}
             hitSlop={12}

@@ -51,3 +51,7 @@ example
 # raw translation datasets already uploaded to Firebase Storage (translation-data/);
 # see scripts/upload-translation-data.js
 /scripts/data/translations
+
+# generated Qaida TTS already uploaded to Firebase Storage (qaida-audio/);
+# see scripts/upload-qaida-audio.js
+/assets/audio/qaida

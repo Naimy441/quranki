@@ -11,6 +11,7 @@ import { StagePicker } from '@/components/quranki/stage-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { useNow, useRefreshNowAt } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { formatInterval } from '@/lib/fsrs';
 import { hapticMedium, hapticSelection } from '@/lib/haptics';
@@ -21,13 +22,16 @@ import {
   getIntroductionFrontier,
   getLevelStatusesForStage,
   getMasteredLemmaIds,
+  getQaidaIntroductionFrontier,
   getStage,
   getStageProgress,
+  getTrackContext,
+  QAIDA_STAGE,
   getUnlockedStage,
   getUpcomingLearning,
+  getVisibleStages,
   isStageUnlocked,
   isStudyWord,
-  STAGES,
   type LevelStatus,
   type Word,
 } from '@/lib/levels';
@@ -80,6 +84,7 @@ export default function LearnScreen() {
   const theme = useTheme();
   const progress = useProgressStore((state) => state.progress);
   const wordsPerSession = useProgressStore((state) => state.settings.wordsPerSession);
+  const canReadQuran = useProgressStore((state) => state.settings.canReadQuran);
   const reviewsToday = useProgressStore((state) => state.reviewsToday);
   const newCardsToday = useProgressStore((state) => state.newCardsToday);
   const reviewCountDate = useProgressStore((state) => state.reviewCountDate);
@@ -91,14 +96,15 @@ export default function LearnScreen() {
   const knownWords = useKnownWordsStore((state) => state.knownWords);
   const [selectedStageId, setSelectedStageId] = useState<number | null>(null);
 
-  const now = new Date();
+  const now = useNow();
   const reviewsAlready = reviewsCompletedToday(reviewCountDate, reviewsToday, now);
   const newAlready = newCardsCompletedToday(reviewCountDate, newCardsToday, now);
-  const todaySession = buildGlobalSessionQueue(progress, now, wordsPerSession, reviewsAlready, newAlready);
+  const track = getTrackContext(progress, canReadQuran);
+  const todaySession = buildGlobalSessionQueue(progress, now, wordsPerSession, reviewsAlready, newAlready, false, track);
   const extraSession =
     todaySession.length > 0
       ? []
-      : buildGlobalSessionQueue(progress, now, wordsPerSession, reviewsAlready, newAlready, true);
+      : buildGlobalSessionQueue(progress, now, wordsPerSession, reviewsAlready, newAlready, true, track);
   const canStart = todaySession.length > 0 || extraSession.length > 0;
   const studyToday = todaySession.filter((entry) => isStudyWord(entry.word));
   const extraStudy = extraSession.filter((entry) => isStudyWord(entry.word));
@@ -106,22 +112,32 @@ export default function LearnScreen() {
   const dueCount = studyToday.filter((entry) => entry.reason === 'due').length;
   const newCount = studyToday.filter((entry) => entry.reason === 'new').length;
   const upcoming = getUpcomingLearning(progress, now);
+  useRefreshNowAt(upcoming?.dueAt.getTime());
   const newRemaining = Math.max(0, wordsPerSession - newCardsCompletedToday(reviewCountDate, newCardsToday, now));
   const streak = computeStreak(reviewDates, streakGraceDates, now);
   const studyTodayMs = studyTimeForDay(studyMsByDate, now);
-  const frontier = getIntroductionFrontier(progress);
-  const reachedLevel = Math.max(maxUnlockedLevel, frontier);
-  const unlockedStage = getUnlockedStage(reachedLevel);
+  const visibleStages = getVisibleStages(track.learnToRead);
+  const frontier =
+    track.learnToRead && !track.qaidaComplete
+      ? getQaidaIntroductionFrontier(progress)
+      : getIntroductionFrontier(progress);
+  const reachedLevel =
+    track.learnToRead && !track.qaidaComplete ? frontier : Math.max(maxUnlockedLevel, getIntroductionFrontier(progress));
+  const unlockedStage = getUnlockedStage(reachedLevel, track);
   const masteredLemmaIds = getMasteredLemmaIds(progress);
   for (const id of getKnownLemmaIds(knownWords)) masteredLemmaIds.add(id);
-  const selectedStage = getStage(selectedStageId ?? unlockedStage.id) ?? STAGES[0];
-  const selectedUnlocked = isStageUnlocked(selectedStage, reachedLevel);
-  const visibleStage = selectedUnlocked ? selectedStage : STAGES[0];
+  const masteredCount =
+    track.learnToRead && !track.qaidaComplete
+      ? getStageProgress(QAIDA_STAGE, progress, now).mastered
+      : masteredLemmaIds.size;
+  const selectedStage = getStage(selectedStageId ?? unlockedStage.id) ?? visibleStages[0] ?? unlockedStage;
+  const selectedUnlocked = isStageUnlocked(selectedStage, reachedLevel, track);
+  const visibleStage = selectedUnlocked ? selectedStage : (visibleStages[0] ?? unlockedStage);
   const rows = rowsForStatuses(getLevelStatusesForStage(visibleStage, progress, now));
-  const stageEntries = STAGES.map((stage) => ({
+  const stageEntries = visibleStages.map((stage) => ({
     stage,
     progress: getStageProgress(stage, progress, now),
-    unlocked: isStageUnlocked(stage, reachedLevel),
+    unlocked: isStageUnlocked(stage, reachedLevel, track),
   }));
 
   if (!hydrated) {
@@ -200,7 +216,7 @@ export default function LearnScreen() {
                 <View style={styles.heroStatsRow}>
                   <HeroStat
                     icon="checkmark-done"
-                    value={formatCount(masteredLemmaIds.size)}
+                    value={formatCount(masteredCount)}
                     label="Mastered"
                     color={theme.onPrimary}
                   />
@@ -218,6 +234,8 @@ export default function LearnScreen() {
                 entries={stageEntries}
                 selectedStageId={visibleStage.id}
                 wordsPerDay={wordsPerSession}
+                learnToRead={track.learnToRead}
+                progressMap={progress}
                 onSelect={setSelectedStageId}
               />
             </View>
@@ -229,7 +247,11 @@ export default function LearnScreen() {
               </View>
             ) : (
               <View style={styles.cardWrap}>
-                <LevelCard status={item.status} isCurrent={item.status.level.number === frontier} />
+                <LevelCard
+                  status={item.status}
+                  isCurrent={item.status.level.number === frontier}
+                  learnToRead={track.learnToRead}
+                />
               </View>
             )
           }

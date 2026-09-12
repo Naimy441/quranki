@@ -168,6 +168,21 @@ export default function SettingsScreen() {
             </View>
           </SettingsSection>
 
+          <SettingsSection title="Arabic reading">
+            <View style={styles.reminderToggle}>
+              <ThemedText type="smallBold">I can read the Quran</ThemedText>
+              <Switch
+                value={settings.canReadQuran}
+                onValueChange={(canReadQuran) => updateSettings({ canReadQuran })}
+                trackColor={{ false: theme.border, true: theme.primary }}
+                thumbColor={theme.card}
+              />
+            </View>
+            <ThemedText type="small" themeColor="textSecondary">
+              Turn this off to study the Qaida first: letters, vowels, then reading.
+            </ThemedText>
+          </SettingsSection>
+
           <SettingsSection
             title="Notifications">
             <View style={styles.reminderToggle}>

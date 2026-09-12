@@ -8,9 +8,11 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAppDigits } from '@/hooks/use-mastered-arabic-digits';
+import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { displayArabic } from '@/lib/arabic-display';
-import { getCoverageThroughLevel, getGrammarIntro, getLevel, getLevelStatus, isAsmaDigitLevel, isAsmaLevel, type WordState } from '@/lib/levels';
+import { formatLevelLabel, getCoverageThroughLevel, getGrammarIntro, getLevel, getLevelStatus, isAsmaDigitLevel, isAsmaLevel, isQaidaLevel, type WordState } from '@/lib/levels';
+import { getQaidaReadableCoverageThroughLevel } from '@/lib/qaida-readable';
 import { formatCount } from '@/lib/stats';
 import { useProgressStore } from '@/store/progress-store';
 
@@ -28,11 +30,13 @@ export default function LevelDetailScreen() {
 
   const theme = useTheme();
   const progress = useProgressStore((state) => state.progress);
-  const levelTitle = useAppDigits(level ? `Level ${level.number}` : 'Level');
+  const learnToRead = useProgressStore((state) => state.settings.canReadQuran === false);
+  const levelTitle = useAppDigits(level ? formatLevelLabel(level.number, learnToRead) : 'Level');
 
-  const now = new Date();
+  const now = useNow();
   const status = level ? getLevelStatus(level, progress, now) : null;
   const coverage = level ? getCoverageThroughLevel(level.number) : null;
+  const qaidaCoverage = level && isQaidaLevel(level.number) ? getQaidaReadableCoverageThroughLevel(level.number) : null;
   const grammar = level ? getGrammarIntro(level) : undefined;
 
   if (!level || !status || !coverage) {
@@ -58,9 +62,21 @@ export default function LevelDetailScreen() {
                   numbers across the app switch to it. 1 becomes ١ as soon as you know 1. 19
                   becomes ١٩ only after you know both 1 and 9.
                 </ThemedText>
+              ) : isQaidaLevel(level.number) ? (
+                <>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    These cards teach you to read Arabic. See the letter or word, say it, then reveal
+                    the name or reading. After Stage 1, Stage 2 begins.
+                  </ThemedText>
+                  {qaidaCoverage ? (
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {`Once mastered through here, you can read ${formatCount(qaidaCoverage.readable)} of ${formatCount(qaidaCoverage.total)} Quran words`}
+                    </ThemedText>
+                  ) : null}
+                </>
               ) : isAsmaLevel(level.number) ? (
                 <ThemedText type="small" themeColor="textSecondary">
-                  These names unlock after Stage 1 and are studied as their own stage. When the
+                  These names unlock after Stage {learnToRead ? 2 : 1} and are studied as their own stage. When the
                   Quran uses the name itself, that verse is the example; otherwise the verse shows
                   the same meaning. Reviews of names you already know are mixed into the same daily
                   session.
@@ -89,7 +105,7 @@ export default function LevelDetailScreen() {
               {grammar ? <GrammarIntroRow word={grammar} /> : null}
 
               <ThemedText type="smallBold" style={styles.wordsLabel}>
-                Words ({status.totalCount})
+                {isQaidaLevel(level.number) ? 'Cards' : 'Words'} ({status.totalCount})
               </ThemedText>
             </View>
           }

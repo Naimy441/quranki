@@ -7,15 +7,16 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticSelection } from '@/lib/haptics';
-import type { LevelStatus } from '@/lib/levels';
+import { isQaidaLevel, levelDisplayNumber, type LevelStatus } from '@/lib/levels';
 
 interface LevelCardProps {
   status: LevelStatus;
   /** True for the level sequential new-card introduction is currently drawing from. */
   isCurrent: boolean;
+  learnToRead: boolean;
 }
 
-export function LevelCard({ status, isCurrent }: LevelCardProps) {
+export function LevelCard({ status, isCurrent, learnToRead }: LevelCardProps) {
   const theme = useTheme();
   const { level, masteredCount, totalCount, dueCount, newCount } = status;
   const progress = totalCount === 0 ? 0 : masteredCount / totalCount;
@@ -33,7 +34,9 @@ export function LevelCard({ status, isCurrent }: LevelCardProps) {
         pressed && styles.pressed,
       ]}>
       <ProgressRing progress={progress} color={theme.primary} trackColor={theme.backgroundElement} size={52} strokeWidth={4}>
-        <ThemedText type="smallBold">{level.number}</ThemedText>
+        <ThemedText type="smallBold">
+          {levelDisplayNumber(level.number, learnToRead)}
+        </ThemedText>
       </ProgressRing>
 
       <View style={styles.info}>
@@ -41,7 +44,9 @@ export function LevelCard({ status, isCurrent }: LevelCardProps) {
           {level.title}
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {introduced === 0 ? `${totalCount} words - not started` : `${masteredCount} of ${totalCount} mastered`}
+          {introduced === 0
+            ? `${totalCount} ${isQaidaLevel(level.number) ? 'cards' : 'words'} - not started`
+            : `${masteredCount} of ${totalCount} mastered`}
         </ThemedText>
       </View>
 

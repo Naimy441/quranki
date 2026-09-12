@@ -188,6 +188,62 @@ function onPlaybackStatus(status: AudioStatus): void {
   finished?.();
 }
 
+async function playResolvedUri(uri: string, seq: number): Promise<boolean> {
+  return runPlayerOp(async () => {
+    if (seq !== requestSeq) return false;
+    const instance = await getPlayer();
+    if (seq !== requestSeq) return false;
+
+    ignoreFinishUntil = Date.now() + 400;
+    if (loadedUri === uri && instance.isLoaded) {
+      await instance.seekTo(0);
+      if (seq !== requestSeq) return false;
+      instance.play();
+      return true;
+    }
+
+    instance.replace({ uri });
+    loadedUri = uri;
+    const ready = await waitForReady(instance, seq);
+    if (!ready || seq !== requestSeq) return false;
+    instance.play();
+    return true;
+  });
+}
+
+function beginPlayback(listeners?: { onFinished?: () => void; onFailed?: () => void }): number {
+  const seq = ++requestSeq;
+  // Ignore the outgoing clip's `didJustFinish` before swapping listeners, or a replace
+  // would fire the new card's `onFinished` and clear the speaking state immediately.
+  ignoreFinishUntil = Date.now() + 800;
+  onFinished = listeners?.onFinished ?? null;
+  onFailed = listeners?.onFailed ?? null;
+  return seq;
+}
+
+function failPlayback(seq: number, error?: unknown): boolean {
+  if (seq !== requestSeq) return false;
+  if (error) void notifyIfOffline(error);
+  onFinished = null;
+  const failed = onFailed;
+  onFailed = null;
+  failed?.();
+  return false;
+}
+
+/** Plays a local or remote audio URI on the shared word-audio player. */
+export async function playAudioUri(
+  uri: string,
+  listeners?: { onFinished?: () => void; onFailed?: () => void },
+): Promise<boolean> {
+  const seq = beginPlayback(listeners);
+  try {
+    return await playResolvedUri(uri, seq);
+  } catch (error) {
+    return failPlayback(seq, error);
+  }
+}
+
 /** Plays one word. Resolves `true` once playback has been started. */
 export async function playWordAudio(
   surah: number,
@@ -195,52 +251,17 @@ export async function playWordAudio(
   word: number,
   listeners?: { onFinished?: () => void; onFailed?: () => void },
 ): Promise<boolean> {
-  const seq = ++requestSeq;
-  // Ignore the outgoing clip's `didJustFinish` before swapping listeners, or a replace
-  // would fire the new card's `onFinished` and clear the speaking state immediately.
-  ignoreFinishUntil = Date.now() + 800;
-  onFinished = listeners?.onFinished ?? null;
-  onFailed = listeners?.onFailed ?? null;
+  const seq = beginPlayback(listeners);
 
   try {
     if (!isWordAudioCached(surah, ayah, word) && !(await requireOnline())) {
-      if (seq !== requestSeq) return false;
-      onFinished = null;
-      const failed = onFailed;
-      onFailed = null;
-      failed?.();
-      return false;
+      return failPlayback(seq);
     }
     const uri = await getWordPlaybackUri(surah, ayah, word);
     if (seq !== requestSeq) return false;
-    return await runPlayerOp(async () => {
-      if (seq !== requestSeq) return false;
-      const instance = await getPlayer();
-      if (seq !== requestSeq) return false;
-
-      ignoreFinishUntil = Date.now() + 400;
-      if (loadedUri === uri && instance.isLoaded) {
-        await instance.seekTo(0);
-        if (seq !== requestSeq) return false;
-        instance.play();
-        return true;
-      }
-
-      instance.replace({ uri });
-      loadedUri = uri;
-      const ready = await waitForReady(instance, seq);
-      if (!ready || seq !== requestSeq) return false;
-      instance.play();
-      return true;
-    });
+    return await playResolvedUri(uri, seq);
   } catch (error) {
-    if (seq !== requestSeq) return false;
-    void notifyIfOffline(error);
-    onFinished = null;
-    const failed = onFailed;
-    onFailed = null;
-    failed?.();
-    return false;
+    return failPlayback(seq, error);
   }
 }
 

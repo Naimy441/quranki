@@ -6,6 +6,7 @@ import { InteractionManager, Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useHifzAvailable } from '@/hooks/use-hifz-tab';
+import { useNowClock } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticMedium } from '@/lib/haptics';
 import { buildHifzSessionQueue, countDueHifzCards } from '@/lib/hifz';
@@ -18,9 +19,10 @@ export function MemorizeEntryRow() {
   const available = useHifzAvailable();
   const enrolledRukuIds = useHifzStore((state) => state.enrolledRukuIds);
   const cards = useHifzStore((state) => state.cards);
+  const now = useNowClock();
   const { due, next } = useMemo(
-    () => countDueHifzCards({ enrolledRukuIds, cards }),
-    [cards, enrolledRukuIds],
+    () => countDueHifzCards({ enrolledRukuIds, cards }, now),
+    [cards, enrolledRukuIds, now],
   );
   const sessionSize = due + next;
 

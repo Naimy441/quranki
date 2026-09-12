@@ -10,7 +10,7 @@ import {
     type Card,
     type GradeName,
 } from '@/lib/fsrs';
-import { buildGlobalSessionQueue, computeReachedLevel, getLevel, getWord, isLevelUnlocked as levelIsUnlocked, isStudyWord, LAST_LEVEL_NUMBER, LEVELS, LISTENING_RECALL_EASY_STREAK, nextReachedLevel, usesListeningOverlay, type ProgressMap, type WordProgress } from '@/lib/levels';
+import { buildGlobalSessionQueue, computeReachedLevel, getLevel, getTrackContext, getWord, isLevelUnlocked as levelIsUnlocked, isStudyWord, LAST_LEVEL_NUMBER, LEVELS, LISTENING_RECALL_EASY_STREAK, nextReachedLevel, QAIDA_LEVELS, usesListeningOverlay, type ProgressMap, type WordProgress } from '@/lib/levels';
 import { syncPracticeReminder } from '@/lib/practice-reminder';
 import {
   calendarDayKey,
@@ -82,6 +82,7 @@ interface ProgressState {
   completeOnboarding: (
     wordsPerSession: number,
     reminder?: { enabled: boolean; hour: number; minute: number },
+    extras?: { canReadQuran?: boolean },
   ) => Promise<void>;
   setOnboardingCompleted: (value: boolean) => void;
   resetProgress: () => void;
@@ -377,6 +378,9 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
 
   updateSettings: (partial) => {
     const nextSettings = { ...get().settings, ...partial };
+    if ('canReadQuran' in partial && partial.canReadQuran === false && !('readerShowAyahCoverage' in partial)) {
+      nextSettings.readerShowAyahCoverage = false;
+    }
     if ('readerShowTranslation' in partial) nextSettings.readerShowTranslation = partial.readerShowTranslation === true;
     if ('readerShowAyahCoverage' in partial) nextSettings.readerShowAyahCoverage = partial.readerShowAyahCoverage === true;
     if ('readerTransliteration' in partial) nextSettings.readerTransliteration = partial.readerTransliteration === true;
@@ -402,7 +406,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     void syncPracticeReminder(nextSettings, { requestPermission: false });
   },
 
-  completeOnboarding: async (wordsPerSession, reminder) => {
+  completeOnboarding: async (wordsPerSession, reminder, extras) => {
     const state = get();
     let nextSettings = {
       ...state.settings,
@@ -410,6 +414,9 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       reminderEnabled: reminder?.enabled === true,
       reminderHour: reminder?.hour ?? state.settings.reminderHour,
       reminderMinute: reminder?.minute ?? state.settings.reminderMinute,
+      canReadQuran: extras?.canReadQuran ?? state.settings.canReadQuran,
+      readerShowAyahCoverage:
+        extras?.canReadQuran === false ? false : state.settings.readerShowAyahCoverage,
     };
     if (nextSettings.reminderEnabled) {
       const scheduled = await syncPracticeReminder(nextSettings, { requestPermission: false });
@@ -478,9 +485,10 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const reviewsAlready = reviewsCompletedToday(state.reviewCountDate, state.reviewsToday, now);
     const newAlready = newCardsCompletedToday(state.reviewCountDate, state.newCardsToday, now);
     const wordsPerSession = clampWordsPerSession(state.settings.wordsPerSession);
-    let queue = buildGlobalSessionQueue(state.progress, now, wordsPerSession, reviewsAlready, newAlready);
+    const track = getTrackContext(state.progress, state.settings.canReadQuran);
+    let queue = buildGlobalSessionQueue(state.progress, now, wordsPerSession, reviewsAlready, newAlready, false, track);
     if (queue.length === 0) {
-      queue = buildGlobalSessionQueue(state.progress, now, wordsPerSession, reviewsAlready, newAlready, true);
+      queue = buildGlobalSessionQueue(state.progress, now, wordsPerSession, reviewsAlready, newAlready, true, track);
     }
     const nextProgress: ProgressMap = { ...state.progress };
     const devHidePromptWordIds: Record<string, true> = { ...(state.devHidePromptWordIds ?? {}) };
@@ -501,7 +509,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const now = new Date();
     const due = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     const nextProgress: ProgressMap = {};
-    for (const level of LEVELS) {
+    for (const level of [...LEVELS, ...QAIDA_LEVELS]) {
       for (const word of level.words) {
         if (word.kind === 'grammar') continue;
         const card = createNewCard(now);

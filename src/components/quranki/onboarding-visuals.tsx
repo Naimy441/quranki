@@ -198,6 +198,15 @@ export function OnboardingCoveragePreview() {
   );
 }
 
+export function OnboardingReadingPreview() {
+  const theme = useTheme();
+  return (
+    <View style={[styles.intentionCard, { backgroundColor: theme.backgroundElement }]}>
+      <ThemedText style={[styles.intentionArabic, ArabicTextStyle]}>ا ب ت ث</ThemedText>
+    </View>
+  );
+}
+
 export function OnboardingIntentionPreview() {
   const theme = useTheme();
   const arabic = BISMILLAH_WORDS.map((word) => word.ar.map((seg) => seg.t).join('')).join(' ');
