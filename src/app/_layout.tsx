@@ -13,16 +13,16 @@ import { ArabicFont, Colors, SurahNameFont } from '@/constants/theme';
 import { useAppColorScheme, useTheme } from '@/hooks/use-theme';
 import { mergeAccountCloud } from '@/lib/account-sync';
 import {
-  applyThemePreference,
-  didApplyThemeAtImport,
-  themePreferenceReady,
+    applyThemePreference,
+    didApplyThemeAtImport,
+    themePreferenceReady,
 } from '@/lib/color-scheme';
 import '@/lib/practice-reminder';
 import { getStreakReclaimOpportunity } from '@/lib/stats';
 import { useAccountStore } from '@/store/account-store';
+import { useHifzStore } from '@/store/hifz-store';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
-import { useHifzStore } from '@/store/hifz-store';
 import { useQuranMarksStore } from '@/store/quran-marks-store';
 
 SplashScreen.preventAutoHideAsync();
@@ -135,6 +135,7 @@ export default function RootLayout() {
               />
               <Stack.Screen name="saved" options={{ title: 'Saved', headerBackTitle: "Quran" }} />
               <Stack.Screen name="known-words" options={{ title: 'Known words', headerBackTitle: 'Settings' }} />
+              <Stack.Screen name="word-timeline" options={{ title: 'Word Timeline', headerBackTitle: 'Back' }} />
               <Stack.Screen name="reader-settings" options={{ title: 'Settings' }} />
               <Stack.Screen name="reciter-picker" options={{ title: 'Reciter' }} />
               <Stack.Screen name="translation-picker" options={{ title: 'Translation' }} />

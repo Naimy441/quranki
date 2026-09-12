@@ -68,6 +68,7 @@ export default function SettingsScreen() {
   const updateSettings = useProgressStore((state) => state.updateSettings);
   const resetProgress = useProgressStore((state) => state.resetProgress);
   const masterAllWords = useProgressStore((state) => state.masterAllWords);
+  const markMemWordsDoubleEasy = useProgressStore((state) => state.markMemWordsDoubleEasy);
   const seedDemoStudyTime = useProgressStore((state) => state.seedDemoStudyTime);
   const setOnboardingCompleted = useProgressStore((state) => state.setOnboardingCompleted);
   const accountUid = useAccountStore((state) => state.uid);
@@ -251,6 +252,13 @@ export default function SettingsScreen() {
             />
             <ActionRow icon="refresh-outline" label="Reset progress" destructive onPress={handleReset} />
             {__DEV__ && <ActionRow icon="flask-outline" label="Master all words" onPress={masterAllWords} />}
+            {__DEV__ && (
+              <ActionRow
+                icon="eye-off-outline"
+                label="Force Overlays"
+                onPress={markMemWordsDoubleEasy}
+              />
+            )}
             {__DEV__ && <ActionRow icon="time-outline" label="Fill study time" onPress={seedDemoStudyTime} />}
             {__DEV__ && (
               <ActionRow

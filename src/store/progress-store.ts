@@ -10,7 +10,7 @@ import {
     type Card,
     type GradeName,
 } from '@/lib/fsrs';
-import { computeReachedLevel, getLevel, getWord, isLevelUnlocked as levelIsUnlocked, isStudyWord, LAST_LEVEL_NUMBER, LEVELS, nextReachedLevel, type ProgressMap, type WordProgress } from '@/lib/levels';
+import { buildGlobalSessionQueue, computeReachedLevel, getLevel, getWord, isLevelUnlocked as levelIsUnlocked, isStudyWord, LAST_LEVEL_NUMBER, LEVELS, LISTENING_RECALL_EASY_STREAK, nextReachedLevel, type ProgressMap, type WordProgress } from '@/lib/levels';
 import { syncPracticeReminder } from '@/lib/practice-reminder';
 import { calendarDayKey, pruneStudyMsByDate, sanitizeStudyMsByDate, getStreakReclaimOpportunity } from '@/lib/stats';
 import {
@@ -45,6 +45,10 @@ interface ProgressState {
    *  is a free hint; the second reveal of that same vocab id lapses it. Cleared when the word
    *  is graded in a real review. */
   readerPeeks: Record<string, number>;
+  /** Dev-only: extra word ids whose next prompt should hide Arabic, including unseen session words. */
+  devHidePromptWordIds: Record<string, true>;
+  /** Dev-only: hide Arabic on every study prompt until the sitting ends. */
+  hideNextSessionPrompts: boolean;
   hydrate: () => Promise<void>;
   /** Adds elapsed study-session time (vocab or hifz) to the current local calendar day. */
   recordStudyMs: (ms: number) => void;
@@ -78,6 +82,8 @@ interface ProgressState {
   masterAllWords: () => void;
   /** Dev-only: fills the last week with sample session times so the study-time UI can be checked. */
   seedDemoStudyTime: () => void;
+  /** Dev-only: sets a two-Easy streak on due review words so listening-recall covers Arabic. */
+  markMemWordsDoubleEasy: () => void;
   autoMasterWord: (wordId: string) => void;
   autoMasterWords: (wordIds: readonly string[]) => void;
   /** Restores cloud-learned ids that are missing locally. Existing FSRS cards are left alone. */
@@ -171,6 +177,8 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   studyMsByDate: DEFAULT_META.studyMsByDate,
   onboardingCompleted: false,
   readerPeeks: {},
+  devHidePromptWordIds: {},
+  hideNextSessionPrompts: false,
 
   hydrate: async () => {
     if (get().hydrated || get().hydrating) return;
@@ -260,7 +268,9 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       card: serializeCard(nextCard),
       lastGrade: grade,
       reviewedAt: now.toISOString(),
+      easyStreak: grade === 'easy' ? (existing?.easyStreak ?? 0) + 1 : 0,
     };
+    const { [wordId]: _hide, ...nextDevHidePromptWordIds } = state.devHidePromptWordIds ?? {};
 
     const nextProgress: ProgressMap = { ...state.progress, [wordId]: nextWordProgress };
     const key = todayKey(now);
@@ -292,6 +302,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       reviewsToday,
       newCardsToday,
       readerPeeks,
+      devHidePromptWordIds: nextDevHidePromptWordIds,
     });
     void saveProgressAsync(nextProgress);
     persistMeta({
@@ -420,6 +431,8 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       newCardsToday: 0,
       studyMsByDate: {},
       readerPeeks: {},
+      devHidePromptWordIds: {},
+      hideNextSessionPrompts: false,
       settings: DEFAULT_SETTINGS,
       onboardingCompleted,
     });
@@ -445,6 +458,31 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const studyMsByDate = demoStudyMsByDate();
     set({ studyMsByDate });
     persistMeta({ ...get(), studyMsByDate });
+  },
+
+  markMemWordsDoubleEasy: () => {
+    const state = get();
+    const now = new Date();
+    const reviewsAlready = reviewsCompletedToday(state.reviewCountDate, state.reviewsToday, now);
+    const newAlready = newCardsCompletedToday(state.reviewCountDate, state.newCardsToday, now);
+    const wordsPerSession = clampWordsPerSession(state.settings.wordsPerSession);
+    let queue = buildGlobalSessionQueue(state.progress, now, wordsPerSession, reviewsAlready, newAlready);
+    if (queue.length === 0) {
+      queue = buildGlobalSessionQueue(state.progress, now, wordsPerSession, reviewsAlready, newAlready, true);
+    }
+    const nextProgress: ProgressMap = { ...state.progress };
+    const devHidePromptWordIds: Record<string, true> = { ...(state.devHidePromptWordIds ?? {}) };
+    let persist = false;
+    for (const entry of queue) {
+      if (!isStudyWord(entry.word)) continue;
+      devHidePromptWordIds[entry.word.id] = true;
+      const existing = nextProgress[entry.word.id];
+      if (!existing || (existing.easyStreak ?? 0) >= LISTENING_RECALL_EASY_STREAK) continue;
+      nextProgress[entry.word.id] = { ...existing, easyStreak: LISTENING_RECALL_EASY_STREAK };
+      persist = true;
+    }
+    set({ progress: nextProgress, devHidePromptWordIds, hideNextSessionPrompts: true });
+    if (persist) void saveProgressAsync(nextProgress);
   },
 
   masterAllWords: () => {

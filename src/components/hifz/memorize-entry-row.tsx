@@ -1,14 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo } from 'react';
+import { InteractionManager, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useHifzAvailable } from '@/hooks/use-hifz-tab';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticMedium } from '@/lib/haptics';
-import { countDueHifzCards } from '@/lib/hifz';
+import { buildHifzSessionQueue, countDueHifzCards } from '@/lib/hifz';
+import { getSurahAyahs } from '@/lib/quran-reader';
 import { useHifzStore } from '@/store/hifz-store';
 
 /** Slim Quran-tab entry. Hidden until a ruku unlocks so readers are not interrupted. */
@@ -22,6 +23,15 @@ export function MemorizeEntryRow() {
     [cards, enrolledRukuIds],
   );
   const sessionSize = due + next;
+
+  useEffect(() => {
+    if (sessionSize === 0) return;
+    const task = InteractionManager.runAfterInteractions(() => {
+      const first = buildHifzSessionQueue({ enrolledRukuIds, cards }, new Date())[0];
+      if (first) getSurahAyahs(first.ruku.surah);
+    });
+    return () => task.cancel();
+  }, [cards, enrolledRukuIds, sessionSize]);
 
   if (!available) return null;
 

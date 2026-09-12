@@ -42,17 +42,27 @@ export interface Level {
   words: Word[];
 }
 
+/** Consecutive Easy ratings before the prompt hides Arabic and keeps only the voice button. */
+export const LISTENING_RECALL_EASY_STREAK = 2;
+
 export interface WordProgress {
   wordId: string;
   card: SerializedCard;
   lastGrade: GradeName | null;
   reviewedAt: string;
+  /** Consecutive Easy presses. Reset by any other grade. After
+   *  `LISTENING_RECALL_EASY_STREAK`, the flashcard prompt covers Arabic. */
+  easyStreak?: number;
   /** True only when this progress entry was fabricated by marking the word "known" in the
    *  Quran reader (see useKnownWordsStore), rather than earned through a real flashcard review.
    *  Lets "forget this word" safely undo *only* that fabricated mastery - a real review always
    *  writes a fresh entry without this flag, so genuine progress is never at risk of being wiped
    *  by an unrelated "forget" action. */
   autoMastered?: boolean;
+}
+
+export function hidesPromptArabic(progress: WordProgress | null | undefined): boolean {
+  return (progress?.easyStreak ?? 0) >= LISTENING_RECALL_EASY_STREAK;
 }
 
 export type ProgressMap = Record<string, WordProgress>;
@@ -556,6 +566,73 @@ export function getUpcomingLearning(progressMap: ProgressMap, now: Date): Upcomi
   }
   if (count === 0) return null;
   return { count, dueAt: new Date(soonest), ms: soonest - now.getTime() };
+}
+
+export interface TimelineWord {
+  word: Word;
+  levelNumber: number;
+  dueAt: Date;
+  dueMs: number;
+}
+
+export interface TimelineBucket {
+  key: string;
+  title: string;
+  words: TimelineWord[];
+}
+
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function startOfLocalDay(date: Date): number {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+function timelineBucketMeta(dueAt: Date, now: Date): { key: string; title: string } {
+  if (dueAt.getTime() <= now.getTime()) return { key: 'due', title: 'Due now' };
+  const dueDay = startOfLocalDay(dueAt);
+  const today = startOfLocalDay(now);
+  const days = Math.round((dueDay - today) / 86_400_000);
+  if (days === 0) return { key: 'today', title: 'Later today' };
+  if (days === 1) return { key: 'tomorrow', title: 'Tomorrow' };
+  const key = `day:${dueAt.getFullYear()}-${dueAt.getMonth()}-${dueAt.getDate()}`;
+  if (days < 7) return { key, title: WEEKDAYS[dueAt.getDay()] ?? 'Upcoming' };
+  const month = MONTHS[dueAt.getMonth()] ?? '';
+  const title = dueAt.getFullYear() === now.getFullYear() ? `${month} ${dueAt.getDate()}` : `${month} ${dueAt.getDate()}, ${dueAt.getFullYear()}`;
+  return { key, title };
+}
+
+/** Every introduced study word, grouped by the calendar day it is next due. */
+export function getWordReviewTimeline(progressMap: ProgressMap, now: Date): TimelineBucket[] {
+  const items: TimelineWord[] = [];
+  for (const [wordId, progress] of Object.entries(progressMap)) {
+    const word = getWord(wordId);
+    if (!word || !isStudyWord(word)) continue;
+    const level = getLevelForWord(wordId);
+    if (!level) continue;
+    const dueAt = deserializeCard(progress.card).due;
+    items.push({
+      word,
+      levelNumber: level.number,
+      dueAt,
+      dueMs: dueAt.getTime() - now.getTime(),
+    });
+  }
+  items.sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime() || a.word.id.localeCompare(b.word.id));
+
+  const buckets: TimelineBucket[] = [];
+  const index = new Map<string, TimelineBucket>();
+  for (const item of items) {
+    const { key, title } = timelineBucketMeta(item.dueAt, now);
+    let bucket = index.get(key);
+    if (!bucket) {
+      bucket = { key, title, words: [] };
+      index.set(key, bucket);
+      buckets.push(bucket);
+    }
+    bucket.words.push(item);
+  }
+  return buckets;
 }
 
 /**

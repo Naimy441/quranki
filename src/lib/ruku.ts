@@ -3,6 +3,7 @@
  * memorization deck. Unlock uses the same per-ayah vocabulary ratio as the Progress
  * histogram (every ayah weighted equally), not raw verse count.
  */
+import rukuCueCounts from '@/data/ruku-cue-counts.json';
 import rukuMetadata from '@/data/quran-metadata-ruku.json';
 
 import { shapeQpcArabic } from '@/lib/arabic-display';
@@ -80,7 +81,7 @@ export function getRuku(id: number): Ruku | undefined {
 }
 
 export function formatRukuAyahRange(ruku: Ruku): string {
-  return `${ruku.surah}:${ruku.fromAyah}–${ruku.toAyah}`;
+  return `${ruku.surah}:${ruku.fromAyah} - ${ruku.toAyah}`;
 }
 
 export function formatRukuTitle(ruku: Ruku): string {
@@ -164,7 +165,9 @@ export interface RukuCue {
 }
 
 const cuePrefixCache = new Map<number, RukuCueWord[]>();
-let cueWordCounts: Map<number, number> | null = null;
+const cueWordCounts = new Map(
+  Object.entries(rukuCueCounts as Record<string, number>).map(([id, count]) => [Number(id), count]),
+);
 
 function collectCueWords(ruku: Ruku, limit: number): RukuCueWord[] {
   let cached = cuePrefixCache.get(ruku.id);
@@ -195,53 +198,8 @@ function collectCueWords(ruku: Ruku, limit: number): RukuCueWord[] {
   return cached.slice(0, Math.min(limit, cached.length));
 }
 
-/** Tatweel, harakat, and pause marks — ignored so two openings that *look* the same still collide. */
-const CUE_IGNORABLE = /[\u0640\u064B-\u065F\u0670\u06D6-\u06ED\u200B-\u200F\uFEFF]/g;
-
-function cueWordLetters(text: string): string {
-  return text.replace(CUE_IGNORABLE, '');
-}
-
-function cueKey(words: RukuCueWord[]): string {
-  return words.map((word) => cueWordLetters(word.text)).join('\0');
-}
-
-function prefixCollides(ruku: Ruku, count: number, mine: string): boolean {
-  return RUKUS.some((other) => {
-    if (other.id === ruku.id) return false;
-    return cueKey(collectCueWords(other, count)) === mine;
-  });
-}
-
-/**
- * Shortest opening that is unique among every ruku in the catalog, at least 3 words.
- * Same-surah-only matching left Falaq and Nas sharing قُلْ أَعُوذُ بِرَبِّ; the cue must
- * keep going until no other ruku starts the same way.
- */
-function buildCueWordCounts(): Map<number, number> {
-  const counts = new Map<number, number>();
-  for (const ruku of RUKUS) {
-    const first = collectCueWords(ruku, HIFZ_CUE_MIN_WORDS);
-    let count = first.length;
-    if (count === 0) {
-      counts.set(ruku.id, 0);
-      continue;
-    }
-    while (true) {
-      const words = collectCueWords(ruku, count);
-      const mine = cueKey(words);
-      if (!prefixCollides(ruku, count, mine)) break;
-      if (words.length < count) break;
-      count += 1;
-    }
-    counts.set(ruku.id, count);
-  }
-  return counts;
-}
-
 export function getRukuCueWordCount(ruku: Ruku): number {
-  if (!cueWordCounts) cueWordCounts = buildCueWordCounts();
-  return cueWordCounts.get(ruku.id) ?? collectCueWords(ruku, HIFZ_CUE_MIN_WORDS).length;
+  return cueWordCounts.get(ruku.id) ?? HIFZ_CUE_MIN_WORDS;
 }
 
 /** Opening mushaf words used on the card front and for the reciter clip. */

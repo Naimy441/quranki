@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import Reanimated, { FadeInDown } from 'react-native-reanimated';
 
 import { ArabicText } from '@/components/arabic-text';
 import { GrammarCard } from '@/components/quranki/grammar-card';
@@ -10,29 +10,78 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { displayArabic, shapeQpcArabic } from '@/lib/arabic-display';
+import { hapticLight } from '@/lib/haptics';
 import type { Word } from '@/lib/levels';
 import { exampleSurface, getVocabExamples } from '@/lib/vocab-examples';
 
 interface FlashCardProps {
   word: Word;
   revealed: boolean;
+  hideArabic?: boolean;
+  /** Resets the cover when the same word is shown again later in the sitting. */
+  appearanceKey?: string;
   onSpeak: () => void;
   isSpeaking: boolean;
 }
 
-export function FlashCard({ word, revealed, onSpeak, isSpeaking }: FlashCardProps) {
+export function FlashCard({
+  word,
+  revealed,
+  hideArabic = false,
+  appearanceKey,
+  onSpeak,
+  isSpeaking,
+}: FlashCardProps) {
   const theme = useTheme();
   const examples = useMemo(() => getVocabExamples(word), [word.id]);
+  const [covered, setCovered] = useState(hideArabic);
+  const coverOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    coverOpacity.stopAnimation();
+    const shouldCover = hideArabic && !revealed;
+    coverOpacity.setValue(shouldCover ? 1 : 0);
+    setCovered(shouldCover);
+  }, [appearanceKey, coverOpacity, hideArabic, revealed, word.id]);
+
   if (word.kind === 'grammar') return <GrammarCard word={word} />;
   const spokenSurface = examples[0] ? shapeQpcArabic(exampleSurface(examples[0])) : '';
-  const showSpoken = isSpeaking && spokenSurface.length > 0;
+  const showSpoken = isSpeaking && spokenSurface.length > 0 && !covered;
+
+  const revealArabic = () => {
+    if (!covered) return;
+    hapticLight();
+    Animated.timing(coverOpacity, {
+      toValue: 0,
+      duration: 320,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) setCovered(false);
+    });
+  };
 
   return (
     <View style={styles.wrap}>
       <View style={[styles.prompt, revealed && styles.promptRevealed]}>
-        <ArabicText style={[styles.arabicText, revealed && styles.arabicTextRevealed, showSpoken && { color: theme.primary }]}>
-          {showSpoken ? spokenSurface : displayArabic(word)}
-        </ArabicText>
+        <View style={styles.arabicSlot}>
+          <ArabicText
+            importantForAccessibility={covered ? 'no' : 'yes'}
+            style={[styles.arabicText, revealed && styles.arabicTextRevealed, showSpoken && { color: theme.primary }]}>
+            {showSpoken ? spokenSurface : displayArabic(word)}
+          </ArabicText>
+          {hideArabic && covered ? (
+            <Animated.View
+              style={[styles.arabicCover, { backgroundColor: theme.primary, opacity: coverOpacity }]}>
+              <Pressable
+                onPress={revealArabic}
+                accessibilityRole="button"
+                accessibilityLabel="Show Arabic"
+                style={StyleSheet.absoluteFill}
+              />
+            </Animated.View>
+          ) : null}
+        </View>
         {examples.length > 0 ? (
           <Pressable
             onPress={onSpeak}
@@ -54,7 +103,7 @@ export function FlashCard({ word, revealed, onSpeak, isSpeaking }: FlashCardProp
       </View>
 
       {revealed ? (
-        <Animated.View entering={FadeInDown.duration(280)} style={styles.answer}>
+        <Reanimated.View entering={FadeInDown.duration(280)} style={styles.answer}>
           <View style={[styles.divider, { backgroundColor: theme.border }]} />
           <ThemedText type="subtitle" style={styles.englishText}>
             {word.english}
@@ -80,7 +129,7 @@ export function FlashCard({ word, revealed, onSpeak, isSpeaking }: FlashCardProp
             </ThemedText>
           ) : null}
           {examples.length > 0 ? <VerseExamplePager word={word} examples={examples} /> : null}
-        </Animated.View>
+        </Reanimated.View>
       ) : null}
     </View>
   );
@@ -104,6 +153,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: Spacing.two,
     gap: Spacing.three,
+  },
+  arabicSlot: {
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: Radius.medium,
+    paddingHorizontal: Spacing.three,
+  },
+  arabicCover: {
+    ...StyleSheet.absoluteFill,
   },
   arabicText: {
     fontSize: 56,

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,7 +13,7 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatInterval } from '@/lib/fsrs';
-import { hapticMedium } from '@/lib/haptics';
+import { hapticMedium, hapticSelection } from '@/lib/haptics';
 import { getKnownLemmaIds } from '@/lib/known-words';
 import {
   buildGlobalSessionQueue,
@@ -157,9 +157,26 @@ export default function LearnScreen() {
           ListHeaderComponent={
             <View style={styles.header}>
               <View style={[styles.heroCard, { backgroundColor: theme.primary }]}>
-                <ThemedText themeColor="onPrimary" type="subtitle" style={styles.heroHeadline}>
-                  {heroHeadline}
-                </ThemedText>
+                <View style={styles.heroTitleRow}>
+                  <ThemedText themeColor="onPrimary" type="subtitle" style={styles.heroHeadline}>
+                    {heroHeadline}
+                  </ThemedText>
+                  <Pressable
+                    onPress={() => {
+                      hapticSelection();
+                      router.push('/word-timeline');
+                    }}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel="Word Timeline"
+                    style={({ pressed }) => [
+                      styles.heroTimeline,
+                      { backgroundColor: theme.onPrimary },
+                      pressed && styles.heroTimelinePressed,
+                    ]}>
+                    <Ionicons name="calendar-outline" size={20} color={theme.primary} />
+                  </Pressable>
+                </View>
                 <ThemedText themeColor="onPrimary" type="small" style={styles.heroSubtitle}>
                   {heroSubtitle}
                 </ThemedText>
@@ -246,9 +263,26 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     marginTop: Spacing.one,
   },
+  heroTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.two,
+  },
   heroHeadline: {
+    flex: 1,
     fontSize: 24,
     lineHeight: 30,
+  },
+  heroTimeline: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -2,
+  },
+  heroTimelinePressed: {
+    opacity: 0.85,
   },
   heroSubtitle: {
     opacity: 0.9,

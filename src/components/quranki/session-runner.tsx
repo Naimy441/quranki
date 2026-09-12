@@ -25,7 +25,7 @@ import {
     type GradePreview,
 } from '@/lib/fsrs';
 import { hapticHeavy, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
-import { getStageForLevel, getUpcomingLearning, isStudyWord, type SessionWord, type WordProgress } from '@/lib/levels';
+import { getStageForLevel, getUpcomingLearning, hidesPromptArabic, isStudyWord, type SessionWord, type WordProgress } from '@/lib/levels';
 import { formatStudyDuration } from '@/lib/stats';
 import { playWordPronunciation, prefetchWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
 import { useProgressStore } from '@/store/progress-store';
@@ -85,6 +85,7 @@ interface SessionRunnerProps {
 export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
   const theme = useTheme();
   const progress = useProgressStore((state) => state.progress);
+  const hideNextSessionPrompts = useProgressStore((state) => state.hideNextSessionPrompts);
   const maxUnlockedLevel = useProgressStore((state) => state.maxUnlockedLevel);
   const gradeWord = useProgressStore((state) => state.gradeWord);
   const revertSessionWord = useProgressStore((state) => state.revertSessionWord);
@@ -114,6 +115,14 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
   const sessionGradesByWord = useRef<
     Record<string, { grades: GradeName[]; countedAsNew: boolean; countedAsReview: boolean }>
   >({});
+  const autoplayOnAdvance = useRef(false);
+  const autoplayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancelOverlayAutoplay = () => {
+    if (autoplayTimer.current == null) return;
+    clearTimeout(autoplayTimer.current);
+    autoplayTimer.current = null;
+  };
 
   useEffect(
     () => () => {
@@ -134,6 +143,29 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
   useEffect(() => {
     if (nextWordId) prefetchWordPronunciation(nextWordId);
   }, [nextWordId]);
+  useEffect(() => {
+    if (!currentEntry || !autoplayOnAdvance.current) return;
+    autoplayOnAdvance.current = false;
+    const store = useProgressStore.getState();
+    const hideArabic =
+      currentEntry.word.kind !== 'grammar' &&
+      (store.hideNextSessionPrompts || hidesPromptArabic(store.progress[currentEntry.word.id]));
+    if (!hideArabic) return;
+    const wordId = currentEntry.word.id;
+    autoplayTimer.current = setTimeout(() => {
+      autoplayTimer.current = null;
+      stopRecitation();
+      setIsSpeaking(true);
+      void playWordPronunciation(wordId, () => setIsSpeaking(false))
+        .then((played) => {
+          if (!played) setIsSpeaking(false);
+        })
+        .catch(() => setIsSpeaking(false));
+    }, 400);
+    return () => {
+      cancelOverlayAutoplay();
+    };
+  }, [currentEntry?.sessionKey]);
   const currentProgress = currentEntry ? progress[currentEntry.word.id] : undefined;
 
   const currentCard = useMemo(() => {
@@ -149,7 +181,6 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
     firstSeenByWord.current[currentEntry.word.id] = deserializeCard(serializeCard(currentCard));
     preSessionProgress.current[currentEntry.word.id] = currentProgress ? cloneWordProgress(currentProgress) : null;
   }
-
   const previewCard = currentEntry
     ? (firstSeenCards.current[currentEntry.sessionKey] ?? currentCard)
     : null;
@@ -165,6 +196,7 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
 
   const handleSpeak = async () => {
     if (!currentEntry) return;
+    cancelOverlayAutoplay();
     markInteraction();
     hapticSelection();
     stopRecitation();
@@ -204,6 +236,8 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
 
   const handlePreviousWord = () => {
     if (index <= 0) return;
+    autoplayOnAdvance.current = false;
+    cancelOverlayAutoplay();
     markInteraction();
     hapticLight();
     stopRecitation();
@@ -272,6 +306,7 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
     if (nextQueue !== sessionQueue) setSessionQueue(nextQueue);
 
     if (index + 1 < nextQueue.length) {
+      autoplayOnAdvance.current = true;
       setIndex(index + 1);
       setRevealed(false);
     } else {
@@ -420,6 +455,11 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
           <FlashCard
             word={currentEntry.word}
             revealed={revealed || currentEntry.word.kind === 'grammar'}
+            hideArabic={
+              currentEntry.word.kind !== 'grammar' &&
+              (hideNextSessionPrompts || hidesPromptArabic(currentProgress))
+            }
+            appearanceKey={currentEntry.sessionKey}
             onSpeak={handleSpeak}
             isSpeaking={isSpeaking}
           />
