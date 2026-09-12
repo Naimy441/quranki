@@ -6,9 +6,10 @@
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer, type AudioStatus } from 'expo-audio';
 import { create } from 'zustand';
 
-import { getReciterAyahPlaybackUri, isAbortError } from '@/lib/recitation-cache';
+import { notifyIfOffline, requireOnline } from '@/lib/offline';
+import { getCachedReciterAyahUri, getReciterAyahPlaybackUri, isAbortError } from '@/lib/recitation-cache';
 import { wordAtTimeMs, type WordTiming } from '@/lib/recitation';
-import { downloadReciterDataset, getAyahEntry, type AyahRecitationEntry } from '@/lib/reciter-dataset';
+import { downloadReciterDataset, getAyahEntry, isReciterDatasetDownloaded, type AyahRecitationEntry } from '@/lib/reciter-dataset';
 import { DEFAULT_RECITER_KEY, findReciterOption } from '@/lib/reciters';
 import { getSurahAyahs } from '@/lib/quran-reader';
 import { getRukuCue, type Ruku, type RukuCueWord } from '@/lib/ruku';
@@ -214,6 +215,14 @@ export async function playRukuCue(ruku: Ruku, finished?: () => void): Promise<bo
     }
 
     const reciterKey = activeReciterKey();
+    const needsNetwork =
+      !isReciterDatasetDownloaded(reciterKey) ||
+      cue.words.some((word) => !getCachedReciterAyahUri(reciterKey, ruku.surah, word.ayah));
+    if (needsNetwork && !(await requireOnline())) {
+      finishFail();
+      return false;
+    }
+
     const dataset = await downloadReciterDataset(reciterKey);
     if (seq !== requestSeq) return false;
 
@@ -277,6 +286,7 @@ export async function playRukuCue(ruku: Ruku, finished?: () => void): Promise<bo
     return true;
   } catch (error) {
     if (isAbortError(error) || seq !== requestSeq) return false;
+    void notifyIfOffline(error);
     finishFail();
     return false;
   }

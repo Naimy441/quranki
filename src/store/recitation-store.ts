@@ -3,10 +3,16 @@ import { createAudioPlayer, setAudioModeAsync, type AudioMetadata, type AudioPla
 import { File, Paths, type DownloadProgress } from 'expo-file-system';
 import { create } from 'zustand';
 
+import { notifyIfOffline, requireOnline } from '@/lib/offline';
 import { getSurahMeta } from '@/lib/quran-reader';
 import { wordAtTimeMs, type WordTiming } from '@/lib/recitation';
-import { getReciterAyahPlaybackUri, isAbortError } from '@/lib/recitation-cache';
-import { downloadReciterDataset, getAyahEntry } from '@/lib/reciter-dataset';
+import {
+  getCachedReciterAyahUri,
+  getReciterAyahPlaybackUri,
+  isAbortError,
+  isSurahRecitationDownloaded,
+} from '@/lib/recitation-cache';
+import { downloadReciterDataset, getAyahEntry, isReciterDatasetDownloaded } from '@/lib/reciter-dataset';
 import { DEFAULT_RECITER_KEY, findReciterOption, type ReciterOption } from '@/lib/reciters';
 import { stopWordAudio } from '@/lib/word-audio';
 import { useProgressStore } from '@/store/progress-store';
@@ -87,6 +93,23 @@ function surahHasOpeningBismillah(surahNumber: number | null): boolean {
 function getActiveReciter(): ReciterOption {
   const key = useProgressStore.getState().settings.selectedReciterKey;
   return findReciterOption(key) ?? findReciterOption(DEFAULT_RECITER_KEY)!;
+}
+
+function recitationNeedsNetwork(reciterKey: string, surahNumber: number, ayahNumber: number): boolean {
+  return !isReciterDatasetDownloaded(reciterKey) || getCachedReciterAyahUri(reciterKey, surahNumber, ayahNumber) == null;
+}
+
+/** Offline play needs this surah's own ayahs, not just the shared Fatihah 1:1 Bismillah clip. */
+function surahPlaybackNeedsNetwork(reciterKey: string, surahNumber: number, ayahNumber: number): boolean {
+  const meta = getSurahMeta(surahNumber);
+  if (meta && isSurahRecitationDownloaded(reciterKey, surahNumber, meta.ac)) return false;
+  return recitationNeedsNetwork(reciterKey, surahNumber, ayahNumber);
+}
+
+async function requireRecitationOnline(surahNumber: number, ayahNumber: number): Promise<boolean> {
+  const reciter = getActiveReciter();
+  if (!surahPlaybackNeedsNetwork(reciter.key, surahNumber, ayahNumber)) return true;
+  return requireOnline();
 }
 
 /** Resolves a playable URI + word timings for one ayah, downloading the reciter's dataset first
@@ -526,6 +549,11 @@ async function loadAyahSource(seq: number): Promise<void> {
   suppressStatus = true;
   holdClock(0);
   const reciter = getActiveReciter();
+  if (recitationNeedsNetwork(reciter.key, surahNumber, ayahNumber) && !(await requireOnline())) {
+    if (seq !== requestSeq) return;
+    playbackFailed();
+    return;
+  }
   useRecitationStore.setState({
     awaitingAudio: true,
     error: null,
@@ -557,6 +585,7 @@ async function loadAyahSource(seq: number): Promise<void> {
     }
   } catch (error) {
     if (seq !== requestSeq || isAbortError(error)) return;
+    void notifyIfOffline(error);
     playbackFailed();
   }
 }
@@ -586,7 +615,7 @@ function playbackFailed(): void {
   useRecitationStore.setState({
     awaitingAudio: false,
     playing: false,
-    error: 'Couldn’t download this recitation. Check your connection and try again.',
+    error: 'Error: check connection',
   });
 }
 
@@ -595,6 +624,14 @@ function playbackFailed(): void {
  *  a header (see `meta.b`). */
 async function loadBismillah(seq: number): Promise<void> {
   const reciter = getActiveReciter();
+  const { surahNumber, rangeStartAyah } = useRecitationStore.getState();
+  const contentAyah = surahNumber ? (rangeStartAyah > 0 && Number.isFinite(rangeStartAyah) ? rangeStartAyah : 1) : BISMILLAH_AYAH;
+  const contentSurah = surahNumber ?? BISMILLAH_SURAH;
+  if (surahPlaybackNeedsNetwork(reciter.key, contentSurah, contentAyah) && !(await requireOnline())) {
+    if (seq !== requestSeq) return;
+    playbackFailed();
+    return;
+  }
 
   suppressStatus = true;
   holdClock(0);
@@ -697,6 +734,7 @@ export async function playSurah(surahNumber: number, fromAyah = 1, toAyah?: numb
   const ayah = Math.min(Math.max(fromAyah, 1), meta.ac);
   const rangeEndAyah = Math.min(Math.max(toAyah ?? meta.ac, ayah), meta.ac);
   const openingBismillah = meta.b && ayah === 1;
+  if (!(await requireRecitationOnline(surahNumber, ayah))) return;
   const seq = beginSession({
     mode: 'surah',
     surahNumber,
@@ -731,6 +769,8 @@ export async function playAyah(
 
   const rangeStartAyah = Math.min(Math.max(bounds?.fromAyah ?? 1, 1), meta.ac);
   const rangeEndAyah = Math.min(Math.max(bounds?.toAyah ?? meta.ac, rangeStartAyah), meta.ac);
+
+  if (!(await requireRecitationOnline(surahNumber, ayahNumber))) return;
 
   const seq = beginSession({
     mode: 'ayah',
@@ -772,8 +812,18 @@ export function togglePlayPause(): void {
     return;
   }
   if (state.error) {
-    wantPlaying = true;
-    void loadCurrent(requestSeq);
+    const surah = state.surahNumber;
+    const ayah = state.playingBismillah
+      ? state.rangeStartAyah > 0 && Number.isFinite(state.rangeStartAyah)
+        ? state.rangeStartAyah
+        : 1
+      : state.ayahNumber;
+    if (!surah) return;
+    void requireRecitationOnline(surah, ayah).then((ok) => {
+      if (!ok) return;
+      wantPlaying = true;
+      void loadCurrent(requestSeq);
+    });
     return;
   }
   if (state.playing) {

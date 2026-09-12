@@ -33,7 +33,10 @@ export function FlashCard({
   isSpeaking,
 }: FlashCardProps) {
   const theme = useTheme();
-  const examples = useMemo(() => getVocabExamples(word), [word.id]);
+  const examples = useMemo(
+    () => (word.kind === 'digit' ? [] : getVocabExamples(word)),
+    [word.id, word.kind],
+  );
   const [covered, setCovered] = useState(hideArabic);
   const coverOpacity = useRef(new Animated.Value(1)).current;
 

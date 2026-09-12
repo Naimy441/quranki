@@ -21,6 +21,30 @@ export function calendarDayKey(date: Date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
+export function sanitizeDayKeys(values: readonly unknown[]): string[] {
+  const next = new Set<string>();
+  for (const value of values) {
+    if (typeof value === 'string' && DAY_KEY_RE.test(value)) next.add(value);
+  }
+  return [...next].sort();
+}
+
+export function mergeDayKeys(local: readonly string[], remote: readonly string[]): string[] {
+  return sanitizeDayKeys([...local, ...remote]);
+}
+
+export function mergeStudyMsByDate(
+  local: Record<string, number>,
+  remote: Record<string, number>,
+  now: Date = new Date(),
+): Record<string, number> {
+  const next: Record<string, number> = { ...sanitizeStudyMsByDate(local, now) };
+  for (const [key, ms] of Object.entries(sanitizeStudyMsByDate(remote, now))) {
+    next[key] = Math.max(next[key] ?? 0, ms);
+  }
+  return pruneStudyMsByDate(next, now);
+}
+
 export function sanitizeStudyMsByDate(value: unknown, now: Date = new Date()): Record<string, number> {
   if (!value || typeof value !== 'object') return {};
   const next: Record<string, number> = {};

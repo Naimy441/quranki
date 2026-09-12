@@ -12,6 +12,7 @@ import {
   createHifzCardProgress,
   EMPTY_HIFZ,
   hifzCardKey,
+  sanitizeHifzData,
   type HifzCardProgress,
   type HifzData,
 } from '@/lib/hifz';
@@ -21,6 +22,11 @@ import { useProgressStore } from '@/store/progress-store';
 
 function persist(data: HifzData) {
   void saveHifzAsync(data);
+  queueCloudSync();
+}
+
+function queueCloudSync(): void {
+  void import('@/lib/account-sync').then(({ scheduleAccountSync }) => scheduleAccountSync());
 }
 
 interface HifzState extends HifzData {
@@ -33,6 +39,8 @@ interface HifzState extends HifzData {
   revertSessionRuku: (rukuId: number, previous: HifzCardProgress | undefined) => void;
   markIntroSeen: () => void;
   resetIntroSeen: () => void;
+  /** Replaces local hifz with an already-merged cloud snapshot. */
+  importCloudHifz: (data: HifzData) => void;
   clearAll: () => void;
 }
 
@@ -121,6 +129,16 @@ export const useHifzStore = create<HifzState>((set, get) => ({
     const state = get();
     const next = { enrolledRukuIds: state.enrolledRukuIds, cards: state.cards, introSeen: false };
     set(next);
+    persist(next);
+  },
+
+  importCloudHifz: (data) => {
+    const next = sanitizeHifzData(data);
+    set({
+      enrolledRukuIds: next.enrolledRukuIds,
+      cards: next.cards,
+      introSeen: next.introSeen,
+    });
     persist(next);
   },
 

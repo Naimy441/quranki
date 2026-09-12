@@ -9,6 +9,7 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useProgressStore } from '@/store/progress-store';
 import { hapticSelection, hapticSuccess, hapticWarning } from '@/lib/haptics';
+import { notifyIfOffline, requireOnline } from '@/lib/offline';
 import { clearReciterAyahCache } from '@/lib/recitation-cache';
 import { deleteReciterDataset, downloadReciterDataset, isReciterDatasetDownloaded } from '@/lib/reciter-dataset';
 import { DEFAULT_RECITER_KEY, RECITER_GROUPS, reciterLabel, styleLabel, type ReciterOption } from '@/lib/reciters';
@@ -72,26 +73,36 @@ function useReciterPicker(selectedKey: string, onSelect: (key: string) => void) 
   const handleSelectTag = (option: ReciterOption) => {
     hapticSelection();
     setErrorKey(null);
-    onSelect(option.key);
-    if (isDownloaded(option) || downloadingKeys.has(option.key)) return;
+    if (isDownloaded(option) || downloadingKeys.has(option.key)) {
+      onSelect(option.key);
+      return;
+    }
 
-    setDownloadingKeys((prev) => new Set(prev).add(option.key));
-    void downloadReciterDataset(option.key)
-      .then(() => {
-        setDownloadedKeys((prev) => new Set(prev).add(option.key));
-        hapticSuccess();
-      })
-      .catch(() => {
-        hapticWarning();
+    void requireOnline().then((online) => {
+      if (!online) {
         setErrorKey(option.key);
-      })
-      .finally(() => {
-        setDownloadingKeys((prev) => {
-          const next = new Set(prev);
-          next.delete(option.key);
-          return next;
+        return;
+      }
+      onSelect(option.key);
+      setDownloadingKeys((prev) => new Set(prev).add(option.key));
+      void downloadReciterDataset(option.key)
+        .then(() => {
+          setDownloadedKeys((prev) => new Set(prev).add(option.key));
+          hapticSuccess();
+        })
+        .catch((error) => {
+          void notifyIfOffline(error);
+          hapticWarning();
+          setErrorKey(option.key);
+        })
+        .finally(() => {
+          setDownloadingKeys((prev) => {
+            const next = new Set(prev);
+            next.delete(option.key);
+            return next;
+          });
         });
-      });
+    });
   };
 
   const deleteDownload = (option: ReciterOption) => {

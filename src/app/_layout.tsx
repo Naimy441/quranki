@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 
+import { AppSnackbar } from '@/components/quranki/app-snackbar';
 import { StreakGraceNotice } from '@/components/quranki/streak-grace-notice';
 import { WhatsNewNotice } from '@/components/quranki/whats-new-notice';
 import { createPaperTheme } from '@/constants/paper-theme';
@@ -66,9 +67,11 @@ export default function RootLayout() {
   }, [hydrate, hydrateKnownWords, hydrateQuranMarks, hydrateHifz, hydrateAccount]);
 
   useEffect(() => {
-    if (!hydrated || !knownWordsHydrated || !accountHydrated) return;
+    if (!hydrated || !knownWordsHydrated || !quranMarksHydrated || !hifzHydrated || !accountHydrated) {
+      return;
+    }
     void mergeAccountCloud();
-  }, [hydrated, knownWordsHydrated, accountHydrated]);
+  }, [hydrated, knownWordsHydrated, quranMarksHydrated, hifzHydrated, accountHydrated]);
 
   useEffect(() => {
     if (didApplyThemeAtImport) return;
@@ -168,6 +171,7 @@ export default function RootLayout() {
             enabled={hasFinishedOnboarding}
             paused={reclaimableStreak > 0 && dismissedReclaimableStreak !== reclaimableStreak}
           />
+          <AppSnackbar />
         </ThemeProvider>
       </PaperProvider>
     </GestureHandlerRootView>

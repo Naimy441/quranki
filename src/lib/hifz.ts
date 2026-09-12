@@ -132,3 +132,19 @@ export function sanitizeHifzData(raw: unknown): HifzData {
 
   return { enrolledRukuIds, cards, introSeen: data.introSeen === true };
 }
+
+/** Union enrollments; keep the later-reviewed card; intro is seen if either side saw it. */
+export function mergeHifzData(local: HifzData, remote: HifzData): HifzData {
+  const cards: HifzProgressMap = { ...local.cards };
+  for (const [key, remoteCard] of Object.entries(remote.cards)) {
+    const localCard = cards[key];
+    if (!localCard || Date.parse(remoteCard.reviewedAt) > Date.parse(localCard.reviewedAt)) {
+      cards[key] = remoteCard;
+    }
+  }
+  return sanitizeHifzData({
+    enrolledRukuIds: [...local.enrolledRukuIds, ...remote.enrolledRukuIds],
+    cards,
+    introSeen: local.introSeen || remote.introSeen,
+  });
+}

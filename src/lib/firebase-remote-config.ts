@@ -20,6 +20,7 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 import { FIREBASE_PROJECT_ID, firebaseAppConfig } from '@/lib/firebase-config';
+import { requireOnline } from '@/lib/offline';
 
 const PROJECT_ID = FIREBASE_PROJECT_ID;
 const INSTALLATIONS_SDK = 'w:0.6.4';
@@ -283,6 +284,7 @@ const DEV_SAMPLE: WhatsNewAnnouncement = {
 /** Clears the dismiss flag, refetches Remote Config, and shows the popup. Falls back to sample
  *  copy when nothing is published yet so the UI can still be checked. */
 export async function previewWhatsNew(): Promise<void> {
+  if (!(await requireOnline())) return;
   dismissedIdMemory = null;
   await AsyncStorage.multiRemove([DISMISSED_KEY, CONFIG_CACHE_KEY]);
   let announcement: WhatsNewAnnouncement | null = null;

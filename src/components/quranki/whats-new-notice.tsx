@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticLight, hapticMedium } from '@/lib/haptics';
+import { requireOnline } from '@/lib/offline';
 import {
   dismissWhatsNew,
   loadUndismissedWhatsNew,
@@ -64,10 +65,13 @@ export function WhatsNewNotice({ enabled, paused = false }: WhatsNewNoticeProps)
 
   const openStore = () => {
     if (!announcement || !open) return;
-    hapticMedium();
-    void dismissWhatsNew(announcement.id);
-    setOpen(false);
-    void Linking.openURL(STORE_URL);
+    void requireOnline().then((online) => {
+      if (!online) return;
+      hapticMedium();
+      void dismissWhatsNew(announcement.id);
+      setOpen(false);
+      void Linking.openURL(STORE_URL);
+    });
   };
 
   return (

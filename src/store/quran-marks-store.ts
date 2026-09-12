@@ -7,6 +7,7 @@ import {
   MARK_NAME_MAX,
   newMarkId,
   RECENT_SURAH_LIMIT,
+  sanitizeQuranMarks,
   type Bookmark,
   type BookmarkCollection,
   type LastRead,
@@ -27,12 +28,18 @@ function persist(data: QuranMarksData, immediate = false) {
   }
   if (immediate) {
     void saveQuranMarksAsync(data);
+    queueCloudSync();
     return;
   }
   persistTimer = setTimeout(() => {
     persistTimer = null;
     void saveQuranMarksAsync(data);
+    queueCloudSync();
   }, LAST_READ_PERSIST_MS);
+}
+
+function queueCloudSync(): void {
+  void import('@/lib/account-sync').then(({ scheduleAccountSync }) => scheduleAccountSync());
 }
 
 function snapshot(state: QuranMarksState): QuranMarksData {
@@ -67,6 +74,8 @@ interface QuranMarksState extends QuranMarksData {
   removeCollection: (id: string) => void;
   toggleBookmark: (collectionId: string, surah: number, ayah: number) => void;
   removeBookmark: (id: string) => void;
+  /** Replaces local marks with an already-merged cloud snapshot. */
+  importCloudMarks: (data: QuranMarksData) => void;
   clearAllMarks: () => void;
 }
 
@@ -228,6 +237,16 @@ export const useQuranMarksStore = create<QuranMarksState>((set, get) => ({
   removeBookmark: (id) => {
     set({ bookmarks: get().bookmarks.filter((bookmark) => bookmark.id !== id) });
     persist(snapshot(get()), true);
+  },
+
+  importCloudMarks: (data) => {
+    const next = sanitizeQuranMarks(data);
+    if (persistTimer) {
+      clearTimeout(persistTimer);
+      persistTimer = null;
+    }
+    set(next);
+    persist(next, true);
   },
 
   clearAllMarks: () => {

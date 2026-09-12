@@ -4,7 +4,8 @@ import { playWordAudio, prefetchWordAudio, stopWordAudio } from '@/lib/word-audi
 
 function exampleForWord(id: string) {
   const word = getWord(id);
-  return word ? getVocabExample(word) : undefined;
+  if (!word || word.kind === 'digit') return undefined;
+  return getVocabExample(word);
 }
 
 /** Download this card's Quran word clip so the speaker tap does not wait on the network. */

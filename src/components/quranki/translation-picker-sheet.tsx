@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticSelection, hapticSuccess, hapticWarning } from '@/lib/haptics';
+import { notifyIfOffline, requireOnline } from '@/lib/offline';
 import { useProgressStore } from '@/store/progress-store';
 import { ensureTranslationDatasetLoaded } from '@/store/translation-store';
 import { deleteTranslationDataset, downloadTranslationDataset, isTranslationDatasetDownloaded } from '@/lib/translation-dataset';
@@ -69,26 +70,36 @@ function useTranslationPicker(selectedKey: string, onSelect: (key: string) => vo
   const handleSelectOption = (option: TranslationOption) => {
     hapticSelection();
     setErrorKey(null);
-    onSelect(option.key);
-    if (isDownloaded(option) || downloadingKeys.has(option.key)) return;
+    if (isDownloaded(option) || downloadingKeys.has(option.key)) {
+      onSelect(option.key);
+      return;
+    }
 
-    setDownloadingKeys((prev) => new Set(prev).add(option.key));
-    void downloadTranslationDataset(option.key)
-      .then(() => {
-        setDownloadedKeys((prev) => new Set(prev).add(option.key));
-        hapticSuccess();
-      })
-      .catch(() => {
-        hapticWarning();
+    void requireOnline().then((online) => {
+      if (!online) {
         setErrorKey(option.key);
-      })
-      .finally(() => {
-        setDownloadingKeys((prev) => {
-          const next = new Set(prev);
-          next.delete(option.key);
-          return next;
+        return;
+      }
+      onSelect(option.key);
+      setDownloadingKeys((prev) => new Set(prev).add(option.key));
+      void downloadTranslationDataset(option.key)
+        .then(() => {
+          setDownloadedKeys((prev) => new Set(prev).add(option.key));
+          hapticSuccess();
+        })
+        .catch((error) => {
+          void notifyIfOffline(error);
+          hapticWarning();
+          setErrorKey(option.key);
+        })
+        .finally(() => {
+          setDownloadingKeys((prev) => {
+            const next = new Set(prev);
+            next.delete(option.key);
+            return next;
+          });
         });
-      });
+    });
   };
 
   const deleteDownload = (option: TranslationOption) => {

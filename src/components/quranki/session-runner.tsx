@@ -25,7 +25,7 @@ import {
     type GradePreview,
 } from '@/lib/fsrs';
 import { hapticHeavy, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '@/lib/haptics';
-import { getStageForLevel, getUpcomingLearning, hidesPromptArabic, isStudyWord, type SessionWord, type WordProgress } from '@/lib/levels';
+import { getStageForLevel, getUpcomingLearning, hidesPromptArabic, isStudyWord, usesListeningOverlay, type SessionWord, type WordProgress } from '@/lib/levels';
 import { formatStudyDuration } from '@/lib/stats';
 import { playWordPronunciation, prefetchWordPronunciation, stopWordPronunciation } from '@/lib/word-pronunciation';
 import { useProgressStore } from '@/store/progress-store';
@@ -148,7 +148,7 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
     autoplayOnAdvance.current = false;
     const store = useProgressStore.getState();
     const hideArabic =
-      currentEntry.word.kind !== 'grammar' &&
+      usesListeningOverlay(currentEntry.word) &&
       (store.hideNextSessionPrompts || hidesPromptArabic(store.progress[currentEntry.word.id]));
     if (!hideArabic) return;
     const wordId = currentEntry.word.id;
@@ -195,7 +195,7 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
   }, [previewCard, currentEntry?.sessionKey]);
 
   const handleSpeak = async () => {
-    if (!currentEntry) return;
+    if (!currentEntry || currentEntry.word.kind === 'digit') return;
     cancelOverlayAutoplay();
     markInteraction();
     hapticSelection();
@@ -456,7 +456,7 @@ export function SessionRunner({ queue, emptyMessage }: SessionRunnerProps) {
             word={currentEntry.word}
             revealed={revealed || currentEntry.word.kind === 'grammar'}
             hideArabic={
-              currentEntry.word.kind !== 'grammar' &&
+              usesListeningOverlay(currentEntry.word) &&
               (hideNextSessionPrompts || hidesPromptArabic(currentProgress))
             }
             appearanceKey={currentEntry.sessionKey}

@@ -10,6 +10,7 @@ import {
   type AccountSession,
 } from '@/lib/account-auth';
 import { mergeAccountCloud } from '@/lib/account-sync';
+import { notifyIfOffline, requireOnline } from '@/lib/offline';
 
 interface AccountState {
   hydrated: boolean;
@@ -42,6 +43,7 @@ async function finishAuth(
     set({ ...applySession(session), error: null });
     await mergeAccountCloud();
   } catch (error) {
+    void notifyIfOffline(error);
     set({
       error: error instanceof Error ? error.message : 'Could not sign in.',
     });
@@ -74,10 +76,12 @@ export const useAccountStore = create<AccountState>((set, get) => ({
   },
 
   signIn: async (email, password) => {
+    if (!(await requireOnline())) return;
     await finishAuth(set, () => signInWithPassword(email, password));
   },
 
   createAccount: async (email, password) => {
+    if (!(await requireOnline())) return;
     await finishAuth(set, () => createAccountRemote(email, password));
   },
 

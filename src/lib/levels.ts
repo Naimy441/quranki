@@ -65,6 +65,11 @@ export function hidesPromptArabic(progress: WordProgress | null | undefined): bo
   return (progress?.easyStreak ?? 0) >= LISTENING_RECALL_EASY_STREAK;
 }
 
+/** Listening overlay covers Arabic and plays the clip. Digits have no audio, so they never overlay. */
+export function usesListeningOverlay(word: Word): boolean {
+  return word.kind !== 'grammar' && word.kind !== 'digit';
+}
+
 export type ProgressMap = Record<string, WordProgress>;
 
 const data = quranicWordsData as { deck: string; levelCount: number; wordCount: number; levels: Level[] };

@@ -2,6 +2,8 @@ import { createAudioPlayer, setAudioModeAsync, type AudioPlayer, type AudioStatu
 import { Directory, File, Paths } from 'expo-file-system';
 import { Platform } from 'react-native';
 
+import { isOnline, notifyIfOffline, requireOnline } from '@/lib/offline';
+
 /** Quran.com word-by-word MP3s, addressed as SURAH_AYAH_WORD (`001_001_001.mp3`). */
 const WORD_AUDIO_CDN = 'https://audio.qurancdn.com/wbw';
 
@@ -50,6 +52,11 @@ function wordFile(surah: number, ayah: number, word: number): File {
 
 function isValidAudioFile(file: File): boolean {
   return file.exists && file.size >= MIN_WORD_BYTES;
+}
+
+export function isWordAudioCached(surah: number, ayah: number, word: number): boolean {
+  if (!canCacheToDisk()) return false;
+  return isValidAudioFile(wordFile(surah, ayah, word));
 }
 
 function deleteQuietly(file: File): void {
@@ -104,9 +111,12 @@ async function getWordPlaybackUri(
 
 /** Warm the on-disk cache so the next tap does not hit the network. */
 export function prefetchWordAudio(surah: number, ayah: number, word: number): void {
-  if (!canCacheToDisk()) return;
-  void getWordPlaybackUri(surah, ayah, word).catch(() => {
-    // Prefetch is best-effort; play will retry.
+  if (!canCacheToDisk() || isWordAudioCached(surah, ayah, word)) return;
+  void isOnline().then((online) => {
+    if (!online) return;
+    void getWordPlaybackUri(surah, ayah, word).catch(() => {
+      // Prefetch is best-effort; play will retry.
+    });
   });
 }
 
@@ -193,6 +203,14 @@ export async function playWordAudio(
   onFailed = listeners?.onFailed ?? null;
 
   try {
+    if (!isWordAudioCached(surah, ayah, word) && !(await requireOnline())) {
+      if (seq !== requestSeq) return false;
+      onFinished = null;
+      const failed = onFailed;
+      onFailed = null;
+      failed?.();
+      return false;
+    }
     const uri = await getWordPlaybackUri(surah, ayah, word);
     if (seq !== requestSeq) return false;
     return await runPlayerOp(async () => {
@@ -215,8 +233,9 @@ export async function playWordAudio(
       instance.play();
       return true;
     });
-  } catch {
+  } catch (error) {
     if (seq !== requestSeq) return false;
+    void notifyIfOffline(error);
     onFinished = null;
     const failed = onFailed;
     onFailed = null;

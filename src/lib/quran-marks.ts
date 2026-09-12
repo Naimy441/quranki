@@ -237,3 +237,72 @@ function sanitizePins(data: Partial<QuranMarksData> & { pins?: unknown }): {
 
   return { pins, pinPlacements };
 }
+
+function laterOrEqual(left: string, right: string): boolean {
+  return Date.parse(left) >= Date.parse(right);
+}
+
+/** Unions pins, placements, collections, and bookmarks. Last-read and recents keep the later timestamp. */
+export function mergeQuranMarks(local: QuranMarksData, remote: QuranMarksData): QuranMarksData {
+  const lastRead =
+    !local.lastRead ? remote.lastRead
+    : !remote.lastRead ? local.lastRead
+    : laterOrEqual(local.lastRead.updatedAt, remote.lastRead.updatedAt)
+      ? local.lastRead
+      : remote.lastRead;
+
+  const recentBySurah = new Map<number, RecentSurah>();
+  for (const entry of [...remote.recentSurahs, ...local.recentSurahs]) {
+    const existing = recentBySurah.get(entry.n);
+    if (!existing || laterOrEqual(entry.openedAt, existing.openedAt)) {
+      recentBySurah.set(entry.n, entry);
+    }
+  }
+  const recentSurahs = [...recentBySurah.values()]
+    .sort((a, b) => Date.parse(b.openedAt) - Date.parse(a.openedAt))
+    .slice(0, RECENT_SURAH_LIMIT);
+
+  const pinsById = new Map<string, Pin>();
+  for (const pin of [...remote.pins, ...local.pins]) {
+    const existing = pinsById.get(pin.id);
+    if (!existing || laterOrEqual(pin.createdAt, existing.createdAt)) {
+      pinsById.set(pin.id, pin);
+    }
+  }
+
+  const placementsByPin = new Map<string, PinPlacement>();
+  for (const placement of [...remote.pinPlacements, ...local.pinPlacements]) {
+    if (!pinsById.has(placement.pinId)) continue;
+    const existing = placementsByPin.get(placement.pinId);
+    if (!existing || laterOrEqual(placement.createdAt, existing.createdAt)) {
+      placementsByPin.set(placement.pinId, placement);
+    }
+  }
+
+  const collectionsById = new Map<string, BookmarkCollection>();
+  for (const collection of [...remote.collections, ...local.collections]) {
+    const existing = collectionsById.get(collection.id);
+    if (!existing || laterOrEqual(collection.createdAt, existing.createdAt)) {
+      collectionsById.set(collection.id, collection);
+    }
+  }
+
+  const bookmarksByKey = new Map<string, Bookmark>();
+  for (const bookmark of [...remote.bookmarks, ...local.bookmarks]) {
+    if (!collectionsById.has(bookmark.collectionId)) continue;
+    const key = `${bookmark.collectionId}:${bookmark.surah}:${bookmark.ayah}`;
+    const existing = bookmarksByKey.get(key);
+    if (!existing || laterOrEqual(bookmark.createdAt, existing.createdAt)) {
+      bookmarksByKey.set(key, bookmark);
+    }
+  }
+
+  return sanitizeQuranMarks({
+    lastRead,
+    recentSurahs,
+    pins: [...pinsById.values()],
+    pinPlacements: [...placementsByPin.values()],
+    collections: [...collectionsById.values()],
+    bookmarks: [...bookmarksByKey.values()],
+  });
+}

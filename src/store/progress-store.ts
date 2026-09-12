@@ -10,9 +10,15 @@ import {
     type Card,
     type GradeName,
 } from '@/lib/fsrs';
-import { buildGlobalSessionQueue, computeReachedLevel, getLevel, getWord, isLevelUnlocked as levelIsUnlocked, isStudyWord, LAST_LEVEL_NUMBER, LEVELS, LISTENING_RECALL_EASY_STREAK, nextReachedLevel, type ProgressMap, type WordProgress } from '@/lib/levels';
+import { buildGlobalSessionQueue, computeReachedLevel, getLevel, getWord, isLevelUnlocked as levelIsUnlocked, isStudyWord, LAST_LEVEL_NUMBER, LEVELS, LISTENING_RECALL_EASY_STREAK, nextReachedLevel, usesListeningOverlay, type ProgressMap, type WordProgress } from '@/lib/levels';
 import { syncPracticeReminder } from '@/lib/practice-reminder';
-import { calendarDayKey, pruneStudyMsByDate, sanitizeStudyMsByDate, getStreakReclaimOpportunity } from '@/lib/stats';
+import {
+  calendarDayKey,
+  getStreakReclaimOpportunity,
+  pruneStudyMsByDate,
+  sanitizeDayKeys,
+  sanitizeStudyMsByDate,
+} from '@/lib/stats';
 import {
     clampWordsPerSession,
     DEFAULT_META,
@@ -88,6 +94,12 @@ interface ProgressState {
   autoMasterWords: (wordIds: readonly string[]) => void;
   /** Restores cloud-learned ids that are missing locally. Existing FSRS cards are left alone. */
   importLearnedWordIds: (wordIds: readonly string[]) => void;
+  /** Replaces local streak days and study-time totals with an already-merged cloud snapshot. */
+  importCloudStreaks: (next: {
+    reviewDates: string[];
+    streakGraceDates: string[];
+    studyMsByDate: Record<string, number>;
+  }) => void;
   revertAutoMasteredWord: (wordId: string) => void;
   revertAutoMasteredWords: (wordIds: readonly string[]) => void;
 }
@@ -474,7 +486,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const devHidePromptWordIds: Record<string, true> = { ...(state.devHidePromptWordIds ?? {}) };
     let persist = false;
     for (const entry of queue) {
-      if (!isStudyWord(entry.word)) continue;
+      if (!usesListeningOverlay(entry.word)) continue;
       devHidePromptWordIds[entry.word.id] = true;
       const existing = nextProgress[entry.word.id];
       if (!existing || (existing.easyStreak ?? 0) >= LISTENING_RECALL_EASY_STREAK) continue;
@@ -585,6 +597,14 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       return Boolean(word && isStudyWord(word));
     });
     get().autoMasterWords(missing);
+  },
+
+  importCloudStreaks: (next) => {
+    const reviewDates = sanitizeDayKeys(next.reviewDates);
+    const streakGraceDates = sanitizeDayKeys(next.streakGraceDates);
+    const studyMsByDate = sanitizeStudyMsByDate(next.studyMsByDate);
+    set({ reviewDates, streakGraceDates, studyMsByDate });
+    persistMeta({ ...get(), reviewDates, streakGraceDates, studyMsByDate });
   },
 
   /** Undoes `autoMasterWord` - only when that fabricated entry is still in place untouched. If
