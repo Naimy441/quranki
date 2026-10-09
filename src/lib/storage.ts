@@ -53,6 +53,8 @@ export interface Settings {
   /** Keeps the full ayah translation panel open for every ayah at all times, instead of only the
    *  ones the reader has tapped "Translate" on. */
   readerAlwaysShowTranslation: boolean;
+  /** Small label at the first ayah of each ruku in the Quran reader. */
+  readerShowRukuMarkers: boolean;
   /** False when the learner asked to start with the Qaida. Existing installs default to true. */
   canReadQuran: boolean;
 }
@@ -103,6 +105,7 @@ export const DEFAULT_SETTINGS: Settings = {
   selectedReciterKey: DEFAULT_RECITER_KEY,
   selectedTranslationKey: DEFAULT_TRANSLATION_KEY,
   readerAlwaysShowTranslation: false,
+  readerShowRukuMarkers: false,
   canReadQuran: true,
 };
 
@@ -183,6 +186,7 @@ function normalizeSettings(settings: Settings): Settings {
       settings.readerAlwaysShowTranslation,
       DEFAULT_SETTINGS.readerAlwaysShowTranslation,
     ),
+    readerShowRukuMarkers: persistFlag(settings.readerShowRukuMarkers, DEFAULT_SETTINGS.readerShowRukuMarkers),
     canReadQuran: persistFlag(settings.canReadQuran, DEFAULT_SETTINGS.canReadQuran),
   };
 }

@@ -3,6 +3,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 
@@ -65,6 +66,13 @@ export default function RootLayout() {
     void hydrateHifz();
     void hydrateAccount();
   }, [hydrate, hydrateKnownWords, hydrateQuranMarks, hydrateHifz, hydrateAccount]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (next) => {
+      if (next === 'active') useProgressStore.getState().easeReturnBacklog();
+    });
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     if (!hydrated || !knownWordsHydrated || !quranMarksHydrated || !hifzHydrated || !accountHydrated) {

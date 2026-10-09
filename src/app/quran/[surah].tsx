@@ -66,12 +66,14 @@ export default function SurahReaderScreen() {
   // updates after the page animation so the strip doesn't remount mid-slide. A custom
   // `headerTitle` also skips the native stack's title-slide interpolation.
   const [headerSurah, setHeaderSurah] = useState(() => Number(surah));
-  // Re-sync from the route itself if it ever disagrees with our own `active` (not the other way
-  // around - see the comment above). Adjusting state during render, rather than in an effect,
-  // avoids an extra cascading render pass: React bails out and re-renders immediately with the
-  // synced value before anything commits.
+  // Swipes and jumps set `active` before `setParams` lands. While that write is in flight the
+  // route still names the previous surah; copying it back snaps the page and the title.
+  const [awaitingParam, setAwaitingParam] = useState<number | null>(null);
   const paramSurah = Number(surah);
-  if (paramSurah !== active) {
+  if (awaitingParam != null && paramSurah === awaitingParam) {
+    setAwaitingParam(null);
+  }
+  if (paramSurah !== active && awaitingParam == null) {
     setActive(paramSurah);
     setHeaderSurah(paramSurah);
   }
@@ -113,6 +115,7 @@ export default function SurahReaderScreen() {
   const visibleAyahRef = useRef(1);
   const lastAppliedNavToken = useRef(0);
   const pendingPlayRef = useRef<{ surah: number; ayah: number } | null>(null);
+  const blurStopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [readerFocusEpoch, setReaderFocusEpoch] = useState(0);
   const noteOpenedSurah = useQuranMarksStore((s) => s.noteOpenedSurah);
   const setLastRead = useQuranMarksStore((s) => s.setLastRead);
@@ -157,18 +160,30 @@ export default function SurahReaderScreen() {
       // Saved stashes a jump here so we update this same reader instead of pushing
       // another `/quran/[surah]`. Applied on focus so `setParams` hits this route.
       // Consumed immediately so a later search / list tap cannot replay this bookmark.
+      if (blurStopTimer.current) {
+        clearTimeout(blurStopTimer.current);
+        blurStopTimer.current = null;
+      }
       const target = consumePendingReaderTarget();
       if (target && target.token !== lastAppliedNavToken.current) {
         lastAppliedNavToken.current = target.token;
         if (target.play) pendingPlayRef.current = { surah: target.surah, ayah: target.ayah };
         setReaderFocusEpoch(target.token);
+        setAwaitingParam(target.surah);
+        setHeaderSurah(target.surah);
+        setActive(target.surah);
         router.setParams({ surah: String(target.surah), ayah: String(target.ayah) });
       }
       return () => {
-        // Backgrounding the app blurs this screen on some platforms; keep recitation going.
-        const appState = AppState.currentState;
-        if (appState === 'background' || appState === 'inactive') return;
-        stopRecitation();
+        // Leaving for another screen should stop audio. Backgrounding also blurs this
+        // screen while AppState is still "active", so wait and only stop if we stayed
+        // in the foreground. A quick return cancels the timer and playback continues.
+        blurStopTimer.current = setTimeout(() => {
+          blurStopTimer.current = null;
+          const appState = AppState.currentState;
+          if (appState === 'background' || appState === 'inactive') return;
+          stopRecitation();
+        }, 180);
       };
     }, [router]),
   );
@@ -217,6 +232,8 @@ export default function SurahReaderScreen() {
 
   const commitShift = (direction: 1 | -1) => {
     const next = active + direction;
+    setAwaitingParam(next);
+    setHeaderSurah(next);
     setActive(next);
     router.setParams({ surah: String(next), ayah: '' });
   };
@@ -230,6 +247,7 @@ export default function SurahReaderScreen() {
     hapticSelection();
     const jumpAyah = recitationAyahNumber > 0 ? recitationAyahNumber : 1;
     setAutoScrollSuspended(false);
+    setAwaitingParam(recitationSurah);
     setHeaderSurah(recitationSurah);
     setActive(recitationSurah);
     setLastRead(recitationSurah, jumpAyah);
@@ -237,8 +255,10 @@ export default function SurahReaderScreen() {
   };
 
   const swipeGesture = Gesture.Pan()
-    .activeOffsetX([-20, 20])
-    .failOffsetY([-15, 15])
+    // A vertical scroll used to cross the old 20px horizontal threshold and slide the
+    // neighboring surah in, then spring back. Fail the pan on a small vertical move first.
+    .activeOffsetX([-72, 72])
+    .failOffsetY([-8, 8])
     .onUpdate((event) => {
       'worklet';
       // Nothing is mounted past surah 1 or 114, so don't let the drag reveal empty space there.
@@ -357,6 +377,10 @@ export default function SurahReaderScreen() {
       <SafeAreaView style={styles.flex} edges={['bottom']}>
         <View style={styles.flex}>
           <GestureDetector gesture={swipeGesture}>
+            {/* The pan's hit target must stay in the viewport. Translating this view
+                by `active * screenWidth` moves its box off screen, so later pans never
+                start. Slide an inner strip instead. */}
+            <View style={styles.pager} collapsable={false}>
             <Animated.View style={[styles.row, rowStyle]}>
               {[active - 1, active, active + 1].map((surahNumber) => {
                 if (surahNumber < 1 || surahNumber > SURAH_COUNT) return null;
@@ -394,6 +418,7 @@ export default function SurahReaderScreen() {
                 );
               })}
             </Animated.View>
+            </View>
           </GestureDetector>
         </View>
         {playerVisible && <RecitationPlayer onPressTitle={jumpToRecitation} />}
@@ -442,6 +467,7 @@ export default function SurahReaderScreen() {
         onDismiss={() => setJumpVisible(false)}
         onJump={(jumpSurah, jumpAyah) => {
           setJumpVisible(false);
+          setAwaitingParam(jumpSurah);
           setHeaderSurah(jumpSurah);
           setActive(jumpSurah);
           setLastRead(jumpSurah, jumpAyah);
@@ -477,6 +503,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, overflow: 'hidden' },
   // Just a full-size, positioned ancestor for the absolutely-placed slots below - no flex layout
   // involved, since each slot's horizontal position comes from its own `left` offset instead.
+  pager: { flex: 1, overflow: 'hidden' },
   row: { flex: 1 },
   slot: { position: 'absolute', top: 0, bottom: 0 },
   headerActions: { flexDirection: 'row', alignItems: 'center' },

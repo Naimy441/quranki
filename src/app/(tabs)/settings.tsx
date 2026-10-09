@@ -243,6 +243,8 @@ export default function SettingsScreen() {
               onTransliterationSizeChange={(readerTransliterationSize) => updateSettings({ readerTransliterationSize })}
               alwaysShowTranslation={settings.readerAlwaysShowTranslation}
               onAlwaysShowTranslationChange={(readerAlwaysShowTranslation) => updateSettings({ readerAlwaysShowTranslation })}
+              showRukuMarkers={settings.readerShowRukuMarkers}
+              onShowRukuMarkersChange={(readerShowRukuMarkers) => updateSettings({ readerShowRukuMarkers })}
             />
           </SettingsSection>
 

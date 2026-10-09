@@ -1720,7 +1720,8 @@
         },
         {
           "arabic": "أَحْسَن",
-          "english": "better, best",
+          "english": "better - comparative",
+          "note": "Comparative - better. A different word from the verb to do good.",
           "id": "15-008",
           "lemmaIds": [
             331
@@ -3217,8 +3218,8 @@
           "id": "29-000",
           "kind": "grammar",
           "arabic": "فَعَلَ",
-          "english": "How verbs are listed",
-          "note": "Each verb is shown as “he did” it. Hunt for the same three letters in other shapes: يَفْعَلُ he does, فَعَلُوا they did.",
+          "english": "Past tense",
+          "note": "If a word is 3 letters, or 4 letters with a fatha at the end, it is a verb and it is past tense. فَعَلَ he did. أَخْرَجَ he brought out.",
           "exampleOf": "29-004"
         },
         {
@@ -3758,7 +3759,7 @@
         },
         {
           "arabic": "حَفِظَ",
-          "english": "to guard, to protect",
+          "english": "to guard, to protect, to memorize",
           "id": "33-004",
           "lemmaIds": [
             1091
@@ -4186,7 +4187,7 @@
         },
         {
           "arabic": "بَغَى",
-          "english": "to seek, to opress",
+          "english": "to seek",
           "id": "37-004",
           "lemmaIds": [
             434
@@ -4580,7 +4581,8 @@
         },
         {
           "arabic": "أَحْسَنَ",
-          "english": "to do good, to do excellently",
+          "english": "to do good - verb",
+          "note": "Verb - to do good. A different word from the comparative better.",
           "id": "41-002",
           "lemmaIds": [
             496

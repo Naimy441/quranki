@@ -49,6 +49,8 @@ export default function ReaderSettingsScreen() {
             onAlwaysShowTranslationChange={(readerAlwaysShowTranslation) =>
               updateSettings({ readerAlwaysShowTranslation })
             }
+            showRukuMarkers={settings.readerShowRukuMarkers}
+            onShowRukuMarkersChange={(readerShowRukuMarkers) => updateSettings({ readerShowRukuMarkers })}
           />
         </ScrollView>
       </SafeAreaView>

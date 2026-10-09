@@ -26,9 +26,11 @@ export interface ReaderDisplaySettingsProps {
   onTransliterationSizeChange: (size: number) => void;
   alwaysShowTranslation: boolean;
   onAlwaysShowTranslationChange: (value: boolean) => void;
+  showRukuMarkers: boolean;
+  onShowRukuMarkersChange: (value: boolean) => void;
 }
 
-export function ReaderDisplaySettings({ arabicSize, onArabicSizeChange, glossSize, onGlossSizeChange, showTranslation, onShowTranslationChange, showAyahCoverage, onShowAyahCoverageChange, showTransliteration, onShowTransliterationChange, transliterationSize, onTransliterationSizeChange, alwaysShowTranslation, onAlwaysShowTranslationChange }: ReaderDisplaySettingsProps) {
+export function ReaderDisplaySettings({ arabicSize, onArabicSizeChange, glossSize, onGlossSizeChange, showTranslation, onShowTranslationChange, showAyahCoverage, onShowAyahCoverageChange, showTransliteration, onShowTransliterationChange, transliterationSize, onTransliterationSizeChange, alwaysShowTranslation, onAlwaysShowTranslationChange, showRukuMarkers, onShowRukuMarkersChange }: ReaderDisplaySettingsProps) {
   const theme = useTheme();
   return <View style={styles.content}>
     <FontSizeSlider label="Arabic text" value={arabicSize} range={ARABIC_SIZE_RANGE} onChange={onArabicSizeChange} />
@@ -45,6 +47,10 @@ export function ReaderDisplaySettings({ arabicSize, onArabicSizeChange, glossSiz
     <View style={styles.toggleRow}>
       <ThemedText type="small">Show ayah coverage %</ThemedText>
       <Switch value={showAyahCoverage} onValueChange={(value) => { const next = value === true; hapticToggle(next); onShowAyahCoverageChange(next); }} color={theme.primary} />
+    </View>
+    <View style={styles.toggleRow}>
+      <ThemedText type="small">Show ruku markers</ThemedText>
+      <Switch value={showRukuMarkers} onValueChange={(value) => { const next = value === true; hapticToggle(next); onShowRukuMarkersChange(next); }} color={theme.primary} />
     </View>
     <View style={styles.toggleRow}>
       <ThemedText type="small">Always show full translation</ThemedText>

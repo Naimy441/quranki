@@ -426,7 +426,22 @@ function onPlaybackStatus(status: AudioStatus): void {
   });
 }
 
+function applyQuranAudioMode(): void {
+  // Hifz cues set shouldPlayInBackground false on the shared audio session, and that
+  // flag used to stick because Quran playback only configured the session once.
+  // Re-apply background playback on every Quran play.
+  audioModeReady = true;
+  void setAudioModeAsync({
+    playsInSilentMode: true,
+    shouldPlayInBackground: true,
+    interruptionMode: 'doNotMix',
+  }).catch(() => {
+    audioModeReady = false;
+  });
+}
+
 function beginSession(partial: Partial<RecitationState>): number {
+  applyQuranAudioMode();
   stopWordAudio();
   standbyReady = false;
   standbyAyahNumber = null;
@@ -822,7 +837,8 @@ export function togglePlayPause(): void {
     void requireRecitationOnline(surah, ayah).then((ok) => {
       if (!ok) return;
       wantPlaying = true;
-      void loadCurrent(requestSeq);
+      applyQuranAudioMode();
+    void loadCurrent(requestSeq);
     });
     return;
   }
@@ -832,6 +848,7 @@ export function togglePlayPause(): void {
     useRecitationStore.setState({ playing: false });
     return;
   }
+  applyQuranAudioMode();
   wantPlaying = true;
   const nearEnd = state.rangeFinished || (state.durationSeconds > 0 && state.positionSeconds >= state.durationSeconds - 0.15);
   if (nearEnd) {

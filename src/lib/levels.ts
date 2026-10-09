@@ -3,7 +3,7 @@ import { QAIDA_FIRST_LEVEL, QAIDA_LAST_LEVEL, QAIDA_LEVELS, QAIDA_STAGE_ID } fro
 import lemmaLevelCoverageData from '@/data/quran/lemma-level-coverage.json';
 import stageLevelsData from '@/data/quran/stage-levels.json';
 import quranicWordsData from '@/data/quranic-words.json';
-import { deserializeCard, isCardDue, isWordMastered, shouldHideInReader, State, type GradeName, type SerializedCard } from '@/lib/fsrs';
+import { deserializeCard, isCardDue, isWordMastered, serializeCard, shouldHideInReader, State, type GradeName, type SerializedCard } from '@/lib/fsrs';
 import { QURAN_LEMMA_COUNT, TOTAL_QURAN_WORDS, type LemmaId } from '@/lib/quran-lemmas';
 
 export { QAIDA_FIRST_LEVEL, QAIDA_LAST_LEVEL, QAIDA_LEVELS, QAIDA_STAGE_ID };
@@ -96,7 +96,7 @@ export function isStudyWord(word: Word): boolean {
 }
 
 export const DECK_NAME = data.deck;
-/** Stage 1, then the 99 names and Arabic digits, then the rest of the curriculum — sorted by level number. */
+/** Stage 1, then the 99 names and Arabic digits, then the rest of the curriculum, sorted by level number. */
 export const LEVELS: Level[] = [...data.levels, ...generated.levels, ...asmaUlHusna.levels].sort(
   (a, b) => a.number - b.number,
 );
@@ -268,7 +268,8 @@ export function getLevelsForStage(stage: Stage): Level[] {
 
 /** Later stages stay locked until the reached level enters them. Isolated words marked known
  *  in the Quran reader do not unlock a later stage's level list. Learners on the Qaida stay
- *  there until every Qaida card is mastered. */
+ *  there until every Qaida card is mastered. Names of Allah (stage 2) sit between stage 1 and
+ *  the frequency stages, so reaching them is what unlocks stage 2. */
 export function isStageUnlocked(stage: Stage, reachedLevel: number, track?: TrackContext): boolean {
   if (isQaidaStage(stage)) return track?.learnToRead === true;
   if (track?.learnToRead && !track.qaidaComplete) return false;
@@ -544,39 +545,18 @@ export function getQaidaIntroductionFrontier(progressMap: ProgressMap): number {
   return QAIDA_LAST_LEVEL;
 }
 
-function hasProgressInLevels(progressMap: ProgressMap, levels: readonly Level[]): boolean {
-  return levels.some((level) =>
-    level.words.some((word) => isStudyWord(word) && Boolean(progressMap[word.id])),
-  );
-}
-
 function stage1Levels(): Level[] {
   return LEVELS.filter((level) => level.number <= STAGE1_LAST_LEVEL);
 }
 
-function asmaLevels(): Level[] {
-  return LEVELS.filter((level) => isAsmaLevel(level.number));
-}
-
-function frequencyLevels(): Level[] {
-  return LEVELS.filter((level) => isFrequencyLevel(level.number));
-}
-
-function hasFrequencyProgress(progressMap: ProgressMap): boolean {
-  return hasProgressInLevels(progressMap, frequencyLevels());
-}
-
-/** The learner's current level: the first unmastered level in number order (stage 1, names,
- *  then leftover frequency). Someone already studying frequency words is not pulled back
- *  onto the names. Isolated reader marks do not skip ahead. */
+/** The learner's current level: the first unmastered level in curriculum order
+ *  (stage 1, then Names of Allah, then leftover frequency). Names are not skipped
+ *  when a later frequency word already has progress - that jump sent people to
+ *  stage 3 and left stage 2 out of the normal path. */
 export function computeReachedLevel(progressMap: ProgressMap): number {
-  const enteredFrequency = hasFrequencyProgress(progressMap);
   for (const level of LEVELS) {
-    if (isAsmaLevel(level.number) && enteredFrequency) continue;
     if (!isLevelFullyMastered(level, progressMap)) return Math.max(level.number, 1);
   }
-  const nextName = asmaLevels().find((level) => !isLevelFullyMastered(level, progressMap));
-  if (nextName) return frequencyLevels().at(-1)?.number ?? nextName.number;
   return Math.max(LAST_LEVEL_NUMBER, 1);
 }
 
@@ -588,17 +568,11 @@ export function nextReachedLevel(progressMap: ProgressMap, currentMax: number): 
 
 /** The first level that still has an unseen study word - where sequential new-card
  *  introduction is currently drawing from. Grammar intros do not hold this back.
+ *  Names of Allah stay in this sequence, between stage 1 and the frequency levels.
  *  LAST_LEVEL_NUMBER if the whole deck has been introduced. */
 export function getIntroductionFrontier(progressMap: ProgressMap): number {
-  const skipNames = hasFrequencyProgress(progressMap);
   for (const level of LEVELS) {
-    if (skipNames && isAsmaLevel(level.number)) continue;
     if (level.words.some((word) => isStudyWord(word) && !progressMap[word.id])) return level.number;
-  }
-  if (skipNames) {
-    for (const level of asmaLevels()) {
-      if (level.words.some((word) => isStudyWord(word) && !progressMap[word.id])) return level.number;
-    }
   }
   return LAST_LEVEL_NUMBER;
 }
@@ -627,6 +601,80 @@ function isLearningDue(state: WordState): boolean {
  *  steps and new-word introductions are independent of this, matching Anki's "Maximum reviews/day"
  *  vs "New cards/day" split. */
 export const DAILY_REVIEW_LIMIT = 200;
+
+/** A gap longer than this (local midnights since the last study day) is a return, not daily use. */
+export const RETURN_REVIEW_GAP_DAYS = 3;
+
+/** Overdue Review cards kept due today after a long absence. The rest are pushed onto later
+ *  days in batches of this size. Daily study inside the gap still uses DAILY_REVIEW_LIMIT. */
+export const RETURN_REVIEW_DAILY_CAP = 30;
+
+function localDayKey(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function daysBetweenDayKeys(earlier: string, later: string): number {
+  const [y1, m1, d1] = earlier.split('-').map(Number);
+  const [y2, m2, d2] = later.split('-').map(Number);
+  if (![y1, m1, d1, y2, m2, d2].every((part) => Number.isFinite(part))) return 0;
+  const start = Date.UTC(y1!, (m1 ?? 1) - 1, d1);
+  const end = Date.UTC(y2!, (m2 ?? 1) - 1, d2);
+  return Math.round((end - start) / 86_400_000);
+}
+
+function addLocalDays(date: Date, days: number): Date {
+  const next = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+/**
+ * After more than 3 days away, don't dump every overdue Review card into the next session.
+ * The first RETURN_REVIEW_DAILY_CAP stay due now. Each further batch of that size is given
+ * a later due date, one batch per day, so the backlog drains across return days.
+ * Stability, difficulty, scheduled days, reps, lapses, and learning steps are left alone -
+ * only `due` moves, and only forward. Active users (gap of 3 days or less) are unchanged.
+ * Running this again the same day is a no-op: cards already pushed into the future are no
+ * longer overdue, so they are not moved a second time.
+ */
+export function deferReturnReviewBacklog(
+  progressMap: ProgressMap,
+  now: Date,
+  lastActivityDay: string | null,
+): ProgressMap | null {
+  if (!lastActivityDay) return null;
+  const gapDays = daysBetweenDayKeys(lastActivityDay, localDayKey(now));
+  if (gapDays <= RETURN_REVIEW_GAP_DAYS) return null;
+
+  const overdue: { wordId: string; dueMs: number }[] = [];
+  for (const [wordId, progress] of Object.entries(progressMap)) {
+    const card = deserializeCard(progress.card);
+    if (card.state !== State.Review) continue;
+    if (card.due.getTime() > now.getTime()) continue;
+    overdue.push({ wordId, dueMs: card.due.getTime() });
+  }
+  overdue.sort((a, b) => a.dueMs - b.dueMs || a.wordId.localeCompare(b.wordId));
+  if (overdue.length <= RETURN_REVIEW_DAILY_CAP) return null;
+
+  let next: ProgressMap | null = null;
+  for (let index = RETURN_REVIEW_DAILY_CAP; index < overdue.length; index += 1) {
+    const wordId = overdue[index]!.wordId;
+    const progress = progressMap[wordId];
+    if (!progress) continue;
+    const dayShift = Math.floor(index / RETURN_REVIEW_DAILY_CAP);
+    const deferredDue = addLocalDays(now, dayShift);
+    const card = deserializeCard(progress.card);
+    if (deferredDue.getTime() <= card.due.getTime()) continue;
+    next ??= { ...progressMap };
+    next[wordId] = {
+      ...progress,
+      card: serializeCard({ ...card, due: deferredDue }),
+    };
+  }
+  return next;
+}
 
 function shuffleInPlace<T>(items: T[]): T[] {
   for (let i = items.length - 1; i > 0; i -= 1) {
@@ -740,9 +788,10 @@ export function getWordReviewTimeline(progressMap: ProgressMap, now: Date): Time
  * order, minus any already reviewed today), then up to `wordsPerSession` unseen
  * study words in curriculum order (level 1, then 2, …), minus any new cards already introduced
  * today. Grammar intros in that same stretch are included for free so they don't consume the
- * new-word quota. Stages hide later level lists until introduction reaches them, the same
- * way a later level can be learned from the Quran reader before it is the current study
- * level. Reviews never consume the new-word quota.
+ * new-word quota. Unseen cards follow curriculum order: stage 1, then Names of Allah,
+ * then frequency leftovers. A finished stage 1 used to spill new cards straight into
+ * frequency, and that frequency progress then hid the names stage. Reviews never
+ * consume the new-word quota.
  *
  * The new-card cap is the default day's batch, not a hard stop: pass `ignoreNewCardCap` when
  * the learner explicitly starts another session after finishing today's.
@@ -797,8 +846,6 @@ export function buildGlobalSessionQueue(
   const asmaFresh = fresh.filter((item) => isAsmaLevel(item.levelNumber));
   const laterFresh = fresh.filter((item) => isFrequencyLevel(item.levelNumber));
   const stage1Complete = stage1Levels().every((level) => isLevelFullyMastered(level, progressMap));
-  const enteredFrequency = hasFrequencyProgress(progressMap);
-  const reserveName = enteredFrequency && asmaFresh.some((item) => isStudyWord(item.word)) ? 1 : 0;
 
   const newCards: SessionWord[] = [];
   const takeFresh = (items: SessionWord[], slots: number): number => {
@@ -816,17 +863,17 @@ export function buildGlobalSessionQueue(
     }
     return remaining;
   };
+  // Names of Allah are the normal step after stage 1. Leftover new-card slots must not
+  // jump to frequency levels while names are still unseen, or the learner lands in stage 3.
   if (qaidaOnly) {
     takeFresh(qaidaFresh, remainingNewSlots);
   } else if (!stage1Complete) {
-    const leftover = takeFresh(stage1Fresh, remainingNewSlots);
-    takeFresh(laterFresh, leftover);
-  } else if (!enteredFrequency) {
-    const leftover = takeFresh(asmaFresh, remainingNewSlots);
-    takeFresh(laterFresh, leftover);
+    const afterStage1 = takeFresh(stage1Fresh, remainingNewSlots);
+    const afterNames = takeFresh(asmaFresh, afterStage1);
+    takeFresh(laterFresh, afterNames);
   } else {
-    const leftover = takeFresh([...stage1Fresh, ...laterFresh], Math.max(0, remainingNewSlots - reserveName));
-    takeFresh(asmaFresh, leftover + reserveName);
+    const afterNames = takeFresh(asmaFresh, remainingNewSlots);
+    takeFresh(laterFresh, afterNames);
   }
 
   return [

@@ -70,6 +70,7 @@ function buildCatalog(): Ruku[] {
 export const RUKUS: Ruku[] = buildCatalog();
 
 const rukuById = new Map(RUKUS.map((ruku) => [ruku.id, ruku]));
+const rukuByStart = new Map(RUKUS.map((ruku) => [`${ruku.surah}:${ruku.fromAyah}`, ruku]));
 
 /** Canonical lemma lists for every ayah, keyed `"surah:ayah"`. Opening letters are already omitted. */
 const CANONICAL_BY_AYAH = new Map(
@@ -78,6 +79,11 @@ const CANONICAL_BY_AYAH = new Map(
 
 export function getRuku(id: number): Ruku | undefined {
   return rukuById.get(id);
+}
+
+/** The ruku that begins on this ayah, if this verse is a ruku start. */
+export function getRukuStartingAt(surah: number, ayah: number): Ruku | undefined {
+  return rukuByStart.get(`${surah}:${ayah}`);
 }
 
 export function formatRukuAyahRange(ruku: Ruku): string {

@@ -8,6 +8,7 @@ import { AyahActionMenu } from '@/components/quran/ayah-action-menu';
 import { AyahNumberBadge } from '@/components/quran/ayah-number-badge';
 import { AyahTranslation } from '@/components/quran/ayah-translation';
 import { WordCell } from '@/components/quran/word-cell';
+import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticLight, hapticSelection, hapticSuccess } from '@/lib/haptics';
@@ -16,6 +17,7 @@ import type { LemmaId } from '@/lib/quran-lemmas';
 import { buildAyahShareText } from '@/lib/quran-reader';
 import type { ReaderAyah, ReaderWordRef } from '@/lib/quran-reader-types';
 import { getAyahUnderstanding } from '@/lib/quran-understanding';
+import { getRukuStartingAt } from '@/lib/ruku';
 import { getAyahTranslationParts } from '@/lib/translation-dataset';
 import { findTranslationOption } from '@/lib/translations';
 import { useProgressStore } from '@/store/progress-store';
@@ -50,6 +52,8 @@ export const AyahBlock = memo(function AyahBlock({ ayah, surahNumber, surahName,
   const marks = marksKey ? marksKey.split(',').map((entry) => { const separator = entry.indexOf(':'); return { kind: entry.slice(0, separator) as 'pin' | 'bookmark', color: entry.slice(separator + 1) }; }) : [];
   const [showFullTranslation, setShowFullTranslation] = useState(false);
   const alwaysShowTranslation = useProgressStore((s) => s.settings.readerAlwaysShowTranslation);
+  const showRukuMarkers = useProgressStore((s) => s.settings.readerShowRukuMarkers);
+  const rukuStart = showRukuMarkers ? getRukuStartingAt(surahNumber, ayah.a) : undefined;
   const selectedTranslationKey = useProgressStore((s) => s.settings.selectedTranslationKey);
   // Only takes the store's dataset once it actually matches the current selection - while
   // switching from one non-bundled translation to another, the store briefly still holds the
@@ -154,6 +158,7 @@ export const AyahBlock = memo(function AyahBlock({ ayah, surahNumber, surahName,
   const copy = async () => { await Clipboard.setStringAsync(buildAyahShareText(surahName, ayah)); hapticSuccess(); setCopied(true); if (copyTimer.current) clearTimeout(copyTimer.current); copyTimer.current = setTimeout(() => setCopied(false), 1500); };
   const menu = { open: actionsOpen, onToggle: () => onToggleActions?.(ayah.a), bookmarked, copied, playback, showTranslation: effectiveShowTranslation, showTranslationAction: !isOpeningLetters && !alwaysShowTranslation, onSave: () => { onToggleActions?.(ayah.a); onOpenMarks?.(ayah.a); }, onCopy: copy, onPlay: () => { hapticLight(); void playAyah(surahNumber, ayah.a, { fromAyah: playbackFromAyah, toAyah: playbackToAyah }); }, onTranslate: () => { hapticSelection(); setShowFullTranslation((value) => !value); } };
   return <View ref={blockRef} collapsable={false} style={[styles.container, { borderBottomColor: theme.border }]}>
+    {rukuStart ? <View style={[styles.rukuMarker, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}><ThemedText type="smallBold" style={styles.rukuLabel}>{`Ruku ${rukuStart.surahRukuNumber}`}</ThemedText></View> : null}
     {playback !== 'idle' ? <View pointerEvents="none" style={[styles.highlight, { backgroundColor: theme.backgroundSelected, opacity: 0.4 }]} /> : null}
     <Animated.View pointerEvents="none" style={[styles.highlight, { backgroundColor: theme.backgroundSelected, opacity: highlightOpacity }]} />
     <View ref={wrapRef} onLayout={updateStickyMenu} collapsable={false} style={styles.body}>
@@ -168,4 +173,4 @@ export const AyahBlock = memo(function AyahBlock({ ayah, surahNumber, surahName,
   </View>;
 });
 
-const styles = StyleSheet.create({ container: { paddingBottom: Spacing.three, borderBottomWidth: 1 }, body: { paddingTop: Spacing.two }, row: { flexDirection: 'row-reverse', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: Spacing.five, paddingBottom: Spacing.one, paddingHorizontal: Spacing.four }, highlight: { ...StyleSheet.absoluteFill }, markIcons: { flexDirection: 'row', alignItems: 'center', gap: 4 } });
+const styles = StyleSheet.create({ container: { paddingBottom: Spacing.three, borderBottomWidth: 1 }, rukuMarker: { alignSelf: 'flex-start', marginTop: Spacing.two, marginLeft: Spacing.four, paddingHorizontal: Spacing.two, paddingVertical: 3, borderRadius: 6, borderWidth: StyleSheet.hairlineWidth }, rukuLabel: { fontSize: 12, lineHeight: 16 }, body: { paddingTop: Spacing.two }, row: { flexDirection: 'row-reverse', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: Spacing.five, paddingBottom: Spacing.one, paddingHorizontal: Spacing.four }, highlight: { ...StyleSheet.absoluteFill }, markIcons: { flexDirection: 'row', alignItems: 'center', gap: 4 } });

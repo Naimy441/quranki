@@ -85,18 +85,29 @@ export function SurahPage({
   const allAyahs = getSurahAyahs(surahNumber);
   const rangeStart = fromAyah && fromAyah > 0 ? fromAyah : 1;
   const rangeEnd = toAyah && toAyah > 0 ? toAyah : allAyahs.length;
-  const ayahs = useMemo(() => {
-    if (rangeStart === 1 && rangeEnd === allAyahs.length) return allAyahs;
-    return allAyahs.filter((ayah) => ayah.a >= rangeStart && ayah.a <= rangeEnd);
-  }, [allAyahs, rangeEnd, rangeStart]);
+  // Open on the target ayah. Earlier ayahs are prepended only after the reader scrolls up,
+  // so a bookmark does not wait for every preceding row to mount, and ayahs after the
+  // target stay in the list so they can be scrolled to.
+  const jumpKey = `${surahNumber}:${focusEpoch}:${focusAyah}:${rangeStart}:${rangeEnd}`;
+  const [appliedJumpKey, setAppliedJumpKey] = useState(jumpKey);
+  const [windowStart, setWindowStart] = useState(() => (focusAyah > rangeStart ? focusAyah : rangeStart));
+  if (appliedJumpKey !== jumpKey) {
+    setAppliedJumpKey(jumpKey);
+    const nextStart = focusAyah > rangeStart ? focusAyah : rangeStart;
+    if (nextStart !== windowStart) setWindowStart(nextStart);
+  }
+  const ayahs = useMemo(
+    () => allAyahs.filter((ayah) => ayah.a >= windowStart && ayah.a <= rangeEnd),
+    [allAyahs, rangeEnd, windowStart],
+  );
+  const rangeCount = Math.max(0, rangeEnd - rangeStart + 1);
   const showBismillah = Boolean(meta?.b && rangeStart === 1);
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlashListRef<ReaderAyah>>(null);
   const scrollOffsetRef = useRef(0);
-  // Ayah 1 belongs at the reader's actual beginning, where the surah heading and Bismillah are visible.
-  const [initialFocusAyah] = useState(focusAyah === 1 ? 0 : focusAyah);
-  const [contentReady, setContentReady] = useState(initialFocusAyah === 0);
+  const anchorAyahRef = useRef(focusAyah > rangeStart ? focusAyah : rangeStart);
+  const pendingAnchorRef = useRef<number | null>(null);
   const didFocus = useRef(false);
   const [openActionsAyah, setOpenActionsAyah] = useState(0);
   const [scrollEpoch, setScrollEpoch] = useState(0);
@@ -166,6 +177,14 @@ export function SurahPage({
     didFocus.current = false;
   }, [focusAyah, focusEpoch, surahNumber]);
 
+  const prependEarlier = useCallback(() => {
+    setWindowStart((current) => {
+      if (current <= rangeStart) return current;
+      pendingAnchorRef.current = anchorAyahRef.current;
+      return Math.max(rangeStart, current - 24);
+    });
+  }, [rangeStart]);
+
   const scrollToAyah = useCallback(
     (ayahNumber: number, animated: boolean, viewPosition = 0.12) => {
       const index = ayahs.findIndex((ayah) => ayah.a === ayahNumber);
@@ -182,10 +201,22 @@ export function SurahPage({
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+      const visibleIndex = listRef.current?.getFirstVisibleIndex();
+      if (typeof visibleIndex === 'number' && visibleIndex >= 0) {
+        const layout = listRef.current?.getLayout(visibleIndex);
+        const header = listRef.current?.getFirstItemOffset() ?? 0;
+        // The first laid-out row can be almost entirely above the viewport.
+        // Anchor the row the reader is actually looking at.
+        const mostlyAbove = Boolean(
+          layout && layout.height > 0 && scrollOffsetRef.current - (layout.y + header) > layout.height * 0.45,
+        );
+        const visible = ayahs[mostlyAbove ? visibleIndex + 1 : visibleIndex] ?? ayahs[visibleIndex];
+        if (visible) anchorAyahRef.current = visible.a;
+      }
       bumpScrollEpoch();
       scheduleSettleCheck();
     },
-    [bumpScrollEpoch, scheduleSettleCheck],
+    [ayahs, bumpScrollEpoch, scheduleSettleCheck],
   );
 
   // Bismillah has no list row of its own (it lives in the header above ayah 1), so the per-ayah
@@ -255,13 +286,67 @@ export function SurahPage({
 
   useEffect(() => {
     if (!isActive || focusAyah <= 0 || didFocus.current) return;
-    if (focusEpoch === 0 && focusAyah === initialFocusAyah) return;
+    // The list already starts at this ayah, so the first open does not scroll through
+    // everything above it. Mark the jump done anyway: prepending earlier ayahs changes
+    // windowStart and must not scroll the reader back to the target.
+    if (focusEpoch === 0 && windowStart === (focusAyah > rangeStart ? focusAyah : rangeStart)) {
+      didFocus.current = true;
+      return;
+    }
     didFocus.current = true;
     requestAnimationFrame(() => {
       if (focusAyah === 1) scrollToSurahStart();
       else scrollToAyah(focusAyah, false);
     });
-  }, [focusAyah, focusEpoch, initialFocusAyah, isActive, scrollToAyah, scrollToSurahStart]);
+  }, [focusAyah, focusEpoch, isActive, rangeStart, scrollToAyah, scrollToSurahStart, windowStart]);
+
+  useEffect(() => {
+    const ayah = pendingAnchorRef.current;
+    if (ayah == null) return;
+    pendingAnchorRef.current = null;
+    requestAnimationFrame(() => scrollToAyah(ayah, false, 0.15));
+  }, [scrollToAyah, windowStart]);
+
+  const displayKey = `${showTranslation}:${showTransliteration}:${arabicSize}:${glossSize}:${transliterationSize}`;
+  const displayKeyRef = useRef(displayKey);
+  const ayahsRef = useRef(ayahs);
+  useEffect(() => {
+    ayahsRef.current = ayahs;
+  }, [ayahs]);
+  useEffect(() => {
+    if (displayKeyRef.current === displayKey) return;
+    displayKeyRef.current = displayKey;
+    // Word-by-word and the size toggles change every row's height at once. The
+    // list keeps its old pixel offset, so the ayah that was on screen slides far
+    // away. Pin that ayah once the new height is measured. layout.y does not
+    // include the list header, so the header offset is added back.
+    if (!isActive) return;
+    const ayah = anchorAyahRef.current;
+    let attempts = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const pin = () => {
+      const index = ayahsRef.current.findIndex((item) => item.a === ayah);
+      const layout = index >= 0 ? listRef.current?.getLayout(index) : undefined;
+      attempts += 1;
+      // layout.y ignores the list header. Wait until the row has a real height,
+      // then include the header offset so the ayah stays where it was.
+      const ready = Boolean(layout && layout.y > 0 && layout.isHeightMeasured && layout.height > 0);
+      if (index >= 0 && ready && layout) {
+        const header = listRef.current?.getFirstItemOffset() ?? 0;
+        listRef.current?.scrollToOffset({
+          offset: Math.max(0, layout.y + header - 24),
+          animated: false,
+        });
+        return;
+      }
+      if (attempts >= 8) return;
+      timer = setTimeout(pin, 80);
+    };
+    timer = setTimeout(pin, 40);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [displayKey, isActive]);
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<ReaderAyah>) => (
@@ -295,11 +380,21 @@ export function SurahPage({
   );
 
   const onViewableItemsChanged = useCallback(
-    ({ viewableItems }: { viewableItems: { item: ReaderAyah; isViewable: boolean }[] }) => {
+    ({ viewableItems }: { viewableItems: { item: ReaderAyah; isViewable: boolean; index: number | null }[] }) => {
       if (!isActive) return;
       const first = viewableItems.find((item) => item.isViewable);
       if (!first) return;
-      onVisibleAyahRef.current?.(first.item.a);
+      let ayahNumber = first.item.a;
+      if (typeof first.index === 'number' && first.index >= 0) {
+        const layout = listRef.current?.getLayout(first.index);
+        const header = listRef.current?.getFirstItemOffset() ?? 0;
+        const mostlyAbove = Boolean(
+          layout && layout.height > 0 && scrollOffsetRef.current - (layout.y + header) > layout.height * 0.45,
+        );
+        if (mostlyAbove) ayahNumber = ayahsRef.current[first.index + 1]?.a ?? ayahNumber;
+      }
+      anchorAyahRef.current = ayahNumber;
+      onVisibleAyahRef.current?.(ayahNumber);
       // Re-engaging auto-scroll on its own lives in the settle-gated effects above/in `AyahBlock`
       // - FlashList calls this back continuously while scrolling, so acting on it here too would
       // yank the list back mid-gesture instead of waiting for the reader to actually stop.
@@ -313,20 +408,17 @@ export function SurahPage({
     <FlashList
       ref={listRef}
       data={ayahs}
-      initialScrollIndex={
-        initialFocusAyah > rangeStart
-          ? Math.max(0, ayahs.findIndex((ayah) => ayah.a === initialFocusAyah))
-          : undefined
-      }
       renderItem={renderItem}
       keyExtractor={(ayah) => String(ayah.a)}
-      style={{ ...styles.list, opacity: contentReady ? 1 : 0 }}
+      style={styles.list}
       contentContainerStyle={[styles.listContent, { paddingBottom: (includeTabInset ? BottomTabInset : 0) + Spacing.four + extraBottomPadding }]}
-      maintainVisibleContentPosition={{ disabled: true }}
-      onLoad={() => {
-        if (initialFocusAyah > 0) requestAnimationFrame(() => setContentReady(true));
+      maintainVisibleContentPosition={{
+        // Keep the ayah on screen when rows above grow (word-by-word) or when earlier
+        // ayahs are prepended. autoscrollToTopThreshold is left unset so a prepend does
+        // not yank the reader to the new top.
+        disabled: false,
       }}
-      ListFooterComponent={footer ?? undefined}
+      ListFooterComponent={footer ? () => <View>{footer}</View> : undefined}
       ListHeaderComponent={
         <View style={styles.header}>
           <View style={styles.titleRow}>
@@ -334,7 +426,7 @@ export function SurahPage({
               <ThemedText type="smallBold" style={styles.transliteration}>{meta.en}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.meaning}>{meta.nt}</ThemedText>
               <ThemedText type="small" themeColor="textMuted" style={styles.metaLine}>
-                {headerMeta ?? `${ayahs.length} ${ayahs.length === 1 ? 'ayah' : 'ayahs'}`}
+                {headerMeta ?? `${rangeCount} ${rangeCount === 1 ? 'ayah' : 'ayahs'}`}
               </ThemedText>
               <ThemedText type="small" themeColor="textMuted" style={styles.metaLine}>
                 {meta.rp === 'meccan' ? 'Meccan' : 'Medinan'}
@@ -365,6 +457,7 @@ export function SurahPage({
       onMomentumScrollEnd={() => setScrollEpoch((value) => value + 1)}
       scrollEventThrottle={16}
       onScrollBeginDrag={() => {
+        if (scrollOffsetRef.current < 32) prependEarlier();
         setOpenActionsAyah(0);
         // A manual drag while this surah's playback is what's driving the current scroll -
         // stop auto-scroll from fighting the reader until they either scroll back to the

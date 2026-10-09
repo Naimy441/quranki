@@ -10,7 +10,7 @@ import {
     type Card,
     type GradeName,
 } from '@/lib/fsrs';
-import { buildGlobalSessionQueue, computeReachedLevel, getLevel, getTrackContext, getWord, isLevelUnlocked as levelIsUnlocked, isStudyWord, LAST_LEVEL_NUMBER, LEVELS, LISTENING_RECALL_EASY_STREAK, nextReachedLevel, QAIDA_LEVELS, usesListeningOverlay, type ProgressMap, type WordProgress } from '@/lib/levels';
+import { buildGlobalSessionQueue, computeReachedLevel, deferReturnReviewBacklog, getLevel, getTrackContext, getWord, isLevelUnlocked as levelIsUnlocked, isStudyWord, LAST_LEVEL_NUMBER, LEVELS, LISTENING_RECALL_EASY_STREAK, nextReachedLevel, QAIDA_LEVELS, usesListeningOverlay, type ProgressMap, type WordProgress } from '@/lib/levels';
 import { syncPracticeReminder } from '@/lib/practice-reminder';
 import {
   calendarDayKey,
@@ -56,6 +56,8 @@ interface ProgressState {
   /** Dev-only: hide Arabic on every study prompt until the sitting ends. */
   hideNextSessionPrompts: boolean;
   hydrate: () => Promise<void>;
+  /** Spreads a long-absence review backlog. No-op for daily use and for a second call the same day. */
+  easeReturnBacklog: () => void;
   /** Adds elapsed study-session time (vocab or hifz) to the current local calendar day. */
   recordStudyMs: (ms: number) => void;
   /** Marks today as a study day for the streak. Vocab and hifz grades both call this. */
@@ -107,6 +109,32 @@ interface ProgressState {
 
 function todayKey(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+const DAY_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function latestActivityDay(
+  progress: ProgressMap,
+  reviewDates: readonly string[],
+  studyMsByDate: Record<string, number>,
+): string | null {
+  let best: string | null = null;
+  const consider = (key: string | undefined) => {
+    if (!key || !DAY_KEY_RE.test(key)) return;
+    if (best == null || key > best) best = key;
+  };
+  for (const key of reviewDates) consider(key);
+  for (const key of Object.keys(studyMsByDate)) {
+    if ((studyMsByDate[key] ?? 0) > 0) consider(key);
+  }
+  for (const item of Object.values(progress)) {
+    const reviewed = item.card.last_review;
+    if (!reviewed) continue;
+    const date = new Date(reviewed);
+    if (Number.isNaN(date.getTime())) continue;
+    consider(calendarDayKey(date));
+  }
+  return best;
 }
 
 function nextReviewDayMeta(
@@ -211,10 +239,15 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const loadedStudyMs = sanitizeStudyMsByDate(meta.studyMsByDate, now);
     const studyMsByDate =
       __DEV__ && Object.keys(loadedStudyMs).length === 0 ? demoStudyMsByDate(now) : loadedStudyMs;
+    // Demo chart minutes are not a study session. Counting them would make a long
+    // absence look like today and skip the return-review cap in development.
+    const lastActivity = latestActivityDay(progress, meta.reviewDates, loadedStudyMs);
+    const eased = deferReturnReviewBacklog(progress, now, lastActivity);
+    const nextProgress = eased ?? progress;
     set({
       hydrated: true,
       hydrating: false,
-      progress,
+      progress: nextProgress,
       settings,
       maxUnlockedLevel,
       reviewDates: meta.reviewDates,
@@ -232,6 +265,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
         void saveSettingsAsync(nextSettings);
       }
     });
+    if (eased) void saveProgressAsync(eased);
     if (maxUnlockedLevel !== meta.maxUnlockedLevel || onboardingCompleted !== meta.onboardingCompleted) {
       persistMeta({
         maxUnlockedLevel,
@@ -244,6 +278,17 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
         onboardingCompleted,
       });
     }
+  },
+
+  easeReturnBacklog: () => {
+    const state = get();
+    if (!state.hydrated) return;
+    const now = new Date();
+    const lastActivity = latestActivityDay(state.progress, state.reviewDates, state.studyMsByDate);
+    const eased = deferReturnReviewBacklog(state.progress, now, lastActivity);
+    if (!eased) return;
+    set({ progress: eased });
+    void saveProgressAsync(eased);
   },
 
   recordStudyMs: (ms) => {

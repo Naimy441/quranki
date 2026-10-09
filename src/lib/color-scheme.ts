@@ -17,7 +17,15 @@ export function isThemePreference(value: unknown): value is ThemePreference {
 }
 
 export function applyThemePreference(preference: ThemePreference): void {
-  Appearance.setColorScheme(preference === 'system' ? 'unspecified' : preference);
+  // Static web rendering's Appearance mock has no setColorScheme and throws while
+  // the document is generated. Native and the browser still apply the override.
+  try {
+    if (typeof Appearance.setColorScheme === 'function') {
+      Appearance.setColorScheme(preference === 'system' ? 'unspecified' : preference);
+    }
+  } catch {
+    // Ignore the server render path.
+  }
   persistNativeThemePreference(preference);
 }
 
@@ -34,7 +42,7 @@ function readNativeThemePreference(): ThemePreference | null {
 
 const nativeBootPreference = readNativeThemePreference();
 if (nativeBootPreference) {
-  Appearance.setColorScheme(nativeBootPreference === 'system' ? 'unspecified' : nativeBootPreference);
+  applyThemePreference(nativeBootPreference);
 }
 
 export const didApplyThemeAtImport = nativeBootPreference != null;
