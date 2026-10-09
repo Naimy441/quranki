@@ -85,21 +85,19 @@ export function SurahPage({
   const allAyahs = getSurahAyahs(surahNumber);
   const rangeStart = fromAyah && fromAyah > 0 ? fromAyah : 1;
   const rangeEnd = toAyah && toAyah > 0 ? toAyah : allAyahs.length;
-  // Open on the target ayah. Earlier ayahs are prepended only after the reader scrolls up,
-  // so a bookmark does not wait for every preceding row to mount, and ayahs after the
-  // target stay in the list so they can be scrolled to.
-  const jumpKey = `${surahNumber}:${focusEpoch}:${focusAyah}:${rangeStart}:${rangeEnd}`;
-  const [appliedJumpKey, setAppliedJumpKey] = useState(jumpKey);
-  const [windowStart, setWindowStart] = useState(() => (focusAyah > rangeStart ? focusAyah : rangeStart));
-  if (appliedJumpKey !== jumpKey) {
-    setAppliedJumpKey(jumpKey);
-    const nextStart = focusAyah > rangeStart ? focusAyah : rangeStart;
-    if (nextStart !== windowStart) setWindowStart(nextStart);
-  }
+  // The whole chapter is in the list so a bookmark, pin, or ruku can scroll up to
+  // earlier ayahs and down to later ones. A window that started at the target only
+  // prepended on a top drag, which never runs for a wheel scroll already at offset 0,
+  // so everything above the target stayed missing. FlashList still paints the target
+  // first via initialScrollIndex instead of measuring every earlier row before open.
   const ayahs = useMemo(
-    () => allAyahs.filter((ayah) => ayah.a >= windowStart && ayah.a <= rangeEnd),
-    [allAyahs, rangeEnd, windowStart],
+    () => allAyahs.filter((ayah) => ayah.a >= rangeStart && ayah.a <= rangeEnd),
+    [allAyahs, rangeEnd, rangeStart],
   );
+  const [mountFocusAyah] = useState(() => (focusAyah > rangeStart ? focusAyah : 0));
+  const initialScrollIndex = mountFocusAyah > rangeStart
+    ? ayahs.findIndex((ayah) => ayah.a === mountFocusAyah)
+    : undefined;
   const rangeCount = Math.max(0, rangeEnd - rangeStart + 1);
   const showBismillah = Boolean(meta?.b && rangeStart === 1);
   const { height: windowHeight } = useWindowDimensions();
@@ -107,8 +105,8 @@ export function SurahPage({
   const listRef = useRef<FlashListRef<ReaderAyah>>(null);
   const scrollOffsetRef = useRef(0);
   const anchorAyahRef = useRef(focusAyah > rangeStart ? focusAyah : rangeStart);
-  const pendingAnchorRef = useRef<number | null>(null);
   const didFocus = useRef(false);
+  const skippedInitialScroll = useRef(false);
   const [openActionsAyah, setOpenActionsAyah] = useState(0);
   const [scrollEpoch, setScrollEpoch] = useState(0);
   const lastScrollBump = useRef(0);
@@ -176,14 +174,6 @@ export function SurahPage({
   useEffect(() => {
     didFocus.current = false;
   }, [focusAyah, focusEpoch, surahNumber]);
-
-  const prependEarlier = useCallback(() => {
-    setWindowStart((current) => {
-      if (current <= rangeStart) return current;
-      pendingAnchorRef.current = anchorAyahRef.current;
-      return Math.max(rangeStart, current - 24);
-    });
-  }, [rangeStart]);
 
   const scrollToAyah = useCallback(
     (ayahNumber: number, animated: boolean, viewPosition = 0.12) => {
@@ -286,26 +276,19 @@ export function SurahPage({
 
   useEffect(() => {
     if (!isActive || focusAyah <= 0 || didFocus.current) return;
-    // The list already starts at this ayah, so the first open does not scroll through
-    // everything above it. Mark the jump done anyway: prepending earlier ayahs changes
-    // windowStart and must not scroll the reader back to the target.
-    if (focusEpoch === 0 && windowStart === (focusAyah > rangeStart ? focusAyah : rangeStart)) {
-      didFocus.current = true;
+    didFocus.current = true;
+    // The first open is positioned by initialScrollIndex. Scrolling again here runs
+    // before those rows are measured and lands on ayah 1. A later bookmark, pin, or
+    // ruku on this same list still needs an explicit jump.
+    if (!skippedInitialScroll.current && focusAyah === mountFocusAyah) {
+      skippedInitialScroll.current = true;
       return;
     }
-    didFocus.current = true;
     requestAnimationFrame(() => {
-      if (focusAyah === 1) scrollToSurahStart();
+      if (focusAyah <= rangeStart) scrollToSurahStart();
       else scrollToAyah(focusAyah, false);
     });
-  }, [focusAyah, focusEpoch, isActive, rangeStart, scrollToAyah, scrollToSurahStart, windowStart]);
-
-  useEffect(() => {
-    const ayah = pendingAnchorRef.current;
-    if (ayah == null) return;
-    pendingAnchorRef.current = null;
-    requestAnimationFrame(() => scrollToAyah(ayah, false, 0.15));
-  }, [scrollToAyah, windowStart]);
+  }, [focusAyah, focusEpoch, isActive, mountFocusAyah, rangeStart, scrollToAyah, scrollToSurahStart]);
 
   const displayKey = `${showTranslation}:${showTransliteration}:${arabicSize}:${glossSize}:${transliterationSize}`;
   const displayKeyRef = useRef(displayKey);
@@ -412,10 +395,10 @@ export function SurahPage({
       keyExtractor={(ayah) => String(ayah.a)}
       style={styles.list}
       contentContainerStyle={[styles.listContent, { paddingBottom: (includeTabInset ? BottomTabInset : 0) + Spacing.four + extraBottomPadding }]}
+      initialScrollIndex={initialScrollIndex != null && initialScrollIndex >= 0 ? initialScrollIndex : undefined}
       maintainVisibleContentPosition={{
-        // Keep the ayah on screen when rows above grow (word-by-word) or when earlier
-        // ayahs are prepended. autoscrollToTopThreshold is left unset so a prepend does
-        // not yank the reader to the new top.
+        // Keep the on-screen ayah put when row heights change (word-by-word).
+        // autoscrollToTopThreshold stays unset so that growth does not jump to the top.
         disabled: false,
       }}
       ListFooterComponent={footer ? () => <View>{footer}</View> : undefined}
@@ -457,7 +440,6 @@ export function SurahPage({
       onMomentumScrollEnd={() => setScrollEpoch((value) => value + 1)}
       scrollEventThrottle={16}
       onScrollBeginDrag={() => {
-        if (scrollOffsetRef.current < 32) prependEarlier();
         setOpenActionsAyah(0);
         // A manual drag while this surah's playback is what's driving the current scroll -
         // stop auto-scroll from fighting the reader until they either scroll back to the
