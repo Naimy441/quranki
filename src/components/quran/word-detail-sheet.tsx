@@ -19,6 +19,7 @@ import { formatLevelLabel, getTaughtStudyWordsForLemmas, type Level } from '@/li
 import { getQuranLemma, getWordLemmaIds } from '@/lib/quran-lemmas';
 import { getRootEntry, posLabel } from '@/lib/quran-morphology';
 import type { ReaderMorphSegment, ReaderWord, ReaderWordRef } from '@/lib/quran-reader-types';
+import { ltrLockStyle } from '@/lib/ltr-lock';
 import { formatCount } from '@/lib/stats';
 import { playWordAudio, stopWordAudio } from '@/lib/word-audio';
 import { useProgressStore } from '@/store/progress-store';
@@ -413,7 +414,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.six,
     gap: Spacing.three,
     // Arabic in the sheet must not flip chrome (header, buttons) to RTL.
-    direction: 'ltr',
+    ...ltrLockStyle,
   },
   voiceRow: {
     flexDirection: 'row',

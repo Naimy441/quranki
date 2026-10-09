@@ -7,6 +7,7 @@ import { Spacing } from '@/constants/theme';
 import { useMasteredArabicDigits } from '@/hooks/use-mastered-arabic-digits';
 import { useTheme } from '@/hooks/use-theme';
 import { formatAppDigits } from '@/lib/arabic-digits';
+import { ltrLockStyle } from '@/lib/ltr-lock';
 import { formatRukuAyahRange, formatRukuTitle, type Ruku } from '@/lib/ruku';
 
 export const QuranRukuRow = memo(function QuranRukuRow({
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'baseline',
-    direction: 'ltr',
+    ...ltrLockStyle,
   },
   copy: {
     flex: 1,

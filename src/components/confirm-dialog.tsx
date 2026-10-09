@@ -3,6 +3,7 @@ import { Button } from 'react-native-paper';
 
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
+import { ltrLockStyle } from '@/lib/ltr-lock';
 import { useTheme } from '@/hooks/use-theme';
 
 interface ConfirmDialogProps {
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.large,
     padding: Spacing.four,
     gap: Spacing.two,
-    direction: 'ltr',
+    ...ltrLockStyle,
   },
   copy: {
     textAlign: 'center',

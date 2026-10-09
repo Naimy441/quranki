@@ -3,6 +3,7 @@ import { Button } from 'react-native-paper';
 
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
+import { ltrLockStyle } from '@/lib/ltr-lock';
 import { useTheme } from '@/hooks/use-theme';
 
 interface StreakGraceNoticeProps {
@@ -32,6 +33,6 @@ export function StreakGraceNotice({ visible, streak, onDismiss }: StreakGraceNot
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center', padding: Spacing.four },
-  card: { width: '100%', maxWidth: 320, borderRadius: Radius.large, padding: Spacing.four, gap: Spacing.three, direction: 'ltr' },
+  card: { width: '100%', maxWidth: 320, borderRadius: Radius.large, padding: Spacing.four, gap: Spacing.three, ...ltrLockStyle },
   copy: { textAlign: 'center' },
 });

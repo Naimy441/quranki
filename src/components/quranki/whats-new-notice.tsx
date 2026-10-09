@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticLight, hapticMedium } from '@/lib/haptics';
+import { ltrLockStyle } from '@/lib/ltr-lock';
 import { requireOnline } from '@/lib/offline';
 import {
   dismissWhatsNew,
@@ -98,7 +99,7 @@ export function WhatsNewNotice({ enabled, paused = false }: WhatsNewNoticeProps)
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center', padding: Spacing.four },
-  card: { width: '100%', maxWidth: 320, borderRadius: Radius.large, padding: Spacing.four, paddingTop: Spacing.five, gap: Spacing.three, direction: 'ltr' },
+  card: { width: '100%', maxWidth: 320, borderRadius: Radius.large, padding: Spacing.four, paddingTop: Spacing.five, gap: Spacing.three, ...ltrLockStyle },
   close: { position: 'absolute', top: Spacing.three, right: Spacing.three, zIndex: 1 },
   copy: { textAlign: 'center' },
 });
