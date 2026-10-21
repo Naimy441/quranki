@@ -29,6 +29,9 @@ export default function SettingsPage() {
     importDataJson,
     account,
     signOut,
+    isSyncing,
+    lastSyncedAt,
+    syncNow,
   } = useProgress();
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -95,28 +98,55 @@ export default function SettingsPage() {
         </h3>
 
         {account ? (
-          <div className="flex items-center justify-between p-3 rounded-medium bg-backgroundElement border border-border">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-backgroundSelected text-primary font-bold flex items-center justify-center text-xs">
-                {account.email[0].toUpperCase()}
+          <div className="flex flex-col gap-3 p-3 rounded-medium bg-backgroundElement border border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-backgroundSelected text-primary font-bold flex items-center justify-center text-xs">
+                  {account.email[0].toUpperCase()}
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-text">{account.displayName || account.email}</div>
+                  <div className="text-[11px] text-textSecondary">{account.email}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs font-bold text-text">{account.displayName || account.email}</div>
-                <div className="text-[11px] text-textSecondary">{account.email}</div>
-              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  signOut();
+                  showNotification('Signed out successfully');
+                }}
+                className="py-1.5 px-3 rounded-small border border-border bg-card hover:bg-danger/10 text-danger text-xs font-bold transition-colors flex items-center gap-1.5"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                signOut();
-                showNotification('Signed out successfully');
-              }}
-              className="py-1.5 px-3 rounded-small border border-border bg-card hover:bg-danger/10 text-danger text-xs font-bold transition-colors flex items-center gap-1.5"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign Out</span>
-            </button>
+            <div className="flex items-center justify-between pt-2 border-t border-border/60 text-xs">
+              <div className="flex items-center gap-2 text-textSecondary">
+                <span className={`w-2 h-2 rounded-full ${isSyncing ? 'bg-amber-500 animate-pulse' : 'bg-primary'}`} />
+                <span>
+                  {isSyncing
+                    ? 'Syncing with cloud...'
+                    : lastSyncedAt
+                    ? `Synced with cloud - ${lastSyncedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    : 'Cloud sync active'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  await syncNow();
+                  showNotification('Synced with cloud successfully');
+                }}
+                disabled={isSyncing}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-small bg-card hover:bg-backgroundSelected border border-border text-xs font-bold text-text transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-medium bg-backgroundElement border border-border">

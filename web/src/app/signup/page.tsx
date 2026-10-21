@@ -46,8 +46,9 @@ export default function SignUpPage() {
     try {
       await signUp(email.trim(), password.trim(), name.trim() || undefined);
       router.replace('/learn');
-    } catch {
-      setError('Failed to create account. Please try again.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to create account. Please try again.';
+      setError(msg);
       setLoading(false);
     }
   };

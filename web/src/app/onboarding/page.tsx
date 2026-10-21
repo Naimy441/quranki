@@ -61,7 +61,13 @@ export default function OnboardingPage() {
         setIsSubmitting(false);
         return;
       }
-      await signUp(email.trim(), password.trim());
+      try {
+        await signUp(email.trim(), password.trim());
+      } catch (err: unknown) {
+        setAuthError(err instanceof Error ? err.message : 'Failed to create account.');
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     completeOnboarding({

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import {
   createNewCard,
+  createMasteredCard,
   deserializeCard,
   gradeCard,
   isWordMastered,
@@ -10,6 +11,7 @@ import {
   type GradeName,
 } from '@/lib/fsrs';
 import {
+  computeReachedLevel,
   getLevel,
   LEVELS,
   type ProgressMap,
@@ -26,6 +28,14 @@ import {
   type UserAccount,
   type UserSettings,
 } from '@/lib/storage';
+import {
+  loadAccountSession,
+  signInWithPassword,
+  signOutAccount,
+  signUpWithPassword,
+  type AccountSession,
+} from '@/lib/account-auth';
+import { pullCloudSnapshot, pushCloudSnapshot } from '@/lib/account-sync';
 
 interface ProgressContextValue {
   hydrated: boolean;
@@ -37,6 +47,9 @@ interface ProgressContextValue {
   streak: number;
   studySeconds: number;
   bookmarks: Bookmark[];
+  isSyncing: boolean;
+  lastSyncedAt: Date | null;
+  syncNow: () => Promise<void>;
   gradeWord: (wordId: string, grade: GradeName) => void;
   updateSettings: (partial: Partial<UserSettings>) => void;
   toggleBookmark: (surah: number, ayah: number) => void;
@@ -57,14 +70,179 @@ const ProgressContext = createContext<ProgressContextValue | null>(null);
 export function ProgressProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<StoredData>(() => loadStoredData());
   const [hydrated, setHydrated] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const pushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync cloud data with local data
+  const syncCloud = async (overrideSession?: AccountSession | null): Promise<boolean> => {
+    const session = overrideSession ?? loadAccountSession();
+    if (!session) return false;
+    setIsSyncing(true);
+    try {
+      const remote = await pullCloudSnapshot();
+      if (remote) {
+        setData((prev) => {
+          // Merge words from remote
+          const now = new Date();
+          const nextProgress: ProgressMap = { ...prev.progress };
+
+          for (const wordId of remote.wordIds) {
+            const existing = nextProgress[wordId];
+            if (existing) {
+              const card = deserializeCard(existing.card);
+              if (isWordMastered(card, existing.lastGrade)) continue;
+            }
+            nextProgress[wordId] = {
+              wordId,
+              card: createMasteredCard(now),
+              lastGrade: 'good',
+              reviewedAt: now.toISOString(),
+              easyStreak: 2,
+              autoMastered: true,
+            };
+          }
+
+          const maxUnlocked = computeReachedLevel(nextProgress);
+
+          // Merge review dates
+          const reviewDatesSet = new Set([...prev.reviewDates, ...remote.reviewDates]);
+          const nextReviewDates = Array.from(reviewDatesSet).sort();
+
+          // Merge bookmarks
+          const remoteBookmarks = (remote.quranMarks?.bookmarks || [])
+            .map((b) => ({
+              surah: Number(b.surah),
+              ayah: Number(b.ayah),
+            }))
+            .filter((b) => b.surah > 0 && b.ayah > 0);
+
+          const bmSet = new Set(prev.bookmarks.map((b) => `${b.surah}:${b.ayah}`));
+          const nextBookmarks = [...prev.bookmarks];
+          for (const rb of remoteBookmarks) {
+            const key = `${rb.surah}:${rb.ayah}`;
+            if (!bmSet.has(key)) {
+              bmSet.add(key);
+              nextBookmarks.push(rb);
+            }
+          }
+
+          // Merge settings
+          const nextSettings: UserSettings = {
+            ...prev.settings,
+            ...(remote.settings || {}),
+          };
+
+          // Study seconds (max of local or remote ms/1000)
+          const remoteTotalStudySecs = Math.round(
+            Object.values(remote.studyMsByDate || {}).reduce(
+              (acc, ms) => acc + (typeof ms === 'number' ? ms : 0),
+              0
+            ) / 1000
+          );
+          const nextStudySeconds = Math.max(prev.studySeconds, remoteTotalStudySecs);
+
+          const nextHasCompletedOnboarding = prev.hasCompletedOnboarding || remote.onboardingCompleted;
+
+          const nextData: StoredData = {
+            ...prev,
+            progress: nextProgress,
+            maxUnlockedLevel: Math.max(prev.maxUnlockedLevel, maxUnlocked),
+            reviewDates: nextReviewDates,
+            bookmarks: nextBookmarks,
+            settings: nextSettings,
+            studySeconds: nextStudySeconds,
+            hasCompletedOnboarding: nextHasCompletedOnboarding,
+            account: {
+              email: session.email,
+              displayName: session.displayName || session.email.split('@')[0],
+              createdAt: new Date().toISOString(),
+            },
+          };
+
+          // Push merged snapshot back to cloud to keep everything coherent
+          void pushCloudSnapshot({
+            wordIds: Object.keys(nextProgress),
+            settings: nextSettings,
+            bookmarks: nextBookmarks,
+            reviewDates: nextReviewDates,
+            studySeconds: nextStudySeconds,
+            hasCompletedOnboarding: nextHasCompletedOnboarding,
+          }).catch((e) => console.warn('Background push after sync failed:', e));
+
+          return nextData;
+        });
+      } else {
+        // Remote document does not exist yet: push initial local progress
+        setData((prev) => {
+          void pushCloudSnapshot({
+            wordIds: Object.keys(prev.progress),
+            settings: prev.settings,
+            bookmarks: prev.bookmarks,
+            reviewDates: prev.reviewDates,
+            studySeconds: prev.studySeconds,
+            hasCompletedOnboarding: prev.hasCompletedOnboarding,
+          }).catch((e) => console.warn('Initial push for new account failed:', e));
+
+          return {
+            ...prev,
+            account: {
+              email: session.email,
+              displayName: session.displayName || session.email.split('@')[0],
+              createdAt: new Date().toISOString(),
+            },
+          };
+        });
+      }
+      setLastSyncedAt(new Date());
+      return true;
+    } catch (e) {
+      console.warn('Failed to sync with cloud:', e);
+      return false;
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   useEffect(() => {
-    setHydrated(true);
+    const timer = setTimeout(() => {
+      setHydrated(true);
+      const session = loadAccountSession();
+      if (session) {
+        void syncCloud(session);
+      } else {
+        setData((prev) => (prev.account ? { ...prev, account: null } : prev));
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
+  // Save to local storage and debounce push to cloud when signed in
   useEffect(() => {
     if (!hydrated) return;
     saveStoredData(data);
+
+    const session = loadAccountSession();
+    if (!session) return;
+
+    if (pushTimerRef.current) clearTimeout(pushTimerRef.current);
+    pushTimerRef.current = setTimeout(() => {
+      pushTimerRef.current = null;
+      void pushCloudSnapshot({
+        wordIds: Object.keys(data.progress),
+        settings: data.settings,
+        bookmarks: data.bookmarks,
+        reviewDates: data.reviewDates,
+        studySeconds: data.studySeconds,
+        hasCompletedOnboarding: data.hasCompletedOnboarding,
+      })
+        .then(() => setLastSyncedAt(new Date()))
+        .catch((err) => console.warn('Debounced cloud push failed:', err));
+    }, 2500);
+
+    return () => {
+      if (pushTimerRef.current) clearTimeout(pushTimerRef.current);
+    };
   }, [data, hydrated]);
 
   // Apply dark mode class to document element
@@ -199,28 +377,27 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
-  const signIn = async (email: string): Promise<boolean> => {
-    const account: UserAccount = {
-      email,
-      displayName: email.split('@')[0],
-      createdAt: new Date().toISOString(),
-    };
-    setData((prev) => ({ ...prev, account }));
+  const signIn = async (email: string, password?: string): Promise<boolean> => {
+    if (!password) throw new Error('Enter a password.');
+    const session = await signInWithPassword(email, password);
+    await syncCloud(session);
     return true;
   };
 
-  const signUp = async (email: string, _password?: string, displayName?: string): Promise<boolean> => {
-    const account: UserAccount = {
-      email,
-      displayName: displayName || email.split('@')[0],
-      createdAt: new Date().toISOString(),
-    };
-    setData((prev) => ({ ...prev, account, hasCompletedOnboarding: true }));
+  const signUp = async (email: string, password?: string, displayName?: string): Promise<boolean> => {
+    if (!password) throw new Error('Enter a password.');
+    const session = await signUpWithPassword(email, password, displayName);
+    await syncCloud(session);
     return true;
   };
 
   const signOut = () => {
+    signOutAccount();
     setData((prev) => ({ ...prev, account: null }));
+  };
+
+  const syncNow = async () => {
+    await syncCloud();
   };
 
   const completeOnboarding = (prefs?: { canReadQuran?: boolean; wordsPerSession?: number }) => {
@@ -271,6 +448,9 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
         streak,
         studySeconds: data.studySeconds,
         bookmarks: data.bookmarks,
+        isSyncing,
+        lastSyncedAt,
+        syncNow,
         gradeWord,
         updateSettings,
         toggleBookmark,

@@ -45,6 +45,21 @@ export function createNewCard(now: Date = new Date()): Card {
   return createEmptyCard(now);
 }
 
+export function createMasteredCard(now: Date = new Date()): SerializedCard {
+  const due = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const card = createNewCard(now);
+  return serializeCard({
+    ...card,
+    state: State.Review,
+    due,
+    stability: 30,
+    difficulty: 5,
+    reps: 3,
+    scheduled_days: 30,
+    last_review: now,
+  });
+}
+
 export function serializeCard(card: Card): SerializedCard {
   return {
     ...card,

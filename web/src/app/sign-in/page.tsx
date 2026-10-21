@@ -34,8 +34,9 @@ export default function SignInPage() {
     try {
       await signIn(email.trim(), password.trim());
       router.replace('/learn');
-    } catch {
-      setError('Failed to sign in. Please try again.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to sign in. Please try again.';
+      setError(msg);
       setLoading(false);
     }
   };
