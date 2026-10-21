@@ -1,0 +1,16 @@
+# Next.js
+.next/
+out/
+node_modules/
+.DS_Store
+*.pem
+
+# Local env files
+.env*.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts

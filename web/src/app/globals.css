@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'UthmanicHafs';
+  src: url('/fonts/UthmanicHafs1Ver18.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SurahNames';
+  src: url('/fonts/surah_names.ttf') format('truetype');
+  font-display: swap;
+}
+
+:root {
+  --background: #FFFFFF;
+  --background-element: #F3F7F4;
+  --background-selected: #E4F1E8;
+  --card: #FFFFFF;
+  --border: #E6ECE8;
+  --text: #101913;
+  --text-secondary: #5C6B62;
+  --text-muted: #94A39B;
+  --primary: #1E8E5A;
+  --primary-dark: #0F5C3C;
+  --on-primary: #FFFFFF;
+  --danger: #E5484D;
+  --grade-again: #C1121F;
+  --grade-hard: #F77F00;
+  --grade-good: #146B38;
+  --grade-easy: #3568A0;
+}
+
+.dark {
+  --background: #0A0D0B;
+  --background-element: #151B17;
+  --background-selected: #1E2B23;
+  --card: #131916;
+  --border: #232B26;
+  --text: #F2F6F3;
+  --text-secondary: #9CB0A5;
+  --text-muted: #6C7A73;
+  --primary: #34C77E;
+  --primary-dark: #1E8E5A;
+  --on-primary: #06140D;
+  --danger: #F1666B;
+  --grade-again: #E23A44;
+  --grade-hard: #FF9520;
+  --grade-good: #2FA66A;
+  --grade-easy: #4A6F9A;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+.uthmanic-text {
+  font-family: 'UthmanicHafs', serif;
+  direction: rtl;
+  font-feature-settings: 'liga' 1, 'calt' 1;
+}
+
+.surah-name-glyph {
+  font-family: 'SurahNames', sans-serif;
+  user-select: none;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(140, 160, 150, 0.3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 160, 150, 0.6);
+}
