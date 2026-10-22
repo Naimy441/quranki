@@ -1,0 +1,18 @@
+{
+  "src": "vo-clips/fatiha-a3-intro.mp3",
+  "speechStart": 0,
+  "speechEnd": 1.52,
+  "words": [
+    {
+      "w": "Ayah",
+      "s": 0,
+      "e": 0.32
+    },
+    {
+      "w": "three.",
+      "s": 0.48,
+      "e": 1.52
+    }
+  ],
+  "hash": "2cc944a51ebd"
+}

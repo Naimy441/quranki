@@ -1,0 +1,38 @@
+{
+  "src": "vo-clips/fatiha-1-7-6.mp3",
+  "speechStart": 0,
+  "speechEnd": 4,
+  "words": [
+    {
+      "w": "Al-maghdoobi.",
+      "s": 0,
+      "e": 1.6
+    },
+    {
+      "w": "Those",
+      "s": 1.68,
+      "e": 1.92
+    },
+    {
+      "w": "who",
+      "s": 2,
+      "e": 2.08
+    },
+    {
+      "w": "have",
+      "s": 2.16,
+      "e": 2.4
+    },
+    {
+      "w": "earned",
+      "s": 2.6,
+      "e": 2.8
+    },
+    {
+      "w": "anger.",
+      "s": 2.96,
+      "e": 4
+    }
+  ],
+  "hash": "a98e1cdd3fdd"
+}

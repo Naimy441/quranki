@@ -1,0 +1,28 @@
+{
+  "src": "vo-clips/rahma-arham.mp3",
+  "speechStart": 0,
+  "speechEnd": 3.44,
+  "words": [
+    {
+      "w": "And",
+      "s": 0,
+      "e": 0.16
+    },
+    {
+      "w": "al-ar-haam.",
+      "s": 0.32,
+      "e": 1.92
+    },
+    {
+      "w": "The",
+      "s": 2,
+      "e": 2.08
+    },
+    {
+      "w": "wombs.",
+      "s": 2.16,
+      "e": 3.44
+    }
+  ],
+  "hash": "b740199a1d8e"
+}

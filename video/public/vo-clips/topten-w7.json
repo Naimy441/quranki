@@ -1,0 +1,18 @@
+{
+  "src": "vo-clips/topten-w7.mp3",
+  "speechStart": 0,
+  "speechEnd": 1.12,
+  "words": [
+    {
+      "w": "He",
+      "s": 0,
+      "e": 0.24
+    },
+    {
+      "w": "said.",
+      "s": 0.44,
+      "e": 1.12
+    }
+  ],
+  "hash": "3afb9e4c40e4"
+}

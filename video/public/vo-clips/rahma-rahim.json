@@ -1,0 +1,28 @@
+{
+  "src": "vo-clips/rahma-rahim.mp3",
+  "speechStart": 0,
+  "speechEnd": 3.52,
+  "words": [
+    {
+      "w": "Ar-Raheem.",
+      "s": 0,
+      "e": 1.44
+    },
+    {
+      "w": "The",
+      "s": 1.52,
+      "e": 1.6
+    },
+    {
+      "w": "Especially",
+      "s": 1.68,
+      "e": 2.32
+    },
+    {
+      "w": "Merciful.",
+      "s": 2.4,
+      "e": 3.52
+    }
+  ],
+  "hash": "efe9f4fd22bf"
+}

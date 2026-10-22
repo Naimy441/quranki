@@ -1,0 +1,18 @@
+{
+  "src": "vo-clips/fatiha-a6-intro.mp3",
+  "speechStart": 0,
+  "speechEnd": 1.6,
+  "words": [
+    {
+      "w": "Ayah",
+      "s": 0,
+      "e": 0.4
+    },
+    {
+      "w": "six.",
+      "s": 0.56,
+      "e": 1.6
+    }
+  ],
+  "hash": "d66e847cd04e"
+}

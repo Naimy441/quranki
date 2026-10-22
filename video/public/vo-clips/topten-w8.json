@@ -1,0 +1,23 @@
+{
+  "src": "vo-clips/topten-w8.mp3",
+  "speechStart": 0,
+  "speechEnd": 2.4,
+  "words": [
+    {
+      "w": "Who,",
+      "s": 0,
+      "e": 0.8
+    },
+    {
+      "w": "or",
+      "s": 0.88,
+      "e": 1.04
+    },
+    {
+      "w": "which.",
+      "s": 1.28,
+      "e": 2.4
+    }
+  ],
+  "hash": "83a1b16cb79f"
+}

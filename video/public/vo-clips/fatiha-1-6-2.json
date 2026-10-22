@@ -1,0 +1,23 @@
+{
+  "src": "vo-clips/fatiha-1-6-2.mp3",
+  "speechStart": 0,
+  "speechEnd": 2.8,
+  "words": [
+    {
+      "w": "As-siraata.",
+      "s": 0,
+      "e": 1.52
+    },
+    {
+      "w": "The",
+      "s": 1.6,
+      "e": 1.68
+    },
+    {
+      "w": "path.",
+      "s": 1.76,
+      "e": 2.8
+    }
+  ],
+  "hash": "44631c070631"
+}

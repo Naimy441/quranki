@@ -1,0 +1,18 @@
+{
+  "src": "vo-clips/fatiha-1-7-5.mp3",
+  "speechStart": 0,
+  "speechEnd": 2.48,
+  "words": [
+    {
+      "w": "Ghayri.",
+      "s": 0,
+      "e": 1.2
+    },
+    {
+      "w": "Not.",
+      "s": 1.28,
+      "e": 2.48
+    }
+  ],
+  "hash": "197b3c1a75d4"
+}

@@ -1,0 +1,23 @@
+{
+  "src": "vo-clips/topten-w10.mp3",
+  "speechStart": 0,
+  "speechEnd": 2.48,
+  "words": [
+    {
+      "w": "Ten.",
+      "s": 0,
+      "e": 1.04
+    },
+    {
+      "w": "He",
+      "s": 1.12,
+      "e": 1.28
+    },
+    {
+      "w": "was.",
+      "s": 1.36,
+      "e": 2.48
+    }
+  ],
+  "hash": "5f78ab9b81bd"
+}

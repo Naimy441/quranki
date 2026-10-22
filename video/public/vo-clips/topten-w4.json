@@ -1,0 +1,23 @@
+{
+  "src": "vo-clips/topten-w4.mp3",
+  "speechStart": 0,
+  "speechEnd": 2.24,
+  "words": [
+    {
+      "w": "No,",
+      "s": 0,
+      "e": 0.72
+    },
+    {
+      "w": "or",
+      "s": 0.84,
+      "e": 0.96
+    },
+    {
+      "w": "not.",
+      "s": 1.28,
+      "e": 2.24
+    }
+  ],
+  "hash": "de816edebdd7"
+}

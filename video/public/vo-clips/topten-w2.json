@@ -1,0 +1,33 @@
+{
+  "src": "vo-clips/topten-w2.mp3",
+  "speechStart": 0,
+  "speechEnd": 4.24,
+  "words": [
+    {
+      "w": "Allah.",
+      "s": 0,
+      "e": 1.2
+    },
+    {
+      "w": "Almost",
+      "s": 1.28,
+      "e": 1.68
+    },
+    {
+      "w": "twenty-seven",
+      "s": 1.76,
+      "e": 2.56
+    },
+    {
+      "w": "hundred",
+      "s": 2.72,
+      "e": 3.04
+    },
+    {
+      "w": "times.",
+      "s": 3.12,
+      "e": 4.24
+    }
+  ],
+  "hash": "7630b3171657"
+}

@@ -1,0 +1,38 @@
+{
+  "src": "vo-clips/fatiha-a3-tr.mp3",
+  "speechStart": 0,
+  "speechEnd": 4.24,
+  "words": [
+    {
+      "w": "The",
+      "s": 0,
+      "e": 0.16
+    },
+    {
+      "w": "Entirely",
+      "s": 0.32,
+      "e": 0.8
+    },
+    {
+      "w": "Merciful,",
+      "s": 0.88,
+      "e": 2
+    },
+    {
+      "w": "the",
+      "s": 2.08,
+      "e": 2.16
+    },
+    {
+      "w": "Especially",
+      "s": 2.24,
+      "e": 2.88
+    },
+    {
+      "w": "Merciful,",
+      "s": 2.96,
+      "e": 4.24
+    }
+  ],
+  "hash": "6d4645ff60b3"
+}

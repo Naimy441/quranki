@@ -1,0 +1,18 @@
+{
+  "src": "vo-clips/rahma-rahma.mp3",
+  "speechStart": 0,
+  "speechEnd": 2.4,
+  "words": [
+    {
+      "w": "Rahmah.",
+      "s": 0,
+      "e": 1.12
+    },
+    {
+      "w": "Mercy.",
+      "s": 1.28,
+      "e": 2.4
+    }
+  ],
+  "hash": "1d1a9e689035"
+}

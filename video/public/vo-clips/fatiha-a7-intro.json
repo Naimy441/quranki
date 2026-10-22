@@ -1,0 +1,33 @@
+{
+  "src": "vo-clips/fatiha-a7-intro.mp3",
+  "speechStart": 0,
+  "speechEnd": 2.4,
+  "words": [
+    {
+      "w": "And",
+      "s": 0,
+      "e": 0.16
+    },
+    {
+      "w": "ayah",
+      "s": 0.24,
+      "e": 0.56
+    },
+    {
+      "w": "seven,",
+      "s": 0.64,
+      "e": 1.44
+    },
+    {
+      "w": "the",
+      "s": 1.48,
+      "e": 1.52
+    },
+    {
+      "w": "longest.",
+      "s": 1.6,
+      "e": 2.4
+    }
+  ],
+  "hash": "f1053b9d2adb"
+}

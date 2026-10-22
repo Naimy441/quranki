@@ -1,0 +1,18 @@
+{
+  "src": "vo-clips/fatiha-a4-tr-intro.mp3",
+  "speechStart": 0,
+  "speechEnd": 1.36,
+  "words": [
+    {
+      "w": "Put",
+      "s": 0,
+      "e": 0.24
+    },
+    {
+      "w": "together:",
+      "s": 0.32,
+      "e": 1.36
+    }
+  ],
+  "hash": "00f0f3420d65"
+}

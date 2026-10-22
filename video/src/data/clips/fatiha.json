@@ -1,0 +1,419 @@
+{
+ "ayahs": [
+  {
+   "ayah": 1,
+   "words": [
+    {
+     "loc": "1:1:1",
+     "ar": "بِسۡمِ",
+     "tl": "bis'mi",
+     "gloss": "In (the) name",
+     "lemma": "اسْم",
+     "root": "س م و",
+     "lemmaFreq": 39,
+     "rootFreq": 381,
+     "audio": "wbw/001_001_001.mp3"
+    },
+    {
+     "loc": "1:1:2",
+     "ar": "ٱللَّهِ",
+     "tl": "l-lahi",
+     "gloss": "(of) Allah",
+     "lemma": "اللَّه",
+     "root": "أ ل ه",
+     "lemmaFreq": 2699,
+     "rootFreq": 2851,
+     "audio": "wbw/001_001_002.mp3"
+    },
+    {
+     "loc": "1:1:3",
+     "ar": "ٱلرَّحۡمَـٰنِ",
+     "tl": "l-raḥmāni",
+     "gloss": "the Most Gracious",
+     "lemma": "رَحْمٰن",
+     "root": "ر ح م",
+     "lemmaFreq": 57,
+     "rootFreq": 339,
+     "audio": "wbw/001_001_003.mp3"
+    },
+    {
+     "loc": "1:1:4",
+     "ar": "ٱلرَّحِيمِ",
+     "tl": "l-raḥīmi",
+     "gloss": "the Most Merciful",
+     "lemma": "رَحِيم",
+     "root": "ر ح م",
+     "lemmaFreq": 116,
+     "rootFreq": 339,
+     "audio": "wbw/001_001_004.mp3"
+    }
+   ],
+   "translation": "In the name of Allāh, the Entirely Merciful, the Especially Merciful.",
+   "recitation": "rec/001-001.mp3",
+   "wordStarts": [
+    0,
+    0.6,
+    1.8,
+    2.48
+   ]
+  },
+  {
+   "ayah": 2,
+   "words": [
+    {
+     "loc": "1:2:1",
+     "ar": "ٱلۡحَمۡدُ",
+     "tl": "al-ḥamdu",
+     "gloss": "All praises and thanks",
+     "lemma": "حَمْد",
+     "root": "ح م د",
+     "lemmaFreq": 43,
+     "rootFreq": 68,
+     "audio": "wbw/001_002_001.mp3"
+    },
+    {
+     "loc": "1:2:2",
+     "ar": "لِلَّهِ",
+     "tl": "lillahi",
+     "gloss": "(be) to Allah",
+     "lemma": "اللَّه",
+     "root": "أ ل ه",
+     "lemmaFreq": 2699,
+     "rootFreq": 2851,
+     "audio": "wbw/001_002_002.mp3"
+    },
+    {
+     "loc": "1:2:3",
+     "ar": "رَبِّ",
+     "tl": "rabbi",
+     "gloss": "the Lord",
+     "lemma": "رَبّ",
+     "root": "ر ب ب",
+     "lemmaFreq": 975,
+     "rootFreq": 980,
+     "audio": "wbw/001_002_003.mp3"
+    },
+    {
+     "loc": "1:2:4",
+     "ar": "ٱلۡعَـٰلَمِينَ",
+     "tl": "l-ʿālamīna",
+     "gloss": "of the universe",
+     "lemma": "عالَم",
+     "root": "ع ل م",
+     "lemmaFreq": 73,
+     "rootFreq": 854,
+     "audio": "wbw/001_002_004.mp3"
+    }
+   ],
+   "translation": "[All] praise is [due] to Allāh, Lord of the worlds -",
+   "recitation": "rec/001-002.mp3",
+   "wordStarts": [
+    0.8,
+    1.57,
+    2.53,
+    2.8
+   ]
+  },
+  {
+   "ayah": 3,
+   "words": [
+    {
+     "loc": "1:3:1",
+     "ar": "ٱلرَّحۡمَـٰنِ",
+     "tl": "al-raḥmāni",
+     "gloss": "The Most Gracious",
+     "lemma": "رَحْمٰن",
+     "root": "ر ح م",
+     "lemmaFreq": 57,
+     "rootFreq": 339,
+     "audio": "wbw/001_003_001.mp3"
+    },
+    {
+     "loc": "1:3:2",
+     "ar": "ٱلرَّحِيمِ",
+     "tl": "l-raḥīmi",
+     "gloss": "the Most Merciful",
+     "lemma": "رَحِيم",
+     "root": "ر ح م",
+     "lemmaFreq": 116,
+     "rootFreq": 339,
+     "audio": "wbw/001_003_002.mp3"
+    }
+   ],
+   "translation": "The Entirely Merciful, the Especially Merciful,",
+   "recitation": "rec/001-003.mp3",
+   "wordStarts": [
+    0.8,
+    1.52
+   ]
+  },
+  {
+   "ayah": 4,
+   "words": [
+    {
+     "loc": "1:4:1",
+     "ar": "مَـٰلِكِ",
+     "tl": "māliki",
+     "gloss": "(The) Master",
+     "lemma": "مالِك",
+     "root": "م ل ك",
+     "lemmaFreq": 4,
+     "rootFreq": 206,
+     "audio": "wbw/001_004_001.mp3"
+    },
+    {
+     "loc": "1:4:2",
+     "ar": "يَوۡمِ",
+     "tl": "yawmi",
+     "gloss": "(of the) Day",
+     "lemma": "يَوْم",
+     "root": "ي و م",
+     "lemmaFreq": 475,
+     "rootFreq": 475,
+     "audio": "wbw/001_004_002.mp3"
+    },
+    {
+     "loc": "1:4:3",
+     "ar": "ٱلدِّينِ",
+     "tl": "l-dīni",
+     "gloss": "(of the) Judgment",
+     "lemma": "دِين",
+     "root": "د ي ن",
+     "lemmaFreq": 92,
+     "rootFreq": 101,
+     "audio": "wbw/001_004_003.mp3"
+    }
+   ],
+   "translation": "Sovereign of the Day of Recompense.",
+   "recitation": "rec/001-004.mp3",
+   "wordStarts": [
+    0,
+    0.92,
+    1.84
+   ]
+  },
+  {
+   "ayah": 5,
+   "words": [
+    {
+     "loc": "1:5:1",
+     "ar": "إِيَّاكَ",
+     "tl": "iyyāka",
+     "gloss": "You Alone",
+     "lemma": "إِيّا",
+     "root": null,
+     "lemmaFreq": 24,
+     "rootFreq": null,
+     "audio": "wbw/001_005_001.mp3"
+    },
+    {
+     "loc": "1:5:2",
+     "ar": "نَعۡبُدُ",
+     "tl": "naʿbudu",
+     "gloss": "we worship",
+     "lemma": "عَبَدَ",
+     "root": "ع ب د",
+     "lemmaFreq": 122,
+     "rootFreq": 275,
+     "audio": "wbw/001_005_002.mp3"
+    },
+    {
+     "loc": "1:5:3",
+     "ar": "وَإِيَّاكَ",
+     "tl": "wa-iyyāka",
+     "gloss": "and You Alone",
+     "lemma": "إِيّا",
+     "root": null,
+     "lemmaFreq": 24,
+     "rootFreq": null,
+     "audio": "wbw/001_005_003.mp3"
+    },
+    {
+     "loc": "1:5:4",
+     "ar": "نَسۡتَعِينُ",
+     "tl": "nastaʿīnu",
+     "gloss": "we ask for help",
+     "lemma": "اسْتَعِينُ",
+     "root": "ع و ن",
+     "lemmaFreq": 4,
+     "rootFreq": 12,
+     "audio": "wbw/001_005_004.mp3"
+    }
+   ],
+   "translation": "It is You we worship and You we ask for help.",
+   "recitation": "rec/001-005.mp3",
+   "wordStarts": [
+    0,
+    1.2,
+    2.08,
+    3.4
+   ]
+  },
+  {
+   "ayah": 6,
+   "words": [
+    {
+     "loc": "1:6:1",
+     "ar": "ٱهۡدِنَا",
+     "tl": "ih'dinā",
+     "gloss": "Guide us",
+     "lemma": "هَدَى",
+     "root": "ه د ي",
+     "lemmaFreq": 144,
+     "rootFreq": 316,
+     "audio": "wbw/001_006_001.mp3"
+    },
+    {
+     "loc": "1:6:2",
+     "ar": "ٱلصِّرٰطَ",
+     "tl": "l-ṣirāṭa",
+     "gloss": "(to) the path",
+     "lemma": "صِراط",
+     "root": "ص ر ط",
+     "lemmaFreq": 45,
+     "rootFreq": 45,
+     "audio": "wbw/001_006_002.mp3"
+    },
+    {
+     "loc": "1:6:3",
+     "ar": "ٱلۡمُسۡتَقِيمَ",
+     "tl": "l-mus'taqīma",
+     "gloss": "the straight",
+     "lemma": "مُسْتَقِيم",
+     "root": "ق و م",
+     "lemmaFreq": 37,
+     "rootFreq": 660,
+     "audio": "wbw/001_006_003.mp3"
+    }
+   ],
+   "translation": "Guide us to the straight path -",
+   "recitation": "rec/001-006.mp3",
+   "wordStarts": [
+    0,
+    1,
+    2.04
+   ]
+  },
+  {
+   "ayah": 7,
+   "words": [
+    {
+     "loc": "1:7:1",
+     "ar": "صِرٰطَ",
+     "tl": "ṣirāṭa",
+     "gloss": "(The) path",
+     "lemma": "صِراط",
+     "root": "ص ر ط",
+     "lemmaFreq": 45,
+     "rootFreq": 45,
+     "audio": "wbw/001_007_001.mp3"
+    },
+    {
+     "loc": "1:7:2",
+     "ar": "ٱلَّذِينَ",
+     "tl": "alladhīna",
+     "gloss": "(of) those",
+     "lemma": "الَّذِي",
+     "root": null,
+     "lemmaFreq": 1468,
+     "rootFreq": null,
+     "audio": "wbw/001_007_002.mp3"
+    },
+    {
+     "loc": "1:7:3",
+     "ar": "أَنۡعَمۡتَ",
+     "tl": "anʿamta",
+     "gloss": "You have bestowed (Your) Favors",
+     "lemma": "أَنْعَمَ",
+     "root": "ن ع م",
+     "lemmaFreq": 17,
+     "rootFreq": 140,
+     "audio": "wbw/001_007_003.mp3"
+    },
+    {
+     "loc": "1:7:4",
+     "ar": "عَلَيۡهِمۡ",
+     "tl": "ʿalayhim",
+     "gloss": "on them",
+     "lemma": "عَلَى",
+     "root": null,
+     "lemmaFreq": 1445,
+     "rootFreq": null,
+     "audio": "wbw/001_007_004.mp3"
+    },
+    {
+     "loc": "1:7:5",
+     "ar": "غَيۡرِ",
+     "tl": "ghayri",
+     "gloss": "not (of)",
+     "lemma": "غَيْر",
+     "root": "غ ي ر",
+     "lemmaFreq": 147,
+     "rootFreq": 154,
+     "audio": "wbw/001_007_005.mp3"
+    },
+    {
+     "loc": "1:7:6",
+     "ar": "ٱلۡمَغۡضُوبِ",
+     "tl": "l-maghḍūbi",
+     "gloss": "those who earned (Your) wrath",
+     "lemma": "مَغْضُوب",
+     "root": "غ ض ب",
+     "lemmaFreq": 1,
+     "rootFreq": 24,
+     "audio": "wbw/001_007_006.mp3"
+    },
+    {
+     "loc": "1:7:7",
+     "ar": "عَلَيۡهِمۡ",
+     "tl": "ʿalayhim",
+     "gloss": "on themselves",
+     "lemma": "عَلَى",
+     "root": null,
+     "lemmaFreq": 1445,
+     "rootFreq": null,
+     "audio": "wbw/001_007_007.mp3"
+    },
+    {
+     "loc": "1:7:8",
+     "ar": "وَلَا",
+     "tl": "walā",
+     "gloss": "and not",
+     "lemma": "لا",
+     "root": null,
+     "lemmaFreq": 1742,
+     "rootFreq": null,
+     "audio": "wbw/001_007_008.mp3"
+    },
+    {
+     "loc": "1:7:9",
+     "ar": "ٱلضَّآلِّينَ",
+     "tl": "l-ḍālīna",
+     "gloss": "(of) those who go astray",
+     "lemma": "ضالّ",
+     "root": "ض ل ل",
+     "lemmaFreq": 14,
+     "rootFreq": 191,
+     "audio": "wbw/001_007_009.mp3"
+    }
+   ],
+   "translation": "The path of those upon whom You have bestowed favor, not of those who have earned [Your] anger or of those who are astray.",
+   "recitation": "rec/001-007.mp3",
+   "wordStarts": [
+    0,
+    1.24,
+    2,
+    3.32,
+    4,
+    5.04,
+    6.44,
+    7.17,
+    7.72
+   ]
+  }
+ ],
+ "distinctLemmas": 23,
+ "occurrences": 9783,
+ "quranWords": 77429,
+ "share": 12.6
+}

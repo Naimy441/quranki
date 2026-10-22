@@ -1,0 +1,18 @@
+{
+  "src": "vo-clips/fatiha-a5-intro.mp3",
+  "speechStart": 0,
+  "speechEnd": 1.6,
+  "words": [
+    {
+      "w": "Ayah",
+      "s": 0,
+      "e": 0.4
+    },
+    {
+      "w": "five.",
+      "s": 0.48,
+      "e": 1.6
+    }
+  ],
+  "hash": "90304768079e"
+}

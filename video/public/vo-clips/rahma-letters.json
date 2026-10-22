@@ -1,0 +1,23 @@
+{
+  "src": "vo-clips/rahma-letters.mp3",
+  "speechStart": 0,
+  "speechEnd": 2.56,
+  "words": [
+    {
+      "w": "Raa...",
+      "s": 0,
+      "e": 0.96
+    },
+    {
+      "w": "Haa...",
+      "s": 1,
+      "e": 1.84
+    },
+    {
+      "w": "Meem.",
+      "s": 1.92,
+      "e": 2.56
+    }
+  ],
+  "hash": "77baf70ad3c0"
+}

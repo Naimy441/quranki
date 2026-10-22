@@ -1,0 +1,38 @@
+{
+  "src": "vo-clips/fatiha-a4-tr.mp3",
+  "speechStart": 0,
+  "speechEnd": 2.72,
+  "words": [
+    {
+      "w": "Sovereign",
+      "s": 0,
+      "e": 0.56
+    },
+    {
+      "w": "of",
+      "s": 0.64,
+      "e": 0.72
+    },
+    {
+      "w": "the",
+      "s": 0.8,
+      "e": 0.88
+    },
+    {
+      "w": "Day",
+      "s": 0.96,
+      "e": 1.2
+    },
+    {
+      "w": "of",
+      "s": 1.28,
+      "e": 1.36
+    },
+    {
+      "w": "Recompense.",
+      "s": 1.44,
+      "e": 2.72
+    }
+  ],
+  "hash": "6ab0bd54b492"
+}

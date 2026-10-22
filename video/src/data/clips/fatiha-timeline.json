@@ -1,0 +1,4796 @@
+{
+ "duration": 528.24,
+ "timeline": {
+  "h1": {
+   "start": 0.25,
+   "end": 6.57,
+   "sayStart": 0.25,
+   "sayEnd": 6.57,
+   "say": "If you've prayed for fifteen years, you've recited Al-Fatiha more than ninety thousand times."
+  },
+  "h2": {
+   "start": 6.970000000000001,
+   "end": 16.009999999999998,
+   "sayStart": 6.970000000000001,
+   "sayEnd": 16.009999999999998,
+   "say": "Seventeen times a day, every single day. But if someone stopped you and asked what one of its words means, could you tell them?"
+  },
+  "h3": {
+   "start": 16.509999999999998,
+   "end": 21.63,
+   "sayStart": 16.509999999999998,
+   "sayEnd": 21.63,
+   "say": "By the end of this video, you'll know every word. All twenty-nine of them."
+  },
+  "h4": {
+   "start": 22.029999999999998,
+   "end": 33.39,
+   "sayStart": 22.029999999999998,
+   "sayEnd": 33.39,
+   "say": "And here's why it's worth it. The words in these seven verses appear almost ten thousand times across the Quran. That's one in every eight words you'll ever read in it."
+  },
+  "h5": {
+   "start": 33.89,
+   "end": 37.33,
+   "sayStart": 33.89,
+   "sayEnd": 37.33,
+   "say": "So let's go through it, one ayah at a time."
+  },
+  "title": {
+   "start": 37.629999999999995,
+   "end": 41.629999999999995
+  },
+  "a1-intro": {
+   "start": 41.83,
+   "end": 43.43,
+   "sayStart": 41.83,
+   "sayEnd": 43.43,
+   "say": "Ayah one."
+  },
+  "a1-rec": {
+   "start": 43.63,
+   "end": 48.758
+  },
+  "1:1:1": {
+   "start": 49.258,
+   "end": 58.466513000000006,
+   "sayStart": 50.226513000000004,
+   "sayEnd": 58.466513000000006,
+   "say": "Bismi. In the name. The bi at the front means in, or with. And ism means name."
+  },
+  "1:1:2": {
+   "start": 58.91651300000001,
+   "end": 67.61369,
+   "sayStart": 60.09369000000001,
+   "sayEnd": 67.61369,
+   "say": "Allah. The most frequent name in the entire Quran. Two thousand, six hundred ninety-nine times."
+  },
+  "1:1:3": {
+   "start": 68.06369000000001,
+   "end": 78.86565600000002,
+   "sayStart": 69.74565600000001,
+   "sayEnd": 78.86565600000002,
+   "say": "Ar-Rahman. The Entirely Merciful. It comes from the root ra, ha, meem, the root of mercy."
+  },
+  "1:1:4": {
+   "start": 79.31565600000002,
+   "end": 93.07784800000002,
+   "sayStart": 80.91784800000002,
+   "sayEnd": 93.07784800000002,
+   "say": "Ar-Raheem. The Especially Merciful. Same root, different form. Ar-Rahman is used only for Allah, while raheem can describe a person too."
+  },
+  "a1-tr-intro": {
+   "start": 93.52784800000002,
+   "end": 94.72784800000002,
+   "sayStart": 93.52784800000002,
+   "sayEnd": 94.72784800000002,
+   "say": "Put together:"
+  },
+  "a1-tr": {
+   "start": 94.87784800000003,
+   "end": 100.39784800000002,
+   "sayStart": 94.87784800000003,
+   "sayEnd": 100.39784800000002,
+   "say": "In the name of Allāh, the Entirely Merciful, the Especially Merciful."
+  },
+  "a2-intro": {
+   "start": 101.19784800000002,
+   "end": 102.71784800000002,
+   "sayStart": 101.19784800000002,
+   "sayEnd": 102.71784800000002,
+   "say": "Ayah two."
+  },
+  "a2-rec": {
+   "start": 102.91784800000002,
+   "end": 109.19522300000003
+  },
+  "1:2:1": {
+   "start": 109.69522300000003,
+   "end": 118.97414600000003,
+   "sayStart": 110.89414600000003,
+   "sayEnd": 118.97414600000003,
+   "say": "Al-hamdu. The praise. Al simply means the, and you'll see it on almost every line of the Quran."
+  },
+  "1:2:2": {
+   "start": 119.42414600000004,
+   "end": 127.76511300000003,
+   "sayStart": 120.88511300000003,
+   "sayEnd": 127.76511300000003,
+   "say": "Lillahi. Li means to, or for. So this is: to Allah."
+  },
+  "1:2:3": {
+   "start": 128.21511300000003,
+   "end": 143.276439,
+   "sayStart": 129.35643900000002,
+   "sayEnd": 143.276439,
+   "say": "Rabbi. Lord. But rabb holds much more than one English word: owner, master, sustainer, provider, caretaker. It appears nine hundred seventy-five times."
+  },
+  "1:2:4": {
+   "start": 143.726439,
+   "end": 155.469453,
+   "sayStart": 145.869453,
+   "sayEnd": 155.469453,
+   "say": "Al-'alameen. The worlds. Its root, ayn, lam, meem, is the same root as 'ilm, knowledge."
+  },
+  "a2-tr-intro": {
+   "start": 155.91945299999998,
+   "end": 157.19945299999998,
+   "sayStart": 155.91945299999998,
+   "sayEnd": 157.19945299999998,
+   "say": "Put together:"
+  },
+  "a2-tr": {
+   "start": 157.34945299999998,
+   "end": 161.34945299999998,
+   "sayStart": 157.34945299999998,
+   "sayEnd": 161.34945299999998,
+   "say": "[All] praise is [due] to Allāh, Lord of the worlds."
+  },
+  "a3-intro": {
+   "start": 162.149453,
+   "end": 163.669453,
+   "sayStart": 162.149453,
+   "sayEnd": 163.669453,
+   "say": "Ayah three."
+  },
+  "a3-rec": {
+   "start": 163.869453,
+   "end": 168.37051599999998
+  },
+  "a3-known": {
+   "start": 168.770516,
+   "end": 179.49051599999999,
+   "sayStart": 168.770516,
+   "sayEnd": 179.49051599999999,
+   "say": "Ar-Rahman, ar-Raheem. You already know both of these words. That's the power of learning the Quran's vocabulary: it keeps coming back."
+  },
+  "a3-tr": {
+   "start": 179.99051599999999,
+   "end": 184.230516,
+   "sayStart": 179.99051599999999,
+   "sayEnd": 184.230516,
+   "say": "The Entirely Merciful, the Especially Merciful,"
+  },
+  "a4-intro": {
+   "start": 185.030516,
+   "end": 186.55051600000002,
+   "sayStart": 185.030516,
+   "sayEnd": 186.55051600000002,
+   "say": "Ayah four."
+  },
+  "a4-rec": {
+   "start": 186.750516,
+   "end": 191.382204
+  },
+  "1:4:1": {
+   "start": 191.882204,
+   "end": 205.339755,
+   "sayStart": 193.179755,
+   "sayEnd": 205.339755,
+   "say": "Maaliki. Master, or Sovereign. Its root, meem, lam, kaf, also gives us malik, king, and mulk, dominion."
+  },
+  "1:4:2": {
+   "start": 205.78975499999999,
+   "end": 216.69351899999998,
+   "sayStart": 207.01351899999997,
+   "sayEnd": 216.69351899999998,
+   "say": "Yawmi. Day. Yawm appears four hundred seventy-five times, so it is one of the most useful words you can learn."
+  },
+  "1:4:3": {
+   "start": 217.14351899999997,
+   "end": 228.16016299999995,
+   "sayStart": 218.96016299999997,
+   "sayEnd": 228.16016299999995,
+   "say": "Ad-deen. Recompense. Yawm ad-deen is the Day when everything we earned, good or bad, is repaid."
+  },
+  "a4-tr-intro": {
+   "start": 228.61016299999994,
+   "end": 229.97016299999996,
+   "sayStart": 228.61016299999994,
+   "sayEnd": 229.97016299999996,
+   "say": "Put together:"
+  },
+  "a4-tr": {
+   "start": 230.12016299999996,
+   "end": 232.84016299999996,
+   "sayStart": 230.12016299999996,
+   "sayEnd": 232.84016299999996,
+   "say": "Sovereign of the Day of Recompense."
+  },
+  "a5-intro": {
+   "start": 233.64016299999997,
+   "end": 235.24016299999997,
+   "sayStart": 233.64016299999997,
+   "sayEnd": 235.24016299999997,
+   "say": "Ayah five."
+  },
+  "a5-rec": {
+   "start": 235.44016299999996,
+   "end": 242.29222599999994
+  },
+  "1:5:1": {
+   "start": 242.79222599999994,
+   "end": 256.1160799999999,
+   "sayStart": 244.27607999999992,
+   "sayEnd": 256.1160799999999,
+   "say": "Iyyaka. You. And notice that it comes first. Arabic could have said, we worship You. Putting You first gives the meaning: You alone."
+  },
+  "1:5:2": {
+   "start": 256.5660799999999,
+   "end": 269.62723699999987,
+   "sayStart": 257.94723699999986,
+   "sayEnd": 269.62723699999987,
+   "say": "Na'budu. We worship. The na at the start means we. And its root, ayn, ba, dal, also gives us 'abd, a servant."
+  },
+  "1:5:3": {
+   "start": 270.07723699999985,
+   "end": 277.5061489999999,
+   "sayStart": 271.90614899999986,
+   "sayEnd": 277.5061489999999,
+   "say": "Wa-iyyaka. Wa means and. And You alone."
+  },
+  "1:5:4": {
+   "start": 277.95614899999987,
+   "end": 285.72587699999985,
+   "sayStart": 280.04587699999985,
+   "sayEnd": 285.72587699999985,
+   "say": "Nasta'een. We ask for help. There's that na again: we."
+  },
+  "a5-tr-intro": {
+   "start": 286.17587699999984,
+   "end": 287.4558769999998,
+   "sayStart": 286.17587699999984,
+   "sayEnd": 287.4558769999998,
+   "say": "Put together:"
+  },
+  "a5-tr": {
+   "start": 287.6058769999998,
+   "end": 291.6058769999998,
+   "sayStart": 287.6058769999998,
+   "sayEnd": 291.6058769999998,
+   "say": "It is You we worship and You we ask for help."
+  },
+  "a6-intro": {
+   "start": 292.4058769999998,
+   "end": 294.0058769999998,
+   "sayStart": 292.4058769999998,
+   "sayEnd": 294.0058769999998,
+   "say": "Ayah six."
+  },
+  "a6-rec": {
+   "start": 294.2058769999998,
+   "end": 299.56900199999984
+  },
+  "1:6:1": {
+   "start": 300.06900199999984,
+   "end": 313.56590799999987,
+   "sayStart": 301.40590799999984,
+   "sayEnd": 313.56590799999987,
+   "say": "Ihdina. Guide us. This time the na is on the end, and it means us. Words from the root of guidance appear over three hundred times."
+  },
+  "1:6:2": {
+   "start": 314.01590799999985,
+   "end": 318.52095799999984,
+   "sayStart": 315.7209579999998,
+   "sayEnd": 318.52095799999984,
+   "say": "As-sirata. The path."
+  },
+  "1:6:3": {
+   "start": 318.9709579999998,
+   "end": 328.59687699999984,
+   "sayStart": 321.47687699999983,
+   "sayEnd": 328.59687699999984,
+   "say": "Al-mustaqeem. The straight. It comes from the root of qama, to stand upright."
+  },
+  "a6-tr-intro": {
+   "start": 329.0468769999998,
+   "end": 330.3268769999998,
+   "sayStart": 329.0468769999998,
+   "sayEnd": 330.3268769999998,
+   "say": "Put together:"
+  },
+  "a6-tr": {
+   "start": 330.4768769999998,
+   "end": 332.9568769999998,
+   "sayStart": 330.4768769999998,
+   "sayEnd": 332.9568769999998,
+   "say": "Guide us to the straight path."
+  },
+  "a7-intro": {
+   "start": 333.7568769999998,
+   "end": 336.1568769999998,
+   "sayStart": 333.7568769999998,
+   "sayEnd": 336.1568769999998,
+   "say": "And ayah seven, the longest."
+  },
+  "a7-rec": {
+   "start": 336.35687699999977,
+   "end": 351.30687699999976
+  },
+  "1:7:1": {
+   "start": 351.80687699999976,
+   "end": 358.64274999999975,
+   "sayStart": 353.20274999999975,
+   "sayEnd": 358.64274999999975,
+   "say": "Sirata. Path. The same word again, so you already know it."
+  },
+  "1:7:2": {
+   "start": 359.09274999999974,
+   "end": 367.13779799999975,
+   "sayStart": 360.57779799999975,
+   "sayEnd": 367.13779799999975,
+   "say": "Alladheena. Those who. This word appears almost fifteen hundred times."
+  },
+  "1:7:3": {
+   "start": 367.58779799999974,
+   "end": 375.0680159999997,
+   "sayStart": 369.0680159999997,
+   "sayEnd": 375.0680159999997,
+   "say": "An'amta. You have bestowed favor. The ta on the end means you."
+  },
+  "1:7:4": {
+   "start": 375.5180159999997,
+   "end": 383.8710779999997,
+   "sayStart": 377.1510779999997,
+   "sayEnd": 383.8710779999997,
+   "say": "'Alayhim. Upon them. 'Ala means on, and him means them."
+  },
+  "1:7:5": {
+   "start": 384.3210779999997,
+   "end": 388.12215699999973,
+   "sayStart": 385.6421569999997,
+   "sayEnd": 388.12215699999973,
+   "say": "Ghayri. Not."
+  },
+  "1:7:6": {
+   "start": 388.5721569999997,
+   "end": 394.52437499999974,
+   "sayStart": 390.52437499999974,
+   "sayEnd": 394.52437499999974,
+   "say": "Al-maghdoobi. Those who have earned anger."
+  },
+  "1:7:7": {
+   "start": 394.9743749999997,
+   "end": 400.03417099999973,
+   "sayStart": 396.6741709999997,
+   "sayEnd": 400.03417099999973,
+   "say": "'Alayhim, again. You know this one."
+  },
+  "1:7:8": {
+   "start": 400.4841709999997,
+   "end": 409.1245669999997,
+   "sayStart": 401.6045669999997,
+   "sayEnd": 409.1245669999997,
+   "say": "Wa-la. And not. La on its own appears over seventeen hundred times."
+  },
+  "1:7:9": {
+   "start": 409.57456699999966,
+   "end": 421.2063809999997,
+   "sayStart": 415.60638099999966,
+   "sayEnd": 421.2063809999997,
+   "say": "Ad-dalleen. Those who are astray. And that's the whole surah."
+  },
+  "a7-tr-intro": {
+   "start": 421.65638099999967,
+   "end": 422.93638099999964,
+   "sayStart": 421.65638099999967,
+   "sayEnd": 422.93638099999964,
+   "say": "Put together:"
+  },
+  "a7-tr": {
+   "start": 423.0863809999996,
+   "end": 431.4863809999996,
+   "sayStart": 423.0863809999996,
+   "sayEnd": 431.4863809999996,
+   "say": "The path of those upon whom You have bestowed favor, not of those who have earned [Your] anger or of those who are astray."
+  },
+  "r1": {
+   "start": 432.2863809999996,
+   "end": 440.2063809999996,
+   "sayStart": 432.2863809999996,
+   "sayEnd": 440.2063809999996,
+   "say": "That's all twenty-nine words. Now listen to the whole surah one more time, and follow the meaning as you hear it."
+  },
+  "r-1": {
+   "start": 440.80638099999965,
+   "end": 445.93438099999963
+  },
+  "r-2": {
+   "start": 446.28438099999966,
+   "end": 452.56175599999966
+  },
+  "r-3": {
+   "start": 452.9117559999997,
+   "end": 457.4128189999997
+  },
+  "r-4": {
+   "start": 457.7628189999997,
+   "end": 462.3945069999997
+  },
+  "r-5": {
+   "start": 462.7445069999997,
+   "end": 469.5965699999997
+  },
+  "r-6": {
+   "start": 469.9465699999997,
+   "end": 475.30969499999975
+  },
+  "r-7": {
+   "start": 475.6596949999998,
+   "end": 490.60969499999976
+  },
+  "o1": {
+   "start": 490.9596949999998,
+   "end": 496.3996949999998,
+   "sayStart": 490.9596949999998,
+   "sayEnd": 496.3996949999998,
+   "say": "Next time you pray, you won't just hear these words. You'll understand them."
+  },
+  "o2": {
+   "start": 496.9996949999998,
+   "end": 507.9596949999998,
+   "sayStart": 496.9996949999998,
+   "sayEnd": 507.9596949999998,
+   "say": "You just learned twenty-three different words, and together they make up one in eight words of the Quran. The five hundred most common words cover eighty percent of it."
+  },
+  "o3": {
+   "start": 508.35969499999976,
+   "end": 521.7996949999998,
+   "sayStart": 508.35969499999976,
+   "sayEnd": 521.7996949999998,
+   "say": "That's what Quranki is for. It teaches the Quran's words in the order the Quran uses them, with spaced repetition so they stick. It's free at quranki dot org, on iPhone, and on Android."
+  },
+  "o4": {
+   "start": 522.1996949999998,
+   "end": 527.2396949999998,
+   "sayStart": 522.1996949999998,
+   "sayEnd": 527.2396949999998,
+   "say": "If this helped, subscribe, and we’ll go through the next surah, word by word."
+  }
+ },
+ "audio": [
+  {
+   "src": "vo-clips/fatiha-h1.mp3",
+   "at": 0.25,
+   "length": 6.470000000000001
+  },
+  {
+   "src": "vo-clips/fatiha-h2.mp3",
+   "at": 6.970000000000001,
+   "length": 9.19
+  },
+  {
+   "src": "vo-clips/fatiha-h3.mp3",
+   "at": 16.509999999999998,
+   "length": 5.2700000000000005
+  },
+  {
+   "src": "vo-clips/fatiha-h4.mp3",
+   "at": 22.029999999999998,
+   "length": 11.51
+  },
+  {
+   "src": "vo-clips/fatiha-h5.mp3",
+   "at": 33.89,
+   "length": 3.59
+  },
+  {
+   "src": "vo-clips/fatiha-a1-intro.mp3",
+   "at": 41.83,
+   "length": 1.75
+  },
+  {
+   "src": "rec/001-001.mp3",
+   "at": 43.63,
+   "trim": 0,
+   "length": 5.128
+  },
+  {
+   "src": "wbw/001_001_001.mp3",
+   "at": 49.258,
+   "trim": 0.35378699999999996,
+   "length": 0.7685130000000001
+  },
+  {
+   "src": "vo-clips/fatiha-1-1-1.mp3",
+   "at": 50.226513000000004,
+   "length": 8.39
+  },
+  {
+   "src": "wbw/001_001_002.mp3",
+   "at": 58.91651300000001,
+   "trim": 0.380023,
+   "length": 0.977177
+  },
+  {
+   "src": "vo-clips/fatiha-1-1-2.mp3",
+   "at": 60.09369000000001,
+   "length": 7.67
+  },
+  {
+   "src": "wbw/001_001_003.mp3",
+   "at": 68.06369000000001,
+   "trim": 0.397234,
+   "length": 1.481966
+  },
+  {
+   "src": "vo-clips/fatiha-1-1-3.mp3",
+   "at": 69.74565600000001,
+   "length": 9.27
+  },
+  {
+   "src": "wbw/001_001_004.mp3",
+   "at": 79.31565600000002,
+   "trim": 0.34650800000000004,
+   "length": 1.4021919999999999
+  },
+  {
+   "src": "vo-clips/fatiha-1-1-4.mp3",
+   "at": 80.91784800000002,
+   "length": 12.31
+  },
+  {
+   "src": "vo-clips/fatiha-a1-tr-intro.mp3",
+   "at": 93.52784800000002,
+   "length": 1.3499999999999999
+  },
+  {
+   "src": "vo-clips/fatiha-a1-tr.mp3",
+   "at": 94.87784800000003,
+   "length": 5.67
+  },
+  {
+   "src": "vo-clips/fatiha-a2-intro.mp3",
+   "at": 101.19784800000002,
+   "length": 1.67
+  },
+  {
+   "src": "rec/001-002.mp3",
+   "at": 102.91784800000002,
+   "trim": 0,
+   "length": 6.277375
+  },
+  {
+   "src": "wbw/001_002_001.mp3",
+   "at": 109.69522300000003,
+   "trim": 0.33217700000000006,
+   "length": 0.9989229999999999
+  },
+  {
+   "src": "vo-clips/fatiha-1-2-1.mp3",
+   "at": 110.89414600000003,
+   "length": 8.23
+  },
+  {
+   "src": "wbw/001_002_002.mp3",
+   "at": 119.42414600000004,
+   "trim": 0.46163299999999996,
+   "length": 1.260967
+  },
+  {
+   "src": "vo-clips/fatiha-1-2-2.mp3",
+   "at": 120.88511300000003,
+   "length": 7.03
+  },
+  {
+   "src": "wbw/001_002_003.mp3",
+   "at": 128.21511300000003,
+   "trim": 0.285374,
+   "length": 0.9413259999999999
+  },
+  {
+   "src": "vo-clips/fatiha-1-2-3.mp3",
+   "at": 129.35643900000002,
+   "length": 14.07
+  },
+  {
+   "src": "wbw/001_002_004.mp3",
+   "at": 143.726439,
+   "trim": 0.43208599999999997,
+   "length": 1.9430140000000002
+  },
+  {
+   "src": "vo-clips/fatiha-1-2-4.mp3",
+   "at": 145.869453,
+   "length": 9.75
+  },
+  {
+   "src": "vo-clips/fatiha-a2-tr-intro.mp3",
+   "at": 155.91945299999998,
+   "length": 1.43
+  },
+  {
+   "src": "vo-clips/fatiha-a2-tr.mp3",
+   "at": 157.34945299999998,
+   "length": 4.15
+  },
+  {
+   "src": "vo-clips/fatiha-a3-intro.mp3",
+   "at": 162.149453,
+   "length": 1.67
+  },
+  {
+   "src": "rec/001-003.mp3",
+   "at": 163.869453,
+   "trim": 0,
+   "length": 4.501063
+  },
+  {
+   "src": "vo-clips/fatiha-a3-known.mp3",
+   "at": 168.770516,
+   "length": 10.870000000000001
+  },
+  {
+   "src": "vo-clips/fatiha-a3-tr.mp3",
+   "at": 179.99051599999999,
+   "length": 4.390000000000001
+  },
+  {
+   "src": "vo-clips/fatiha-a4-intro.mp3",
+   "at": 185.030516,
+   "length": 1.67
+  },
+  {
+   "src": "rec/001-004.mp3",
+   "at": 186.750516,
+   "trim": 0,
+   "length": 4.631688
+  },
+  {
+   "src": "wbw/001_004_001.mp3",
+   "at": 191.882204,
+   "trim": 0.5194329999999999,
+   "length": 1.0975510000000002
+  },
+  {
+   "src": "vo-clips/fatiha-1-4-1.mp3",
+   "at": 193.179755,
+   "length": 12.31
+  },
+  {
+   "src": "wbw/001_004_002.mp3",
+   "at": 205.78975499999999,
+   "trim": 0.463696,
+   "length": 1.023764
+  },
+  {
+   "src": "vo-clips/fatiha-1-4-2.mp3",
+   "at": 207.01351899999997,
+   "length": 9.83
+  },
+  {
+   "src": "wbw/001_004_003.mp3",
+   "at": 217.14351899999997,
+   "trim": 0.4709749999999999,
+   "length": 1.6166439999999997
+  },
+  {
+   "src": "vo-clips/fatiha-1-4-3.mp3",
+   "at": 218.96016299999997,
+   "length": 9.35
+  },
+  {
+   "src": "vo-clips/fatiha-a4-tr-intro.mp3",
+   "at": 228.61016299999994,
+   "length": 1.51
+  },
+  {
+   "src": "vo-clips/fatiha-a4-tr.mp3",
+   "at": 230.12016299999996,
+   "length": 2.87
+  },
+  {
+   "src": "vo-clips/fatiha-a5-intro.mp3",
+   "at": 233.64016299999997,
+   "length": 1.75
+  },
+  {
+   "src": "rec/001-005.mp3",
+   "at": 235.44016299999996,
+   "trim": 0,
+   "length": 6.852063
+  },
+  {
+   "src": "wbw/001_005_001.mp3",
+   "at": 242.79222599999994,
+   "trim": 0.432268,
+   "length": 1.2838540000000003
+  },
+  {
+   "src": "vo-clips/fatiha-1-5-1.mp3",
+   "at": 244.27607999999992,
+   "length": 11.99
+  },
+  {
+   "src": "wbw/001_005_002.mp3",
+   "at": 256.5660799999999,
+   "trim": 0.4706119999999999,
+   "length": 1.1811570000000002
+  },
+  {
+   "src": "vo-clips/fatiha-1-5-2.mp3",
+   "at": 257.94723699999986,
+   "length": 11.83
+  },
+  {
+   "src": "wbw/001_005_003.mp3",
+   "at": 270.07723699999985,
+   "trim": 0.504444,
+   "length": 1.6289120000000001
+  },
+  {
+   "src": "vo-clips/fatiha-1-5-3.mp3",
+   "at": 271.90614899999986,
+   "length": 5.75
+  },
+  {
+   "src": "wbw/001_005_004.mp3",
+   "at": 277.95614899999987,
+   "trim": 0.572404,
+   "length": 1.8897279999999999
+  },
+  {
+   "src": "vo-clips/fatiha-1-5-4.mp3",
+   "at": 280.04587699999985,
+   "length": 5.83
+  },
+  {
+   "src": "vo-clips/fatiha-a5-tr-intro.mp3",
+   "at": 286.17587699999984,
+   "length": 1.43
+  },
+  {
+   "src": "vo-clips/fatiha-a5-tr.mp3",
+   "at": 287.6058769999998,
+   "length": 4.15
+  },
+  {
+   "src": "vo-clips/fatiha-a6-intro.mp3",
+   "at": 292.4058769999998,
+   "length": 1.75
+  },
+  {
+   "src": "rec/001-006.mp3",
+   "at": 294.2058769999998,
+   "trim": 0,
+   "length": 5.363125
+  },
+  {
+   "src": "wbw/001_006_001.mp3",
+   "at": 300.06900199999984,
+   "trim": 0.32469400000000004,
+   "length": 1.136906
+  },
+  {
+   "src": "vo-clips/fatiha-1-6-1.mp3",
+   "at": 301.40590799999984,
+   "length": 12.31
+  },
+  {
+   "src": "wbw/001_006_002.mp3",
+   "at": 314.01590799999985,
+   "trim": 0.37415,
+   "length": 1.50505
+  },
+  {
+   "src": "vo-clips/fatiha-1-6-2.mp3",
+   "at": 315.7209579999998,
+   "length": 2.9499999999999997
+  },
+  {
+   "src": "wbw/001_006_003.mp3",
+   "at": 318.9709579999998,
+   "trim": 0.38238099999999997,
+   "length": 2.305919
+  },
+  {
+   "src": "vo-clips/fatiha-1-6-3.mp3",
+   "at": 321.47687699999983,
+   "length": 7.2700000000000005
+  },
+  {
+   "src": "vo-clips/fatiha-a6-tr-intro.mp3",
+   "at": 329.0468769999998,
+   "length": 1.43
+  },
+  {
+   "src": "vo-clips/fatiha-a6-tr.mp3",
+   "at": 330.4768769999998,
+   "length": 2.63
+  },
+  {
+   "src": "vo-clips/fatiha-a7-intro.mp3",
+   "at": 333.7568769999998,
+   "length": 2.55
+  },
+  {
+   "src": "rec/001-007.mp3",
+   "at": 336.35687699999977,
+   "trim": 0,
+   "length": 14.95
+  },
+  {
+   "src": "wbw/001_007_001.mp3",
+   "at": 351.80687699999976,
+   "trim": 0.35832200000000003,
+   "length": 1.195873
+  },
+  {
+   "src": "vo-clips/fatiha-1-7-1.mp3",
+   "at": 353.20274999999975,
+   "length": 5.590000000000001
+  },
+  {
+   "src": "wbw/001_007_002.mp3",
+   "at": 359.09274999999974,
+   "trim": 0.307052,
+   "length": 1.2850480000000002
+  },
+  {
+   "src": "vo-clips/fatiha-1-7-2.mp3",
+   "at": 360.57779799999975,
+   "length": 6.71
+  },
+  {
+   "src": "wbw/001_007_003.mp3",
+   "at": 367.58779799999974,
+   "trim": 0.364082,
+   "length": 1.280218
+  },
+  {
+   "src": "vo-clips/fatiha-1-7-3.mp3",
+   "at": 369.0680159999997,
+   "length": 6.15
+  },
+  {
+   "src": "wbw/001_007_004.mp3",
+   "at": 375.5180159999997,
+   "trim": 0.40081599999999995,
+   "length": 1.433062
+  },
+  {
+   "src": "vo-clips/fatiha-1-7-4.mp3",
+   "at": 377.1510779999997,
+   "length": 6.87
+  },
+  {
+   "src": "wbw/001_007_005.mp3",
+   "at": 384.3210779999997,
+   "trim": 0.392721,
+   "length": 1.121079
+  },
+  {
+   "src": "vo-clips/fatiha-1-7-5.mp3",
+   "at": 385.6421569999997,
+   "length": 2.63
+  },
+  {
+   "src": "wbw/001_007_006.mp3",
+   "at": 388.5721569999997,
+   "trim": 0.38798200000000005,
+   "length": 1.752218
+  },
+  {
+   "src": "vo-clips/fatiha-1-7-6.mp3",
+   "at": 390.52437499999974,
+   "length": 4.15
+  },
+  {
+   "src": "wbw/001_007_007.mp3",
+   "at": 394.9743749999997,
+   "trim": 0.27174600000000004,
+   "length": 1.499796
+  },
+  {
+   "src": "vo-clips/fatiha-1-7-7.mp3",
+   "at": 396.6741709999997,
+   "length": 3.51
+  },
+  {
+   "src": "wbw/001_007_008.mp3",
+   "at": 400.4841709999997,
+   "trim": 0.306304,
+   "length": 0.9203959999999999
+  },
+  {
+   "src": "vo-clips/fatiha-1-7-8.mp3",
+   "at": 401.6045669999997,
+   "length": 7.67
+  },
+  {
+   "src": "wbw/001_007_009.mp3",
+   "at": 409.57456699999966,
+   "trim": 0.368571,
+   "length": 5.831814
+  },
+  {
+   "src": "vo-clips/fatiha-1-7-9.mp3",
+   "at": 415.60638099999966,
+   "length": 5.75
+  },
+  {
+   "src": "vo-clips/fatiha-a7-tr-intro.mp3",
+   "at": 421.65638099999967,
+   "length": 1.43
+  },
+  {
+   "src": "vo-clips/fatiha-a7-tr.mp3",
+   "at": 423.0863809999996,
+   "length": 8.55
+  },
+  {
+   "src": "vo-clips/fatiha-r1.mp3",
+   "at": 432.2863809999996,
+   "length": 8.07
+  },
+  {
+   "src": "rec/001-001.mp3",
+   "at": 440.80638099999965,
+   "trim": 0,
+   "length": 5.128
+  },
+  {
+   "src": "rec/001-002.mp3",
+   "at": 446.28438099999966,
+   "trim": 0,
+   "length": 6.277375
+  },
+  {
+   "src": "rec/001-003.mp3",
+   "at": 452.9117559999997,
+   "trim": 0,
+   "length": 4.501063
+  },
+  {
+   "src": "rec/001-004.mp3",
+   "at": 457.7628189999997,
+   "trim": 0,
+   "length": 4.631688
+  },
+  {
+   "src": "rec/001-005.mp3",
+   "at": 462.7445069999997,
+   "trim": 0,
+   "length": 6.852063
+  },
+  {
+   "src": "rec/001-006.mp3",
+   "at": 469.9465699999997,
+   "trim": 0,
+   "length": 5.363125
+  },
+  {
+   "src": "rec/001-007.mp3",
+   "at": 475.6596949999998,
+   "trim": 0,
+   "length": 14.95
+  },
+  {
+   "src": "vo-clips/fatiha-o1.mp3",
+   "at": 490.9596949999998,
+   "length": 5.590000000000001
+  },
+  {
+   "src": "vo-clips/fatiha-o2.mp3",
+   "at": 496.9996949999998,
+   "length": 11.110000000000001
+  },
+  {
+   "src": "vo-clips/fatiha-o3.mp3",
+   "at": 508.35969499999976,
+   "length": 13.59
+  },
+  {
+   "src": "vo-clips/fatiha-o4.mp3",
+   "at": 522.1996949999998,
+   "length": 5.19
+  }
+ ],
+ "captions": [
+  {
+   "id": "h1",
+   "words": [
+    {
+     "w": "If",
+     "s": 0.25,
+     "e": 0.41
+    },
+    {
+     "w": "you've",
+     "s": 0.49,
+     "e": 0.73
+    },
+    {
+     "w": "prayed",
+     "s": 0.77,
+     "e": 1.05
+    },
+    {
+     "w": "for",
+     "s": 1.17,
+     "e": 1.29
+    },
+    {
+     "w": "fifteen",
+     "s": 1.37,
+     "e": 1.93
+    },
+    {
+     "w": "years,",
+     "s": 2.01,
+     "e": 2.81
+    },
+    {
+     "w": "you've",
+     "s": 2.89,
+     "e": 2.97
+    },
+    {
+     "w": "recited",
+     "s": 3.05,
+     "e": 3.45
+    },
+    {
+     "w": "Al-Fatiha",
+     "s": 3.53,
+     "e": 4.25
+    },
+    {
+     "w": "more",
+     "s": 4.33,
+     "e": 4.49
+    },
+    {
+     "w": "than",
+     "s": 4.61,
+     "e": 4.73
+    },
+    {
+     "w": "ninety",
+     "s": 4.81,
+     "e": 5.13
+    },
+    {
+     "w": "thousand",
+     "s": 5.37,
+     "e": 5.85
+    },
+    {
+     "w": "times.",
+     "s": 5.93,
+     "e": 6.57
+    }
+   ]
+  },
+  {
+   "id": "h2",
+   "words": [
+    {
+     "w": "Seventeen",
+     "s": 6.97,
+     "e": 7.61
+    },
+    {
+     "w": "times",
+     "s": 7.69,
+     "e": 8.01
+    },
+    {
+     "w": "a",
+     "s": 8.09,
+     "e": 8.17
+    },
+    {
+     "w": "day,",
+     "s": 8.49,
+     "e": 8.85
+    },
+    {
+     "w": "every",
+     "s": 8.89,
+     "e": 9.29
+    },
+    {
+     "w": "single",
+     "s": 9.37,
+     "e": 9.77
+    },
+    {
+     "w": "day.",
+     "s": 10.25,
+     "e": 10.89
+    },
+    {
+     "w": "But",
+     "s": 11.05,
+     "e": 11.21
+    },
+    {
+     "w": "if",
+     "s": 11.29,
+     "e": 11.37
+    },
+    {
+     "w": "someone",
+     "s": 11.53,
+     "e": 11.69
+    },
+    {
+     "w": "stopped",
+     "s": 11.77,
+     "e": 12.09
+    },
+    {
+     "w": "you",
+     "s": 12.17,
+     "e": 12.25
+    },
+    {
+     "w": "and",
+     "s": 12.33,
+     "e": 12.49
+    },
+    {
+     "w": "asked",
+     "s": 12.57,
+     "e": 12.89
+    },
+    {
+     "w": "what",
+     "s": 12.97,
+     "e": 13.13
+    },
+    {
+     "w": "one",
+     "s": 13.21,
+     "e": 13.25
+    },
+    {
+     "w": "of",
+     "s": 13.29,
+     "e": 13.37
+    },
+    {
+     "w": "its",
+     "s": 13.49,
+     "e": 13.61
+    },
+    {
+     "w": "words",
+     "s": 13.77,
+     "e": 13.93
+    },
+    {
+     "w": "means,",
+     "s": 14.01,
+     "e": 14.77
+    },
+    {
+     "w": "could",
+     "s": 14.81,
+     "e": 14.89
+    },
+    {
+     "w": "you",
+     "s": 14.97,
+     "e": 15.05
+    },
+    {
+     "w": "tell",
+     "s": 15.13,
+     "e": 15.21
+    },
+    {
+     "w": "them?",
+     "s": 15.29,
+     "e": 16.01
+    }
+   ]
+  },
+  {
+   "id": "h3",
+   "words": [
+    {
+     "w": "By",
+     "s": 16.51,
+     "e": 16.67
+    },
+    {
+     "w": "the",
+     "s": 16.71,
+     "e": 16.75
+    },
+    {
+     "w": "end",
+     "s": 16.83,
+     "e": 16.91
+    },
+    {
+     "w": "of",
+     "s": 16.99,
+     "e": 17.07
+    },
+    {
+     "w": "this",
+     "s": 17.15,
+     "e": 17.23
+    },
+    {
+     "w": "video,",
+     "s": 17.31,
+     "e": 17.95
+    },
+    {
+     "w": "you'll",
+     "s": 18.03,
+     "e": 18.19
+    },
+    {
+     "w": "know",
+     "s": 18.27,
+     "e": 18.59
+    },
+    {
+     "w": "every",
+     "s": 18.67,
+     "e": 18.99
+    },
+    {
+     "w": "word.",
+     "s": 19.07,
+     "e": 19.83
+    },
+    {
+     "w": "All",
+     "s": 19.87,
+     "e": 20.11
+    },
+    {
+     "w": "twenty-nine",
+     "s": 20.19,
+     "e": 20.75
+    },
+    {
+     "w": "of",
+     "s": 20.79,
+     "e": 20.83
+    },
+    {
+     "w": "them.",
+     "s": 20.91,
+     "e": 21.63
+    }
+   ]
+  },
+  {
+   "id": "h4",
+   "words": [
+    {
+     "w": "And",
+     "s": 22.03,
+     "e": 22.19
+    },
+    {
+     "w": "here's",
+     "s": 22.31,
+     "e": 22.51
+    },
+    {
+     "w": "why",
+     "s": 22.59,
+     "e": 22.67
+    },
+    {
+     "w": "it's",
+     "s": 22.75,
+     "e": 22.91
+    },
+    {
+     "w": "worth",
+     "s": 22.99,
+     "e": 23.23
+    },
+    {
+     "w": "it.",
+     "s": 23.35,
+     "e": 24.03
+    },
+    {
+     "w": "The",
+     "s": 24.11,
+     "e": 24.19
+    },
+    {
+     "w": "words",
+     "s": 24.27,
+     "e": 24.51
+    },
+    {
+     "w": "in",
+     "s": 24.59,
+     "e": 24.67
+    },
+    {
+     "w": "these",
+     "s": 24.79,
+     "e": 24.91
+    },
+    {
+     "w": "seven",
+     "s": 25.07,
+     "e": 25.23
+    },
+    {
+     "w": "verses",
+     "s": 25.31,
+     "e": 25.87
+    },
+    {
+     "w": "appear",
+     "s": 25.95,
+     "e": 26.27
+    },
+    {
+     "w": "almost",
+     "s": 26.35,
+     "e": 26.75
+    },
+    {
+     "w": "ten",
+     "s": 26.83,
+     "e": 27.15
+    },
+    {
+     "w": "thousand",
+     "s": 27.23,
+     "e": 27.71
+    },
+    {
+     "w": "times",
+     "s": 27.79,
+     "e": 28.11
+    },
+    {
+     "w": "across",
+     "s": 28.27,
+     "e": 28.51
+    },
+    {
+     "w": "the",
+     "s": 28.59,
+     "e": 28.67
+    },
+    {
+     "w": "Quran.",
+     "s": 28.71,
+     "e": 29.67
+    },
+    {
+     "w": "That's",
+     "s": 29.71,
+     "e": 30.03
+    },
+    {
+     "w": "one",
+     "s": 30.11,
+     "e": 30.35
+    },
+    {
+     "w": "in",
+     "s": 30.47,
+     "e": 30.59
+    },
+    {
+     "w": "every",
+     "s": 30.67,
+     "e": 30.99
+    },
+    {
+     "w": "eight",
+     "s": 31.07,
+     "e": 31.23
+    },
+    {
+     "w": "words",
+     "s": 31.31,
+     "e": 31.63
+    },
+    {
+     "w": "you'll",
+     "s": 31.67,
+     "e": 31.95
+    },
+    {
+     "w": "ever",
+     "s": 32.03,
+     "e": 32.27
+    },
+    {
+     "w": "read",
+     "s": 32.39,
+     "e": 32.51
+    },
+    {
+     "w": "in",
+     "s": 32.55,
+     "e": 32.59
+    },
+    {
+     "w": "it.",
+     "s": 32.67,
+     "e": 33.39
+    }
+   ]
+  },
+  {
+   "id": "h5",
+   "words": [
+    {
+     "w": "So",
+     "s": 33.89,
+     "e": 34.05
+    },
+    {
+     "w": "let's",
+     "s": 34.13,
+     "e": 34.29
+    },
+    {
+     "w": "go",
+     "s": 34.37,
+     "e": 34.45
+    },
+    {
+     "w": "through",
+     "s": 34.57,
+     "e": 34.69
+    },
+    {
+     "w": "it,",
+     "s": 34.77,
+     "e": 35.25
+    },
+    {
+     "w": "one",
+     "s": 35.33,
+     "e": 35.57
+    },
+    {
+     "w": "ayah",
+     "s": 35.65,
+     "e": 35.97
+    },
+    {
+     "w": "at",
+     "s": 36.05,
+     "e": 36.13
+    },
+    {
+     "w": "a",
+     "s": 36.17,
+     "e": 36.21
+    },
+    {
+     "w": "time.",
+     "s": 36.29,
+     "e": 37.33
+    }
+   ]
+  },
+  {
+   "id": "a1-intro",
+   "words": [
+    {
+     "w": "Ayah",
+     "s": 41.83,
+     "e": 42.31
+    },
+    {
+     "w": "one.",
+     "s": 42.47,
+     "e": 43.43
+    }
+   ]
+  },
+  {
+   "id": "1:1:1",
+   "words": [
+    {
+     "w": "Bismi.",
+     "s": 50.227,
+     "e": 51.347
+    },
+    {
+     "w": "In",
+     "s": 51.427,
+     "e": 51.507
+    },
+    {
+     "w": "the",
+     "s": 51.587,
+     "e": 51.667
+    },
+    {
+     "w": "name.",
+     "s": 51.747,
+     "e": 52.787
+    },
+    {
+     "w": "The",
+     "s": 52.867,
+     "e": 52.947
+    },
+    {
+     "w": "bi",
+     "s": 53.027,
+     "e": 53.427
+    },
+    {
+     "w": "at",
+     "s": 53.467,
+     "e": 53.507
+    },
+    {
+     "w": "the",
+     "s": 53.587,
+     "e": 53.667
+    },
+    {
+     "w": "front",
+     "s": 53.747,
+     "e": 54.147
+    },
+    {
+     "w": "means",
+     "s": 54.227,
+     "e": 54.627
+    },
+    {
+     "w": "in,",
+     "s": 54.707,
+     "e": 55.147
+    },
+    {
+     "w": "or",
+     "s": 55.187,
+     "e": 55.347
+    },
+    {
+     "w": "with.",
+     "s": 55.427,
+     "e": 56.227
+    },
+    {
+     "w": "And",
+     "s": 56.307,
+     "e": 56.387
+    },
+    {
+     "w": "ism",
+     "s": 56.467,
+     "e": 57.027
+    },
+    {
+     "w": "means",
+     "s": 57.107,
+     "e": 57.427
+    },
+    {
+     "w": "name.",
+     "s": 57.507,
+     "e": 58.467
+    }
+   ]
+  },
+  {
+   "id": "1:1:2",
+   "words": [
+    {
+     "w": "Allah.",
+     "s": 60.094,
+     "e": 61.214
+    },
+    {
+     "w": "The",
+     "s": 61.294,
+     "e": 61.334
+    },
+    {
+     "w": "most",
+     "s": 61.374,
+     "e": 61.614
+    },
+    {
+     "w": "frequent",
+     "s": 61.774,
+     "e": 62.174
+    },
+    {
+     "w": "name",
+     "s": 62.334,
+     "e": 62.494
+    },
+    {
+     "w": "in",
+     "s": 62.574,
+     "e": 62.654
+    },
+    {
+     "w": "the",
+     "s": 62.694,
+     "e": 62.734
+    },
+    {
+     "w": "entire",
+     "s": 62.814,
+     "e": 63.294
+    },
+    {
+     "w": "Quran.",
+     "s": 63.454,
+     "e": 64.374
+    },
+    {
+     "w": "Two",
+     "s": 64.414,
+     "e": 64.494
+    },
+    {
+     "w": "thousand,",
+     "s": 64.654,
+     "e": 65.174
+    },
+    {
+     "w": "six",
+     "s": 65.214,
+     "e": 65.374
+    },
+    {
+     "w": "hundred",
+     "s": 65.414,
+     "e": 65.774
+    },
+    {
+     "w": "ninety-nine",
+     "s": 65.854,
+     "e": 66.494
+    },
+    {
+     "w": "times.",
+     "s": 67.014,
+     "e": 67.614
+    }
+   ]
+  },
+  {
+   "id": "1:1:3",
+   "words": [
+    {
+     "w": "Ar-Rahman.",
+     "s": 69.746,
+     "e": 71.346
+    },
+    {
+     "w": "The",
+     "s": 71.426,
+     "e": 71.506
+    },
+    {
+     "w": "Entirely",
+     "s": 71.586,
+     "e": 72.306
+    },
+    {
+     "w": "Merciful.",
+     "s": 72.386,
+     "e": 73.586
+    },
+    {
+     "w": "It",
+     "s": 73.666,
+     "e": 73.746
+    },
+    {
+     "w": "comes",
+     "s": 73.866,
+     "e": 73.986
+    },
+    {
+     "w": "from",
+     "s": 74.066,
+     "e": 74.146
+    },
+    {
+     "w": "the",
+     "s": 74.226,
+     "e": 74.306
+    },
+    {
+     "w": "root",
+     "s": 74.546,
+     "e": 74.786
+    },
+    {
+     "w": "ra,",
+     "s": 74.866,
+     "e": 75.586
+    },
+    {
+     "w": "ha,",
+     "s": 75.666,
+     "e": 76.106
+    },
+    {
+     "w": "meem,",
+     "s": 76.146,
+     "e": 76.986
+    },
+    {
+     "w": "the",
+     "s": 77.026,
+     "e": 77.106
+    },
+    {
+     "w": "root",
+     "s": 77.186,
+     "e": 77.426
+    },
+    {
+     "w": "of",
+     "s": 77.506,
+     "e": 77.586
+    },
+    {
+     "w": "mercy.",
+     "s": 77.666,
+     "e": 78.866
+    }
+   ]
+  },
+  {
+   "id": "1:1:4",
+   "words": [
+    {
+     "w": "Ar-Raheem.",
+     "s": 80.918,
+     "e": 82.358
+    },
+    {
+     "w": "The",
+     "s": 82.438,
+     "e": 82.518
+    },
+    {
+     "w": "Especially",
+     "s": 82.598,
+     "e": 83.318
+    },
+    {
+     "w": "Merciful.",
+     "s": 83.398,
+     "e": 84.598
+    },
+    {
+     "w": "Same",
+     "s": 84.678,
+     "e": 84.838
+    },
+    {
+     "w": "root,",
+     "s": 84.918,
+     "e": 85.478
+    },
+    {
+     "w": "different",
+     "s": 85.558,
+     "e": 85.798
+    },
+    {
+     "w": "form.",
+     "s": 85.878,
+     "e": 86.878
+    },
+    {
+     "w": "Ar-Rahman",
+     "s": 86.918,
+     "e": 87.798
+    },
+    {
+     "w": "is",
+     "s": 87.878,
+     "e": 87.958
+    },
+    {
+     "w": "used",
+     "s": 88.038,
+     "e": 88.358
+    },
+    {
+     "w": "only",
+     "s": 88.438,
+     "e": 88.678
+    },
+    {
+     "w": "for",
+     "s": 88.758,
+     "e": 88.918
+    },
+    {
+     "w": "Allah,",
+     "s": 89.038,
+     "e": 89.905
+    },
+    {
+     "w": "while",
+     "s": 90.011,
+     "e": 90.118
+    },
+    {
+     "w": "raheem",
+     "s": 90.198,
+     "e": 90.918
+    },
+    {
+     "w": "can",
+     "s": 90.958,
+     "e": 90.998
+    },
+    {
+     "w": "describe",
+     "s": 91.078,
+     "e": 91.398
+    },
+    {
+     "w": "a",
+     "s": 91.478,
+     "e": 91.558
+    },
+    {
+     "w": "person",
+     "s": 91.798,
+     "e": 92.038
+    },
+    {
+     "w": "too.",
+     "s": 92.518,
+     "e": 93.078
+    }
+   ]
+  },
+  {
+   "id": "a1-tr-intro",
+   "words": [
+    {
+     "w": "Put",
+     "s": 93.528,
+     "e": 93.688
+    },
+    {
+     "w": "together:",
+     "s": 93.768,
+     "e": 94.728
+    }
+   ]
+  },
+  {
+   "id": "a1-tr",
+   "words": [
+    {
+     "w": "In",
+     "s": 94.878,
+     "e": 95.038
+    },
+    {
+     "w": "the",
+     "s": 95.078,
+     "e": 95.118
+    },
+    {
+     "w": "name",
+     "s": 95.198,
+     "e": 95.518
+    },
+    {
+     "w": "of",
+     "s": 95.598,
+     "e": 95.678
+    },
+    {
+     "w": "Allāh,",
+     "s": 95.838,
+     "e": 96.798
+    },
+    {
+     "w": "the",
+     "s": 96.838,
+     "e": 96.878
+    },
+    {
+     "w": "Entirely",
+     "s": 96.958,
+     "e": 97.598
+    },
+    {
+     "w": "Merciful,",
+     "s": 97.678,
+     "e": 98.718
+    },
+    {
+     "w": "the",
+     "s": 98.758,
+     "e": 98.798
+    },
+    {
+     "w": "Especially",
+     "s": 98.878,
+     "e": 99.518
+    },
+    {
+     "w": "Merciful.",
+     "s": 99.598,
+     "e": 100.398
+    }
+   ]
+  },
+  {
+   "id": "a2-intro",
+   "words": [
+    {
+     "w": "Ayah",
+     "s": 101.198,
+     "e": 101.598
+    },
+    {
+     "w": "two.",
+     "s": 101.758,
+     "e": 102.718
+    }
+   ]
+  },
+  {
+   "id": "1:2:1",
+   "words": [
+    {
+     "w": "Al-hamdu.",
+     "s": 110.894,
+     "e": 112.174
+    },
+    {
+     "w": "The",
+     "s": 112.254,
+     "e": 112.334
+    },
+    {
+     "w": "praise.",
+     "s": 112.414,
+     "e": 113.534
+    },
+    {
+     "w": "Al",
+     "s": 113.614,
+     "e": 114.014
+    },
+    {
+     "w": "simply",
+     "s": 114.174,
+     "e": 114.494
+    },
+    {
+     "w": "means",
+     "s": 114.734,
+     "e": 114.974
+    },
+    {
+     "w": "the,",
+     "s": 115.054,
+     "e": 115.747
+    },
+    {
+     "w": "and",
+     "s": 115.801,
+     "e": 115.854
+    },
+    {
+     "w": "you'll",
+     "s": 115.907,
+     "e": 116.014
+    },
+    {
+     "w": "see",
+     "s": 116.094,
+     "e": 116.174
+    },
+    {
+     "w": "it",
+     "s": 116.254,
+     "e": 116.334
+    },
+    {
+     "w": "on",
+     "s": 116.414,
+     "e": 116.574
+    },
+    {
+     "w": "almost",
+     "s": 116.654,
+     "e": 117.054
+    },
+    {
+     "w": "every",
+     "s": 117.134,
+     "e": 117.374
+    },
+    {
+     "w": "line",
+     "s": 117.454,
+     "e": 117.614
+    },
+    {
+     "w": "of",
+     "s": 117.694,
+     "e": 117.774
+    },
+    {
+     "w": "the",
+     "s": 117.814,
+     "e": 117.854
+    },
+    {
+     "w": "Quran.",
+     "s": 117.934,
+     "e": 118.974
+    }
+   ]
+  },
+  {
+   "id": "1:2:2",
+   "words": [
+    {
+     "w": "Lillahi.",
+     "s": 120.885,
+     "e": 122.405
+    },
+    {
+     "w": "Li",
+     "s": 122.605,
+     "e": 122.805
+    },
+    {
+     "w": "means",
+     "s": 122.965,
+     "e": 123.285
+    },
+    {
+     "w": "to,",
+     "s": 123.445,
+     "e": 124.005
+    },
+    {
+     "w": "or",
+     "s": 124.125,
+     "e": 124.245
+    },
+    {
+     "w": "for.",
+     "s": 124.405,
+     "e": 125.285
+    },
+    {
+     "w": "So",
+     "s": 125.365,
+     "e": 125.445
+    },
+    {
+     "w": "this",
+     "s": 125.525,
+     "e": 125.605
+    },
+    {
+     "w": "is:",
+     "s": 125.685,
+     "e": 126.205
+    },
+    {
+     "w": "to",
+     "s": 126.245,
+     "e": 126.485
+    },
+    {
+     "w": "Allah.",
+     "s": 126.565,
+     "e": 127.765
+    }
+   ]
+  },
+  {
+   "id": "1:2:3",
+   "words": [
+    {
+     "w": "Rabbi.",
+     "s": 129.356,
+     "e": 130.476
+    },
+    {
+     "w": "Lord.",
+     "s": 130.556,
+     "e": 131.516
+    },
+    {
+     "w": "But",
+     "s": 131.596,
+     "e": 131.676
+    },
+    {
+     "w": "rabb",
+     "s": 131.836,
+     "e": 132.396
+    },
+    {
+     "w": "holds",
+     "s": 132.596,
+     "e": 132.796
+    },
+    {
+     "w": "much",
+     "s": 132.916,
+     "e": 133.036
+    },
+    {
+     "w": "more",
+     "s": 133.116,
+     "e": 133.276
+    },
+    {
+     "w": "than",
+     "s": 133.356,
+     "e": 133.516
+    },
+    {
+     "w": "one",
+     "s": 133.596,
+     "e": 133.756
+    },
+    {
+     "w": "English",
+     "s": 133.836,
+     "e": 134.156
+    },
+    {
+     "w": "word:",
+     "s": 134.236,
+     "e": 135.116
+    },
+    {
+     "w": "owner,",
+     "s": 135.196,
+     "e": 135.796
+    },
+    {
+     "w": "master,",
+     "s": 135.836,
+     "e": 136.676
+    },
+    {
+     "w": "sustainer,",
+     "s": 136.716,
+     "e": 137.996
+    },
+    {
+     "w": "provider,",
+     "s": 138.316,
+     "e": 138.676
+    },
+    {
+     "w": "caretaker.",
+     "s": 138.716,
+     "e": 139.956
+    },
+    {
+     "w": "It",
+     "s": 139.996,
+     "e": 140.076
+    },
+    {
+     "w": "appears",
+     "s": 140.156,
+     "e": 140.556
+    },
+    {
+     "w": "nine",
+     "s": 140.636,
+     "e": 140.876
+    },
+    {
+     "w": "hundred",
+     "s": 140.916,
+     "e": 141.276
+    },
+    {
+     "w": "seventy-five",
+     "s": 141.356,
+     "e": 142.076
+    },
+    {
+     "w": "times.",
+     "s": 142.636,
+     "e": 143.276
+    }
+   ]
+  },
+  {
+   "id": "1:2:4",
+   "words": [
+    {
+     "w": "Al-'alameen.",
+     "s": 145.869,
+     "e": 147.629
+    },
+    {
+     "w": "The",
+     "s": 147.709,
+     "e": 147.789
+    },
+    {
+     "w": "worlds.",
+     "s": 147.869,
+     "e": 149.069
+    },
+    {
+     "w": "Its",
+     "s": 149.189,
+     "e": 149.309
+    },
+    {
+     "w": "root,",
+     "s": 149.469,
+     "e": 149.949
+    },
+    {
+     "w": "ayn,",
+     "s": 150.109,
+     "e": 150.749
+    },
+    {
+     "w": "lam,",
+     "s": 150.829,
+     "e": 151.429
+    },
+    {
+     "w": "meem,",
+     "s": 151.469,
+     "e": 152.269
+    },
+    {
+     "w": "is",
+     "s": 152.349,
+     "e": 152.429
+    },
+    {
+     "w": "the",
+     "s": 152.509,
+     "e": 152.589
+    },
+    {
+     "w": "same",
+     "s": 152.669,
+     "e": 152.909
+    },
+    {
+     "w": "root",
+     "s": 153.069,
+     "e": 153.229
+    },
+    {
+     "w": "as",
+     "s": 153.309,
+     "e": 153.549
+    },
+    {
+     "w": "'ilm,",
+     "s": 153.629,
+     "e": 154.349
+    },
+    {
+     "w": "knowledge.",
+     "s": 154.429,
+     "e": 155.469
+    }
+   ]
+  },
+  {
+   "id": "a2-tr-intro",
+   "words": [
+    {
+     "w": "Put",
+     "s": 155.919,
+     "e": 156.079
+    },
+    {
+     "w": "together:",
+     "s": 156.159,
+     "e": 157.199
+    }
+   ]
+  },
+  {
+   "id": "a2-tr",
+   "words": [
+    {
+     "w": "[All]",
+     "s": 157.349,
+     "e": 157.409
+    },
+    {
+     "w": "praise",
+     "s": 157.429,
+     "e": 157.909
+    },
+    {
+     "w": "is",
+     "s": 157.989,
+     "e": 158.149
+    },
+    {
+     "w": "[due]",
+     "s": 158.229,
+     "e": 158.469
+    },
+    {
+     "w": "to",
+     "s": 158.549,
+     "e": 158.629
+    },
+    {
+     "w": "Allāh,",
+     "s": 158.709,
+     "e": 159.349
+    },
+    {
+     "w": "Lord",
+     "s": 159.829,
+     "e": 160.149
+    },
+    {
+     "w": "of",
+     "s": 160.309,
+     "e": 160.389
+    },
+    {
+     "w": "the",
+     "s": 160.469,
+     "e": 160.549
+    },
+    {
+     "w": "worlds.",
+     "s": 160.629,
+     "e": 161.349
+    }
+   ]
+  },
+  {
+   "id": "a3-intro",
+   "words": [
+    {
+     "w": "Ayah",
+     "s": 162.149,
+     "e": 162.469
+    },
+    {
+     "w": "three.",
+     "s": 162.629,
+     "e": 163.669
+    }
+   ]
+  },
+  {
+   "id": "a3-known",
+   "words": [
+    {
+     "w": "Ar-Rahman,",
+     "s": 168.771,
+     "e": 170.131
+    },
+    {
+     "w": "ar-Raheem.",
+     "s": 170.251,
+     "e": 171.891
+    },
+    {
+     "w": "You",
+     "s": 171.971,
+     "e": 172.051
+    },
+    {
+     "w": "already",
+     "s": 172.131,
+     "e": 172.451
+    },
+    {
+     "w": "know",
+     "s": 172.531,
+     "e": 172.771
+    },
+    {
+     "w": "both",
+     "s": 172.891,
+     "e": 173.011
+    },
+    {
+     "w": "of",
+     "s": 173.051,
+     "e": 173.091
+    },
+    {
+     "w": "these",
+     "s": 173.171,
+     "e": 173.331
+    },
+    {
+     "w": "words.",
+     "s": 173.411,
+     "e": 174.251
+    },
+    {
+     "w": "That's",
+     "s": 174.291,
+     "e": 174.531
+    },
+    {
+     "w": "the",
+     "s": 174.611,
+     "e": 174.691
+    },
+    {
+     "w": "power",
+     "s": 174.771,
+     "e": 175.091
+    },
+    {
+     "w": "of",
+     "s": 175.171,
+     "e": 175.251
+    },
+    {
+     "w": "learning",
+     "s": 175.331,
+     "e": 175.571
+    },
+    {
+     "w": "the",
+     "s": 175.651,
+     "e": 175.731
+    },
+    {
+     "w": "Quran's",
+     "s": 175.771,
+     "e": 176.211
+    },
+    {
+     "w": "vocabulary:",
+     "s": 176.251,
+     "e": 177.451
+    },
+    {
+     "w": "it",
+     "s": 177.491,
+     "e": 177.651
+    },
+    {
+     "w": "keeps",
+     "s": 177.731,
+     "e": 177.971
+    },
+    {
+     "w": "coming",
+     "s": 178.051,
+     "e": 178.371
+    },
+    {
+     "w": "back.",
+     "s": 178.451,
+     "e": 179.491
+    }
+   ]
+  },
+  {
+   "id": "a3-tr",
+   "words": [
+    {
+     "w": "The",
+     "s": 179.991,
+     "e": 180.151
+    },
+    {
+     "w": "Entirely",
+     "s": 180.311,
+     "e": 180.791
+    },
+    {
+     "w": "Merciful,",
+     "s": 180.871,
+     "e": 181.991
+    },
+    {
+     "w": "the",
+     "s": 182.071,
+     "e": 182.151
+    },
+    {
+     "w": "Especially",
+     "s": 182.231,
+     "e": 182.871
+    },
+    {
+     "w": "Merciful,",
+     "s": 182.951,
+     "e": 184.231
+    }
+   ]
+  },
+  {
+   "id": "a4-intro",
+   "words": [
+    {
+     "w": "Ayah",
+     "s": 185.031,
+     "e": 185.431
+    },
+    {
+     "w": "four.",
+     "s": 185.591,
+     "e": 186.551
+    }
+   ]
+  },
+  {
+   "id": "1:4:1",
+   "words": [
+    {
+     "w": "Maaliki.",
+     "s": 193.18,
+     "e": 194.54
+    },
+    {
+     "w": "Master,",
+     "s": 194.62,
+     "e": 195.42
+    },
+    {
+     "w": "or",
+     "s": 195.5,
+     "e": 195.66
+    },
+    {
+     "w": "Sovereign.",
+     "s": 195.9,
+     "e": 197.02
+    },
+    {
+     "w": "Its",
+     "s": 197.14,
+     "e": 197.26
+    },
+    {
+     "w": "root,",
+     "s": 197.42,
+     "e": 197.9
+    },
+    {
+     "w": "meem,",
+     "s": 197.98,
+     "e": 198.62
+    },
+    {
+     "w": "lam,",
+     "s": 198.7,
+     "e": 199.18
+    },
+    {
+     "w": "kaf,",
+     "s": 199.26,
+     "e": 200.06
+    },
+    {
+     "w": "also",
+     "s": 200.14,
+     "e": 200.38
+    },
+    {
+     "w": "gives",
+     "s": 200.42,
+     "e": 200.62
+    },
+    {
+     "w": "us",
+     "s": 200.82,
+     "e": 201.02
+    },
+    {
+     "w": "malik,",
+     "s": 201.14,
+     "e": 201.82
+    },
+    {
+     "w": "king,",
+     "s": 202.18,
+     "e": 202.58
+    },
+    {
+     "w": "and",
+     "s": 202.62,
+     "e": 203.1
+    },
+    {
+     "w": "mulk,",
+     "s": 203.14,
+     "e": 203.9
+    },
+    {
+     "w": "dominion.",
+     "s": 204.02,
+     "e": 205.34
+    }
+   ]
+  },
+  {
+   "id": "1:4:2",
+   "words": [
+    {
+     "w": "Yawmi.",
+     "s": 207.014,
+     "e": 208.214
+    },
+    {
+     "w": "Day.",
+     "s": 208.374,
+     "e": 209.654
+    },
+    {
+     "w": "Yawm",
+     "s": 209.734,
+     "e": 210.214
+    },
+    {
+     "w": "appears",
+     "s": 210.334,
+     "e": 210.694
+    },
+    {
+     "w": "four",
+     "s": 210.774,
+     "e": 210.934
+    },
+    {
+     "w": "hundred",
+     "s": 211.014,
+     "e": 211.334
+    },
+    {
+     "w": "seventy-five",
+     "s": 211.414,
+     "e": 212.134
+    },
+    {
+     "w": "times,",
+     "s": 212.574,
+     "e": 213.054
+    },
+    {
+     "w": "so",
+     "s": 213.094,
+     "e": 213.334
+    },
+    {
+     "w": "it",
+     "s": 213.414,
+     "e": 213.454
+    },
+    {
+     "w": "is",
+     "s": 213.494,
+     "e": 213.574
+    },
+    {
+     "w": "one",
+     "s": 213.654,
+     "e": 213.734
+    },
+    {
+     "w": "of",
+     "s": 213.774,
+     "e": 213.814
+    },
+    {
+     "w": "the",
+     "s": 213.854,
+     "e": 213.894
+    },
+    {
+     "w": "most",
+     "s": 214.054,
+     "e": 214.214
+    },
+    {
+     "w": "useful",
+     "s": 214.374,
+     "e": 214.694
+    },
+    {
+     "w": "words",
+     "s": 214.774,
+     "e": 215.014
+    },
+    {
+     "w": "you",
+     "s": 215.094,
+     "e": 215.134
+    },
+    {
+     "w": "can",
+     "s": 215.174,
+     "e": 215.334
+    },
+    {
+     "w": "learn.",
+     "s": 215.974,
+     "e": 216.694
+    }
+   ]
+  },
+  {
+   "id": "1:4:3",
+   "words": [
+    {
+     "w": "Ad-deen.",
+     "s": 218.96,
+     "e": 220.24
+    },
+    {
+     "w": "Recompense.",
+     "s": 220.32,
+     "e": 221.84
+    },
+    {
+     "w": "Yawm",
+     "s": 221.92,
+     "e": 222.16
+    },
+    {
+     "w": "ad-deen",
+     "s": 222.28,
+     "e": 222.96
+    },
+    {
+     "w": "is",
+     "s": 223.04,
+     "e": 223.2
+    },
+    {
+     "w": "the",
+     "s": 223.28,
+     "e": 223.36
+    },
+    {
+     "w": "Day",
+     "s": 223.48,
+     "e": 223.6
+    },
+    {
+     "w": "when",
+     "s": 223.68,
+     "e": 223.92
+    },
+    {
+     "w": "everything",
+     "s": 224,
+     "e": 224.4
+    },
+    {
+     "w": "we",
+     "s": 224.48,
+     "e": 224.64
+    },
+    {
+     "w": "earned,",
+     "s": 224.72,
+     "e": 225.32
+    },
+    {
+     "w": "good",
+     "s": 225.36,
+     "e": 225.68
+    },
+    {
+     "w": "or",
+     "s": 225.76,
+     "e": 225.92
+    },
+    {
+     "w": "bad,",
+     "s": 226.24,
+     "e": 226.6
+    },
+    {
+     "w": "is",
+     "s": 226.64,
+     "e": 226.72
+    },
+    {
+     "w": "repaid.",
+     "s": 226.8,
+     "e": 228.16
+    }
+   ]
+  },
+  {
+   "id": "a4-tr-intro",
+   "words": [
+    {
+     "w": "Put",
+     "s": 228.61,
+     "e": 228.85
+    },
+    {
+     "w": "together:",
+     "s": 228.93,
+     "e": 229.97
+    }
+   ]
+  },
+  {
+   "id": "a4-tr",
+   "words": [
+    {
+     "w": "Sovereign",
+     "s": 230.12,
+     "e": 230.68
+    },
+    {
+     "w": "of",
+     "s": 230.76,
+     "e": 230.84
+    },
+    {
+     "w": "the",
+     "s": 230.92,
+     "e": 231
+    },
+    {
+     "w": "Day",
+     "s": 231.08,
+     "e": 231.32
+    },
+    {
+     "w": "of",
+     "s": 231.4,
+     "e": 231.48
+    },
+    {
+     "w": "Recompense.",
+     "s": 231.56,
+     "e": 232.84
+    }
+   ]
+  },
+  {
+   "id": "a5-intro",
+   "words": [
+    {
+     "w": "Ayah",
+     "s": 233.64,
+     "e": 234.04
+    },
+    {
+     "w": "five.",
+     "s": 234.12,
+     "e": 235.24
+    }
+   ]
+  },
+  {
+   "id": "1:5:1",
+   "words": [
+    {
+     "w": "Iyyaka.",
+     "s": 244.276,
+     "e": 245.876
+    },
+    {
+     "w": "You.",
+     "s": 245.956,
+     "e": 246.996
+    },
+    {
+     "w": "And",
+     "s": 247.076,
+     "e": 247.156
+    },
+    {
+     "w": "notice",
+     "s": 247.316,
+     "e": 247.476
+    },
+    {
+     "w": "that",
+     "s": 247.556,
+     "e": 247.636
+    },
+    {
+     "w": "it",
+     "s": 247.716,
+     "e": 247.796
+    },
+    {
+     "w": "comes",
+     "s": 247.956,
+     "e": 248.116
+    },
+    {
+     "w": "first.",
+     "s": 248.196,
+     "e": 249.236
+    },
+    {
+     "w": "Arabic",
+     "s": 249.316,
+     "e": 249.716
+    },
+    {
+     "w": "could",
+     "s": 249.796,
+     "e": 249.876
+    },
+    {
+     "w": "have",
+     "s": 249.956,
+     "e": 250.036
+    },
+    {
+     "w": "said,",
+     "s": 250.116,
+     "e": 250.756
+    },
+    {
+     "w": "we",
+     "s": 250.836,
+     "e": 250.916
+    },
+    {
+     "w": "worship",
+     "s": 251.036,
+     "e": 251.396
+    },
+    {
+     "w": "You.",
+     "s": 251.556,
+     "e": 252.396
+    },
+    {
+     "w": "Putting",
+     "s": 252.436,
+     "e": 252.676
+    },
+    {
+     "w": "You",
+     "s": 252.836,
+     "e": 253.076
+    },
+    {
+     "w": "first",
+     "s": 253.156,
+     "e": 253.636
+    },
+    {
+     "w": "gives",
+     "s": 253.676,
+     "e": 253.876
+    },
+    {
+     "w": "the",
+     "s": 253.916,
+     "e": 253.956
+    },
+    {
+     "w": "meaning:",
+     "s": 254.036,
+     "e": 254.716
+    },
+    {
+     "w": "You",
+     "s": 254.756,
+     "e": 254.996
+    },
+    {
+     "w": "alone.",
+     "s": 255.476,
+     "e": 256.116
+    }
+   ]
+  },
+  {
+   "id": "1:5:2",
+   "words": [
+    {
+     "w": "Na'budu.",
+     "s": 257.947,
+     "e": 259.307
+    },
+    {
+     "w": "We",
+     "s": 259.387,
+     "e": 259.547
+    },
+    {
+     "w": "worship.",
+     "s": 259.627,
+     "e": 260.827
+    },
+    {
+     "w": "The",
+     "s": 260.907,
+     "e": 260.987
+    },
+    {
+     "w": "na",
+     "s": 261.147,
+     "e": 261.547
+    },
+    {
+     "w": "at",
+     "s": 261.627,
+     "e": 261.707
+    },
+    {
+     "w": "the",
+     "s": 261.787,
+     "e": 261.867
+    },
+    {
+     "w": "start",
+     "s": 262.027,
+     "e": 262.507
+    },
+    {
+     "w": "means",
+     "s": 262.587,
+     "e": 262.987
+    },
+    {
+     "w": "we.",
+     "s": 263.067,
+     "e": 263.974
+    },
+    {
+     "w": "And",
+     "s": 264,
+     "e": 264.027
+    },
+    {
+     "w": "its",
+     "s": 264.107,
+     "e": 264.267
+    },
+    {
+     "w": "root,",
+     "s": 264.347,
+     "e": 264.947
+    },
+    {
+     "w": "ayn,",
+     "s": 264.987,
+     "e": 265.44
+    },
+    {
+     "w": "ba,",
+     "s": 265.494,
+     "e": 265.747
+    },
+    {
+     "w": "dal,",
+     "s": 265.787,
+     "e": 266.507
+    },
+    {
+     "w": "also",
+     "s": 266.587,
+     "e": 266.827
+    },
+    {
+     "w": "gives",
+     "s": 266.907,
+     "e": 267.067
+    },
+    {
+     "w": "us",
+     "s": 267.147,
+     "e": 267.467
+    },
+    {
+     "w": "'abd,",
+     "s": 267.547,
+     "e": 268.227
+    },
+    {
+     "w": "a",
+     "s": 268.267,
+     "e": 268.347
+    },
+    {
+     "w": "servant.",
+     "s": 268.427,
+     "e": 269.627
+    }
+   ]
+  },
+  {
+   "id": "1:5:3",
+   "words": [
+    {
+     "w": "Wa-iyyaka.",
+     "s": 271.906,
+     "e": 273.506
+    },
+    {
+     "w": "Wa",
+     "s": 273.586,
+     "e": 273.906
+    },
+    {
+     "w": "means",
+     "s": 274.146,
+     "e": 274.466
+    },
+    {
+     "w": "and.",
+     "s": 274.706,
+     "e": 275.666
+    },
+    {
+     "w": "And",
+     "s": 275.746,
+     "e": 275.986
+    },
+    {
+     "w": "You",
+     "s": 276.146,
+     "e": 276.306
+    },
+    {
+     "w": "alone.",
+     "s": 276.466,
+     "e": 277.506
+    }
+   ]
+  },
+  {
+   "id": "1:5:4",
+   "words": [
+    {
+     "w": "Nasta'een.",
+     "s": 280.046,
+     "e": 281.566
+    },
+    {
+     "w": "We",
+     "s": 281.686,
+     "e": 281.806
+    },
+    {
+     "w": "ask",
+     "s": 281.886,
+     "e": 282.126
+    },
+    {
+     "w": "for",
+     "s": 282.206,
+     "e": 282.366
+    },
+    {
+     "w": "help.",
+     "s": 282.526,
+     "e": 283.246
+    },
+    {
+     "w": "There's",
+     "s": 283.326,
+     "e": 283.486
+    },
+    {
+     "w": "that",
+     "s": 283.566,
+     "e": 283.726
+    },
+    {
+     "w": "na",
+     "s": 283.806,
+     "e": 283.966
+    },
+    {
+     "w": "again:",
+     "s": 284.046,
+     "e": 284.766
+    },
+    {
+     "w": "we.",
+     "s": 285.206,
+     "e": 285.726
+    }
+   ]
+  },
+  {
+   "id": "a5-tr-intro",
+   "words": [
+    {
+     "w": "Put",
+     "s": 286.176,
+     "e": 286.336
+    },
+    {
+     "w": "together:",
+     "s": 286.416,
+     "e": 287.456
+    }
+   ]
+  },
+  {
+   "id": "a5-tr",
+   "words": [
+    {
+     "w": "It",
+     "s": 287.606,
+     "e": 287.686
+    },
+    {
+     "w": "is",
+     "s": 287.766,
+     "e": 287.926
+    },
+    {
+     "w": "You",
+     "s": 288.086,
+     "e": 288.246
+    },
+    {
+     "w": "we",
+     "s": 288.326,
+     "e": 288.486
+    },
+    {
+     "w": "worship",
+     "s": 288.606,
+     "e": 289.206
+    },
+    {
+     "w": "and",
+     "s": 289.286,
+     "e": 289.446
+    },
+    {
+     "w": "You",
+     "s": 289.606,
+     "e": 289.846
+    },
+    {
+     "w": "we",
+     "s": 289.926,
+     "e": 290.086
+    },
+    {
+     "w": "ask",
+     "s": 290.166,
+     "e": 290.326
+    },
+    {
+     "w": "for",
+     "s": 290.406,
+     "e": 290.566
+    },
+    {
+     "w": "help.",
+     "s": 290.766,
+     "e": 291.606
+    }
+   ]
+  },
+  {
+   "id": "a6-intro",
+   "words": [
+    {
+     "w": "Ayah",
+     "s": 292.406,
+     "e": 292.806
+    },
+    {
+     "w": "six.",
+     "s": 292.966,
+     "e": 294.006
+    }
+   ]
+  },
+  {
+   "id": "1:6:1",
+   "words": [
+    {
+     "w": "Ihdina.",
+     "s": 301.406,
+     "e": 302.926
+    },
+    {
+     "w": "Guide",
+     "s": 303.006,
+     "e": 303.246
+    },
+    {
+     "w": "us.",
+     "s": 303.326,
+     "e": 304.446
+    },
+    {
+     "w": "This",
+     "s": 304.566,
+     "e": 304.686
+    },
+    {
+     "w": "time",
+     "s": 304.886,
+     "e": 305.086
+    },
+    {
+     "w": "the",
+     "s": 305.166,
+     "e": 305.326
+    },
+    {
+     "w": "na",
+     "s": 305.566,
+     "e": 305.806
+    },
+    {
+     "w": "is",
+     "s": 305.886,
+     "e": 305.966
+    },
+    {
+     "w": "on",
+     "s": 306.046,
+     "e": 306.126
+    },
+    {
+     "w": "the",
+     "s": 306.206,
+     "e": 306.286
+    },
+    {
+     "w": "end,",
+     "s": 306.366,
+     "e": 306.953
+    },
+    {
+     "w": "and",
+     "s": 306.979,
+     "e": 307.006
+    },
+    {
+     "w": "it",
+     "s": 307.086,
+     "e": 307.166
+    },
+    {
+     "w": "means",
+     "s": 307.406,
+     "e": 307.646
+    },
+    {
+     "w": "us.",
+     "s": 307.806,
+     "e": 308.926
+    },
+    {
+     "w": "Words",
+     "s": 309.046,
+     "e": 309.166
+    },
+    {
+     "w": "from",
+     "s": 309.246,
+     "e": 309.326
+    },
+    {
+     "w": "the",
+     "s": 309.406,
+     "e": 309.486
+    },
+    {
+     "w": "root",
+     "s": 309.566,
+     "e": 309.726
+    },
+    {
+     "w": "of",
+     "s": 309.846,
+     "e": 309.966
+    },
+    {
+     "w": "guidance",
+     "s": 310.086,
+     "e": 310.606
+    },
+    {
+     "w": "appear",
+     "s": 310.686,
+     "e": 311.006
+    },
+    {
+     "w": "over",
+     "s": 311.086,
+     "e": 311.406
+    },
+    {
+     "w": "three",
+     "s": 311.486,
+     "e": 311.726
+    },
+    {
+     "w": "hundred",
+     "s": 311.806,
+     "e": 312.126
+    },
+    {
+     "w": "times.",
+     "s": 312.206,
+     "e": 313.566
+    }
+   ]
+  },
+  {
+   "id": "1:6:2",
+   "words": [
+    {
+     "w": "As-sirata.",
+     "s": 315.721,
+     "e": 317.241
+    },
+    {
+     "w": "The",
+     "s": 317.321,
+     "e": 317.401
+    },
+    {
+     "w": "path.",
+     "s": 317.481,
+     "e": 318.521
+    }
+   ]
+  },
+  {
+   "id": "1:6:3",
+   "words": [
+    {
+     "w": "Al-mustaqeem.",
+     "s": 321.477,
+     "e": 323.157
+    },
+    {
+     "w": "The",
+     "s": 323.237,
+     "e": 323.317
+    },
+    {
+     "w": "straight.",
+     "s": 323.477,
+     "e": 324.597
+    },
+    {
+     "w": "It",
+     "s": 324.677,
+     "e": 324.757
+    },
+    {
+     "w": "comes",
+     "s": 324.877,
+     "e": 324.997
+    },
+    {
+     "w": "from",
+     "s": 325.077,
+     "e": 325.157
+    },
+    {
+     "w": "the",
+     "s": 325.197,
+     "e": 325.237
+    },
+    {
+     "w": "root",
+     "s": 325.317,
+     "e": 325.557
+    },
+    {
+     "w": "of",
+     "s": 325.637,
+     "e": 325.797
+    },
+    {
+     "w": "qama,",
+     "s": 325.877,
+     "e": 326.677
+    },
+    {
+     "w": "to",
+     "s": 326.757,
+     "e": 326.837
+    },
+    {
+     "w": "stand",
+     "s": 326.917,
+     "e": 327.237
+    },
+    {
+     "w": "upright.",
+     "s": 327.317,
+     "e": 328.597
+    }
+   ]
+  },
+  {
+   "id": "a6-tr-intro",
+   "words": [
+    {
+     "w": "Put",
+     "s": 329.047,
+     "e": 329.207
+    },
+    {
+     "w": "together:",
+     "s": 329.287,
+     "e": 330.327
+    }
+   ]
+  },
+  {
+   "id": "a6-tr",
+   "words": [
+    {
+     "w": "Guide",
+     "s": 330.477,
+     "e": 330.797
+    },
+    {
+     "w": "us",
+     "s": 330.917,
+     "e": 331.037
+    },
+    {
+     "w": "to",
+     "s": 331.117,
+     "e": 331.197
+    },
+    {
+     "w": "the",
+     "s": 331.277,
+     "e": 331.357
+    },
+    {
+     "w": "straight",
+     "s": 331.437,
+     "e": 331.757
+    },
+    {
+     "w": "path.",
+     "s": 331.837,
+     "e": 332.957
+    }
+   ]
+  },
+  {
+   "id": "a7-intro",
+   "words": [
+    {
+     "w": "And",
+     "s": 333.757,
+     "e": 333.917
+    },
+    {
+     "w": "ayah",
+     "s": 333.997,
+     "e": 334.317
+    },
+    {
+     "w": "seven,",
+     "s": 334.397,
+     "e": 335.197
+    },
+    {
+     "w": "the",
+     "s": 335.237,
+     "e": 335.277
+    },
+    {
+     "w": "longest.",
+     "s": 335.357,
+     "e": 336.157
+    }
+   ]
+  },
+  {
+   "id": "1:7:1",
+   "words": [
+    {
+     "w": "Sirata.",
+     "s": 353.203,
+     "e": 354.363
+    },
+    {
+     "w": "Path.",
+     "s": 354.643,
+     "e": 355.603
+    },
+    {
+     "w": "The",
+     "s": 355.683,
+     "e": 355.763
+    },
+    {
+     "w": "same",
+     "s": 355.843,
+     "e": 356.003
+    },
+    {
+     "w": "word",
+     "s": 356.083,
+     "e": 356.163
+    },
+    {
+     "w": "again,",
+     "s": 356.243,
+     "e": 356.883
+    },
+    {
+     "w": "so",
+     "s": 357.043,
+     "e": 357.203
+    },
+    {
+     "w": "you",
+     "s": 357.283,
+     "e": 357.363
+    },
+    {
+     "w": "already",
+     "s": 357.523,
+     "e": 357.683
+    },
+    {
+     "w": "know",
+     "s": 357.763,
+     "e": 357.843
+    },
+    {
+     "w": "it.",
+     "s": 357.923,
+     "e": 358.643
+    }
+   ]
+  },
+  {
+   "id": "1:7:2",
+   "words": [
+    {
+     "w": "Alladheena.",
+     "s": 360.578,
+     "e": 362.098
+    },
+    {
+     "w": "Those",
+     "s": 362.178,
+     "e": 362.498
+    },
+    {
+     "w": "who.",
+     "s": 362.578,
+     "e": 363.538
+    },
+    {
+     "w": "This",
+     "s": 363.618,
+     "e": 363.778
+    },
+    {
+     "w": "word",
+     "s": 363.858,
+     "e": 364.018
+    },
+    {
+     "w": "appears",
+     "s": 364.098,
+     "e": 364.418
+    },
+    {
+     "w": "almost",
+     "s": 364.498,
+     "e": 364.898
+    },
+    {
+     "w": "fifteen",
+     "s": 364.978,
+     "e": 365.538
+    },
+    {
+     "w": "hundred",
+     "s": 365.618,
+     "e": 366.018
+    },
+    {
+     "w": "times.",
+     "s": 366.098,
+     "e": 367.138
+    }
+   ]
+  },
+  {
+   "id": "1:7:3",
+   "words": [
+    {
+     "w": "An'amta.",
+     "s": 369.068,
+     "e": 370.268
+    },
+    {
+     "w": "You",
+     "s": 370.348,
+     "e": 370.428
+    },
+    {
+     "w": "have",
+     "s": 370.508,
+     "e": 370.668
+    },
+    {
+     "w": "bestowed",
+     "s": 370.828,
+     "e": 371.228
+    },
+    {
+     "w": "favor.",
+     "s": 371.388,
+     "e": 372.268
+    },
+    {
+     "w": "The",
+     "s": 372.348,
+     "e": 372.428
+    },
+    {
+     "w": "ta",
+     "s": 372.508,
+     "e": 372.828
+    },
+    {
+     "w": "on",
+     "s": 372.908,
+     "e": 372.988
+    },
+    {
+     "w": "the",
+     "s": 373.068,
+     "e": 373.148
+    },
+    {
+     "w": "end",
+     "s": 373.228,
+     "e": 373.548
+    },
+    {
+     "w": "means",
+     "s": 373.628,
+     "e": 374.028
+    },
+    {
+     "w": "you.",
+     "s": 374.188,
+     "e": 375.068
+    }
+   ]
+  },
+  {
+   "id": "1:7:4",
+   "words": [
+    {
+     "w": "'Alayhim.",
+     "s": 377.151,
+     "e": 378.351
+    },
+    {
+     "w": "Upon",
+     "s": 378.551,
+     "e": 378.751
+    },
+    {
+     "w": "them.",
+     "s": 378.831,
+     "e": 379.791
+    },
+    {
+     "w": "'Ala",
+     "s": 379.911,
+     "e": 380.191
+    },
+    {
+     "w": "means",
+     "s": 380.431,
+     "e": 380.671
+    },
+    {
+     "w": "on,",
+     "s": 380.911,
+     "e": 381.631
+    },
+    {
+     "w": "and",
+     "s": 381.711,
+     "e": 381.791
+    },
+    {
+     "w": "him",
+     "s": 381.871,
+     "e": 382.431
+    },
+    {
+     "w": "means",
+     "s": 382.511,
+     "e": 382.751
+    },
+    {
+     "w": "them.",
+     "s": 382.831,
+     "e": 383.871
+    }
+   ]
+  },
+  {
+   "id": "1:7:5",
+   "words": [
+    {
+     "w": "Ghayri.",
+     "s": 385.642,
+     "e": 386.842
+    },
+    {
+     "w": "Not.",
+     "s": 386.922,
+     "e": 388.122
+    }
+   ]
+  },
+  {
+   "id": "1:7:6",
+   "words": [
+    {
+     "w": "Al-maghdoobi.",
+     "s": 390.524,
+     "e": 392.124
+    },
+    {
+     "w": "Those",
+     "s": 392.204,
+     "e": 392.444
+    },
+    {
+     "w": "who",
+     "s": 392.524,
+     "e": 392.604
+    },
+    {
+     "w": "have",
+     "s": 392.684,
+     "e": 392.924
+    },
+    {
+     "w": "earned",
+     "s": 393.124,
+     "e": 393.324
+    },
+    {
+     "w": "anger.",
+     "s": 393.484,
+     "e": 394.524
+    }
+   ]
+  },
+  {
+   "id": "1:7:7",
+   "words": [
+    {
+     "w": "'Alayhim,",
+     "s": 396.674,
+     "e": 397.794
+    },
+    {
+     "w": "again.",
+     "s": 397.874,
+     "e": 398.754
+    },
+    {
+     "w": "You",
+     "s": 398.794,
+     "e": 398.834
+    },
+    {
+     "w": "know",
+     "s": 398.914,
+     "e": 398.994
+    },
+    {
+     "w": "this",
+     "s": 399.074,
+     "e": 399.234
+    },
+    {
+     "w": "one.",
+     "s": 399.354,
+     "e": 400.034
+    }
+   ]
+  },
+  {
+   "id": "1:7:8",
+   "words": [
+    {
+     "w": "Wa-la.",
+     "s": 401.605,
+     "e": 402.805
+    },
+    {
+     "w": "And",
+     "s": 402.885,
+     "e": 403.125
+    },
+    {
+     "w": "not.",
+     "s": 403.285,
+     "e": 404.325
+    },
+    {
+     "w": "La",
+     "s": 404.485,
+     "e": 404.885
+    },
+    {
+     "w": "on",
+     "s": 404.965,
+     "e": 405.045
+    },
+    {
+     "w": "its",
+     "s": 405.125,
+     "e": 405.205
+    },
+    {
+     "w": "own",
+     "s": 405.285,
+     "e": 405.685
+    },
+    {
+     "w": "appears",
+     "s": 405.805,
+     "e": 406.085
+    },
+    {
+     "w": "over",
+     "s": 406.165,
+     "e": 406.485
+    },
+    {
+     "w": "seventeen",
+     "s": 406.565,
+     "e": 407.205
+    },
+    {
+     "w": "hundred",
+     "s": 407.365,
+     "e": 407.685
+    },
+    {
+     "w": "times.",
+     "s": 407.845,
+     "e": 409.125
+    }
+   ]
+  },
+  {
+   "id": "1:7:9",
+   "words": [
+    {
+     "w": "Ad-dalleen.",
+     "s": 415.606,
+     "e": 417.446
+    },
+    {
+     "w": "Those",
+     "s": 417.526,
+     "e": 417.846
+    },
+    {
+     "w": "who",
+     "s": 417.926,
+     "e": 418.006
+    },
+    {
+     "w": "are",
+     "s": 418.086,
+     "e": 418.166
+    },
+    {
+     "w": "astray.",
+     "s": 418.366,
+     "e": 419.366
+    },
+    {
+     "w": "And",
+     "s": 419.446,
+     "e": 419.526
+    },
+    {
+     "w": "that's",
+     "s": 419.606,
+     "e": 419.766
+    },
+    {
+     "w": "the",
+     "s": 419.846,
+     "e": 419.926
+    },
+    {
+     "w": "whole",
+     "s": 420.006,
+     "e": 420.246
+    },
+    {
+     "w": "surah.",
+     "s": 420.326,
+     "e": 421.206
+    }
+   ]
+  },
+  {
+   "id": "a7-tr-intro",
+   "words": [
+    {
+     "w": "Put",
+     "s": 421.656,
+     "e": 421.816
+    },
+    {
+     "w": "together:",
+     "s": 421.896,
+     "e": 422.936
+    }
+   ]
+  },
+  {
+   "id": "a7-tr",
+   "words": [
+    {
+     "w": "The",
+     "s": 423.086,
+     "e": 423.246
+    },
+    {
+     "w": "path",
+     "s": 423.326,
+     "e": 423.566
+    },
+    {
+     "w": "of",
+     "s": 423.646,
+     "e": 423.726
+    },
+    {
+     "w": "those",
+     "s": 423.806,
+     "e": 424.126
+    },
+    {
+     "w": "upon",
+     "s": 424.326,
+     "e": 424.526
+    },
+    {
+     "w": "whom",
+     "s": 424.606,
+     "e": 424.846
+    },
+    {
+     "w": "You",
+     "s": 424.886,
+     "e": 424.926
+    },
+    {
+     "w": "have",
+     "s": 425.006,
+     "e": 425.166
+    },
+    {
+     "w": "bestowed",
+     "s": 425.326,
+     "e": 425.726
+    },
+    {
+     "w": "favor,",
+     "s": 425.806,
+     "e": 426.686
+    },
+    {
+     "w": "not",
+     "s": 426.766,
+     "e": 426.926
+    },
+    {
+     "w": "of",
+     "s": 427.006,
+     "e": 427.086
+    },
+    {
+     "w": "those",
+     "s": 427.246,
+     "e": 427.406
+    },
+    {
+     "w": "who",
+     "s": 427.446,
+     "e": 427.486
+    },
+    {
+     "w": "have",
+     "s": 427.566,
+     "e": 427.726
+    },
+    {
+     "w": "earned",
+     "s": 427.806,
+     "e": 428.046
+    },
+    {
+     "w": "[Your]",
+     "s": 428.099,
+     "e": 428.286
+    },
+    {
+     "w": "anger",
+     "s": 428.366,
+     "e": 429.006
+    },
+    {
+     "w": "or",
+     "s": 429.086,
+     "e": 429.166
+    },
+    {
+     "w": "of",
+     "s": 429.246,
+     "e": 429.326
+    },
+    {
+     "w": "those",
+     "s": 429.406,
+     "e": 429.726
+    },
+    {
+     "w": "who",
+     "s": 429.806,
+     "e": 429.886
+    },
+    {
+     "w": "are",
+     "s": 429.926,
+     "e": 429.966
+    },
+    {
+     "w": "astray.",
+     "s": 430.046,
+     "e": 431.486
+    }
+   ]
+  },
+  {
+   "id": "r1",
+   "words": [
+    {
+     "w": "That's",
+     "s": 432.286,
+     "e": 432.686
+    },
+    {
+     "w": "all",
+     "s": 432.766,
+     "e": 433.006
+    },
+    {
+     "w": "twenty-nine",
+     "s": 433.086,
+     "e": 433.726
+    },
+    {
+     "w": "words.",
+     "s": 433.806,
+     "e": 434.966
+    },
+    {
+     "w": "Now",
+     "s": 435.006,
+     "e": 435.166
+    },
+    {
+     "w": "listen",
+     "s": 435.326,
+     "e": 435.486
+    },
+    {
+     "w": "to",
+     "s": 435.526,
+     "e": 435.566
+    },
+    {
+     "w": "the",
+     "s": 435.646,
+     "e": 435.726
+    },
+    {
+     "w": "whole",
+     "s": 435.806,
+     "e": 436.046
+    },
+    {
+     "w": "surah",
+     "s": 436.126,
+     "e": 436.526
+    },
+    {
+     "w": "one",
+     "s": 436.606,
+     "e": 436.686
+    },
+    {
+     "w": "more",
+     "s": 436.766,
+     "e": 436.926
+    },
+    {
+     "w": "time,",
+     "s": 437.006,
+     "e": 437.726
+    },
+    {
+     "w": "and",
+     "s": 437.806,
+     "e": 437.886
+    },
+    {
+     "w": "follow",
+     "s": 438.046,
+     "e": 438.206
+    },
+    {
+     "w": "the",
+     "s": 438.286,
+     "e": 438.366
+    },
+    {
+     "w": "meaning",
+     "s": 438.566,
+     "e": 438.766
+    },
+    {
+     "w": "as",
+     "s": 438.846,
+     "e": 438.926
+    },
+    {
+     "w": "you",
+     "s": 439.006,
+     "e": 439.086
+    },
+    {
+     "w": "hear",
+     "s": 439.166,
+     "e": 439.246
+    },
+    {
+     "w": "it.",
+     "s": 439.326,
+     "e": 440.206
+    }
+   ]
+  },
+  {
+   "id": "o1",
+   "words": [
+    {
+     "w": "Next",
+     "s": 490.96,
+     "e": 491.28
+    },
+    {
+     "w": "time",
+     "s": 491.4,
+     "e": 491.52
+    },
+    {
+     "w": "you",
+     "s": 491.6,
+     "e": 491.68
+    },
+    {
+     "w": "pray,",
+     "s": 492.04,
+     "e": 492.44
+    },
+    {
+     "w": "you",
+     "s": 492.48,
+     "e": 492.56
+    },
+    {
+     "w": "won't",
+     "s": 492.6,
+     "e": 492.72
+    },
+    {
+     "w": "just",
+     "s": 492.8,
+     "e": 493.04
+    },
+    {
+     "w": "hear",
+     "s": 493.12,
+     "e": 493.36
+    },
+    {
+     "w": "these",
+     "s": 493.44,
+     "e": 493.6
+    },
+    {
+     "w": "words.",
+     "s": 493.68,
+     "e": 494.44
+    },
+    {
+     "w": "You'll",
+     "s": 494.48,
+     "e": 494.64
+    },
+    {
+     "w": "understand",
+     "s": 494.72,
+     "e": 495.44
+    },
+    {
+     "w": "them.",
+     "s": 495.88,
+     "e": 496.4
+    }
+   ]
+  },
+  {
+   "id": "o2",
+   "words": [
+    {
+     "w": "You",
+     "s": 497,
+     "e": 497.16
+    },
+    {
+     "w": "just",
+     "s": 497.24,
+     "e": 497.4
+    },
+    {
+     "w": "learned",
+     "s": 497.52,
+     "e": 497.88
+    },
+    {
+     "w": "twenty-three",
+     "s": 498.08,
+     "e": 498.6
+    },
+    {
+     "w": "different",
+     "s": 498.76,
+     "e": 499.08
+    },
+    {
+     "w": "words,",
+     "s": 499.16,
+     "e": 499.84
+    },
+    {
+     "w": "and",
+     "s": 499.88,
+     "e": 499.96
+    },
+    {
+     "w": "together",
+     "s": 500.04,
+     "e": 500.76
+    },
+    {
+     "w": "they",
+     "s": 500.84,
+     "e": 500.92
+    },
+    {
+     "w": "make",
+     "s": 501,
+     "e": 501.08
+    },
+    {
+     "w": "up",
+     "s": 501.16,
+     "e": 501.4
+    },
+    {
+     "w": "one",
+     "s": 501.48,
+     "e": 501.72
+    },
+    {
+     "w": "in",
+     "s": 501.8,
+     "e": 502.04
+    },
+    {
+     "w": "eight",
+     "s": 502.12,
+     "e": 502.36
+    },
+    {
+     "w": "words",
+     "s": 502.52,
+     "e": 502.68
+    },
+    {
+     "w": "of",
+     "s": 502.76,
+     "e": 502.84
+    },
+    {
+     "w": "the",
+     "s": 502.88,
+     "e": 502.92
+    },
+    {
+     "w": "Quran.",
+     "s": 503,
+     "e": 504.013
+    },
+    {
+     "w": "The",
+     "s": 504.067,
+     "e": 504.12
+    },
+    {
+     "w": "five",
+     "s": 504.2,
+     "e": 504.44
+    },
+    {
+     "w": "hundred",
+     "s": 504.48,
+     "e": 504.76
+    },
+    {
+     "w": "most",
+     "s": 504.84,
+     "e": 505.08
+    },
+    {
+     "w": "common",
+     "s": 505.16,
+     "e": 505.48
+    },
+    {
+     "w": "words",
+     "s": 505.56,
+     "e": 505.96
+    },
+    {
+     "w": "cover",
+     "s": 506.04,
+     "e": 506.36
+    },
+    {
+     "w": "eighty",
+     "s": 506.44,
+     "e": 506.68
+    },
+    {
+     "w": "percent",
+     "s": 506.76,
+     "e": 507.08
+    },
+    {
+     "w": "of",
+     "s": 507.12,
+     "e": 507.16
+    },
+    {
+     "w": "it.",
+     "s": 507.24,
+     "e": 507.96
+    }
+   ]
+  },
+  {
+   "id": "o3",
+   "words": [
+    {
+     "w": "That's",
+     "s": 508.36,
+     "e": 508.68
+    },
+    {
+     "w": "what",
+     "s": 508.76,
+     "e": 508.84
+    },
+    {
+     "w": "Quranki",
+     "s": 508.92,
+     "e": 509.48
+    },
+    {
+     "w": "is",
+     "s": 509.56,
+     "e": 509.64
+    },
+    {
+     "w": "for.",
+     "s": 509.72,
+     "e": 510.52
+    },
+    {
+     "w": "It",
+     "s": 510.6,
+     "e": 510.68
+    },
+    {
+     "w": "teaches",
+     "s": 510.72,
+     "e": 511.08
+    },
+    {
+     "w": "the",
+     "s": 511.12,
+     "e": 511.16
+    },
+    {
+     "w": "Quran's",
+     "s": 511.24,
+     "e": 511.72
+    },
+    {
+     "w": "words",
+     "s": 511.8,
+     "e": 512.2
+    },
+    {
+     "w": "in",
+     "s": 512.24,
+     "e": 512.28
+    },
+    {
+     "w": "the",
+     "s": 512.36,
+     "e": 512.52
+    },
+    {
+     "w": "order",
+     "s": 512.6,
+     "e": 512.84
+    },
+    {
+     "w": "the",
+     "s": 512.88,
+     "e": 512.92
+    },
+    {
+     "w": "Quran",
+     "s": 513,
+     "e": 513.4
+    },
+    {
+     "w": "uses",
+     "s": 513.48,
+     "e": 513.8
+    },
+    {
+     "w": "them,",
+     "s": 513.88,
+     "e": 514.413
+    },
+    {
+     "w": "with",
+     "s": 514.467,
+     "e": 514.52
+    },
+    {
+     "w": "spaced",
+     "s": 514.68,
+     "e": 514.92
+    },
+    {
+     "w": "repetition",
+     "s": 515,
+     "e": 515.72
+    },
+    {
+     "w": "so",
+     "s": 515.8,
+     "e": 515.88
+    },
+    {
+     "w": "they",
+     "s": 516,
+     "e": 516.12
+    },
+    {
+     "w": "stick.",
+     "s": 516.2,
+     "e": 517.04
+    },
+    {
+     "w": "It's",
+     "s": 517.08,
+     "e": 517.24
+    },
+    {
+     "w": "free",
+     "s": 517.32,
+     "e": 517.72
+    },
+    {
+     "w": "at",
+     "s": 517.8,
+     "e": 517.88
+    },
+    {
+     "w": "quranki",
+     "s": 517.92,
+     "e": 518.44
+    },
+    {
+     "w": "dot",
+     "s": 518.52,
+     "e": 518.68
+    },
+    {
+     "w": "org,",
+     "s": 518.84,
+     "e": 519.36
+    },
+    {
+     "w": "on",
+     "s": 519.4,
+     "e": 519.56
+    },
+    {
+     "w": "iPhone,",
+     "s": 519.64,
+     "e": 520.32
+    },
+    {
+     "w": "and",
+     "s": 520.36,
+     "e": 520.52
+    },
+    {
+     "w": "on",
+     "s": 520.6,
+     "e": 520.68
+    },
+    {
+     "w": "Android.",
+     "s": 520.76,
+     "e": 521.8
+    }
+   ]
+  },
+  {
+   "id": "o4",
+   "words": [
+    {
+     "w": "If",
+     "s": 522.2,
+     "e": 522.36
+    },
+    {
+     "w": "this",
+     "s": 522.44,
+     "e": 522.52
+    },
+    {
+     "w": "helped,",
+     "s": 522.6,
+     "e": 523.2
+    },
+    {
+     "w": "subscribe,",
+     "s": 523.24,
+     "e": 524.173
+    },
+    {
+     "w": "and",
+     "s": 524.227,
+     "e": 524.28
+    },
+    {
+     "w": "we’ll",
+     "s": 524.32,
+     "e": 524.44
+    },
+    {
+     "w": "go",
+     "s": 524.52,
+     "e": 524.6
+    },
+    {
+     "w": "through",
+     "s": 524.68,
+     "e": 524.76
+    },
+    {
+     "w": "the",
+     "s": 524.84,
+     "e": 524.92
+    },
+    {
+     "w": "next",
+     "s": 525,
+     "e": 525.24
+    },
+    {
+     "w": "surah,",
+     "s": 525.32,
+     "e": 525.92
+    },
+    {
+     "w": "word",
+     "s": 525.96,
+     "e": 526.2
+    },
+    {
+     "w": "by",
+     "s": 526.28,
+     "e": 526.44
+    },
+    {
+     "w": "word.",
+     "s": 526.52,
+     "e": 527.24
+    }
+   ]
+  }
+ ]
+}
