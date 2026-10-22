@@ -185,3 +185,83 @@ body {
   background: rgba(140, 160, 150, 0.55);
   background-clip: padding-box;
 }
+
+/* Long-form blog articles. Content is plain JSX, so typography lives here. */
+.prose-blog {
+  color: var(--text-secondary);
+  font-size: 1.0625rem;
+  line-height: 1.8;
+}
+.prose-blog > :where(* + :not(.not-prose)) {
+  margin-top: 1.25em;
+}
+.prose-blog h2 {
+  margin-top: 2.6em;
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-size: clamp(1.85rem, 1.4rem + 1.4vw, 2.4rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  scroll-margin-top: 6rem;
+  text-wrap: balance;
+}
+.prose-blog h3 {
+  margin-top: 2em;
+  font-size: 1.2rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--text);
+  scroll-margin-top: 6rem;
+}
+.prose-blog h2 + *,
+.prose-blog h3 + * {
+  margin-top: 0.75em;
+}
+.prose-blog p {
+  text-wrap: pretty;
+}
+.prose-blog strong {
+  color: var(--text);
+  font-weight: 650;
+}
+.prose-blog a:not(.btn-primary) {
+  color: rgb(var(--primary-rgb));
+  font-weight: 550;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgb(var(--primary-rgb) / 0.35);
+}
+.prose-blog a:not(.btn-primary):hover {
+  text-decoration-color: rgb(var(--primary-rgb));
+}
+.prose-blog > ul,
+.prose-blog > ol {
+  padding-left: 1.4em;
+}
+.prose-blog > ul {
+  list-style: disc;
+}
+.prose-blog > ol {
+  list-style: decimal;
+}
+.prose-blog > :is(ul, ol) > li + li {
+  margin-top: 0.45em;
+}
+.prose-blog > :is(ul, ol) > li::marker {
+  color: rgb(var(--primary-rgb));
+}
+.prose-blog blockquote {
+  border-left: 3px solid rgb(var(--primary-rgb) / 0.5);
+  padding-left: 1.1em;
+  color: var(--text);
+  font-style: italic;
+}
+.prose-blog .ar {
+  font-family: 'UthmanicHafs', serif;
+  font-size: 1.3em;
+  line-height: 1;
+  color: var(--text);
+  direction: rtl;
+  unicode-bidi: isolate;
+}

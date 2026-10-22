@@ -67,7 +67,7 @@ export function Landing({ ayahs, curve }: LandingProps) {
 
 /* ------------------------------------------------------------------ */
 
-function Nav({ startHref }: { startHref: string }) {
+export function Nav({ startHref }: { startHref: string }) {
   const visitor = useReturningVisitor();
   return (
     <header className="fixed top-0 inset-x-0 z-50">
@@ -78,10 +78,10 @@ function Nav({ startHref }: { startHref: string }) {
           </Link>
           <div className="hidden md:flex items-center gap-1 text-sm text-textSecondary">
             {[
-              ['#features', 'Features'],
-              ['#how', 'How it works'],
+              ['/#features', 'Features'],
+              ['/#how', 'How it works'],
               ['/quran', 'Read the Quran'],
-              ['#faq', 'FAQ'],
+              ['/blog', 'Blog'],
             ].map(([href, label]) => (
               <Link key={href} href={href} className="px-3 py-1.5 rounded-pill hover:text-text hover:bg-backgroundElement transition-colors">
                 {label}
@@ -855,7 +855,7 @@ function FinalCta({ startHref, startLabel }: { startHref: string; startLabel: st
   );
 }
 
-function Footer() {
+export function Footer() {
   const cols: { title: string; links: [string, string][] }[] = [
     {
       title: 'Study',
@@ -875,6 +875,17 @@ function Footer() {
       ],
     },
     {
+      title: 'Guides',
+      links: [
+        ['/blog', 'Blog'],
+        ['/blog/how-to-learn-quranic-arabic-fast', 'Learn Quranic Arabic fast'],
+        ['/blog/most-common-words-in-the-quran', 'Most common Quran words'],
+        ['/blog/how-to-memorize-the-quran-without-forgetting', 'Memorize without forgetting'],
+        ['/blog/surah-al-fatihah-word-by-word', 'Al-Fatihah word by word'],
+        ['/blog/99-names-of-allah-meanings', '99 Names of Allah'],
+      ],
+    },
+    {
       title: 'Apps',
       links: [
         [APP_STORE_URL, 'iPhone'],
@@ -885,7 +896,7 @@ function Footer() {
   ];
   return (
     <footer className="border-t border-border">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 grid gap-10 sm:grid-cols-[1.4fr_repeat(3,1fr)]">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
         <div>
           <Wordmark size={30} />
           <p className="mt-4 max-w-xs text-sm text-textSecondary">
