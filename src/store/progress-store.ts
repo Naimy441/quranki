@@ -10,7 +10,7 @@ import {
     type Card,
     type GradeName,
 } from '@/lib/fsrs';
-import { buildGlobalSessionQueue, computeReachedLevel, deferReturnReviewBacklog, getLevel, getTrackContext, getWord, isLevelUnlocked as levelIsUnlocked, isStudyWord, LAST_LEVEL_NUMBER, LEVELS, LISTENING_RECALL_EASY_STREAK, nextReachedLevel, QAIDA_LEVELS, usesListeningOverlay, type ProgressMap, type WordProgress } from '@/lib/levels';
+import { buildGlobalSessionQueue, computeReachedLevel, deferReturnReviewBacklog, getLevel, getTrackContext, getWord, isLevelUnlocked as levelIsUnlocked, LAST_LEVEL_NUMBER, LEVELS, LISTENING_RECALL_EASY_STREAK, nextReachedLevel, QAIDA_LEVELS, usesListeningOverlay, type ProgressMap, type WordProgress } from '@/lib/levels';
 import { syncPracticeReminder } from '@/lib/practice-reminder';
 import {
   calendarDayKey,
@@ -644,11 +644,9 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
 
   importLearnedWordIds: (wordIds) => {
     const progress = get().progress;
-    const missing = wordIds.filter((wordId) => {
-      if (progress[wordId]) return false;
-      const word = getWord(wordId);
-      return Boolean(word && isStudyWord(word));
-    });
+    // Grammar ids count too: they are one-time cards, and dropping them re-queues every
+    // grammar card from finished levels as new on a freshly synced device.
+    const missing = wordIds.filter((wordId) => !progress[wordId] && getWord(wordId) !== undefined);
     get().autoMasterWords(missing);
   },
 
