@@ -16,6 +16,7 @@ import {
   EyeOff,
   Keyboard,
   Languages,
+  Play,
   Plus,
   Sparkles,
 } from 'lucide-react';
@@ -26,7 +27,7 @@ import { useReturningVisitor } from '@/hooks/use-returning-visitor';
 import { useIsDark } from '@/hooks/use-is-dark';
 import { createNewCard, previewGrades, type GradeName } from '@/lib/fsrs';
 import { glossColor, tajweedColor } from '@/lib/quran-colors';
-import { APP_STORE_URL, FACTS, GITHUB_URL, PLAY_STORE_URL } from '@/lib/site';
+import { APP_STORE_URL, DEMO_VIDEO_ID, DEMO_VIDEO_URL, FACTS, GITHUB_URL, PLAY_STORE_URL } from '@/lib/site';
 import { FAQS } from './faqs';
 import { cn } from '@/lib/cn';
 
@@ -57,6 +58,7 @@ export function Landing({ ayahs, curve }: LandingProps) {
       <CoverageSection curve={curve} />
       <Features />
       <HowItWorks />
+      <DemoVideo />
       <MobileApps />
       <Faq />
       <FinalCta startHref={startHref} startLabel={startLabel} />
@@ -744,6 +746,67 @@ function StoreButton({ href, kind }: { href: string; kind: 'apple' | 'google' })
   );
 }
 
+function DemoVideo() {
+  // Load the YouTube player only after a click so the landing page stays light.
+  const [playing, setPlaying] = useState(false);
+  return (
+    <section id="demo" className="pb-24 sm:pb-32 scroll-mt-20">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6">
+        <Reveal className="text-center max-w-2xl mx-auto">
+          <p className="text-sm font-semibold text-primary">Demo</p>
+          <h2 className="mt-3 font-display text-4xl sm:text-5xl tracking-tight text-balance">
+            See Quranki in action.
+          </h2>
+        </Reveal>
+        <Reveal delay={0.08} className="mt-12">
+          <div className="relative aspect-video overflow-hidden rounded-large border border-border bg-backgroundElement shadow-soft">
+            {playing ? (
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${DEMO_VIDEO_ID}?autoplay=1&rel=0`}
+                title="Quranki demo video"
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                allowFullScreen
+                className="absolute inset-0 h-full w-full"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setPlaying(true)}
+                aria-label="Play the Quranki demo video"
+                className="group absolute inset-0 h-full w-full"
+              >
+                <Image
+                  src="/images/demo-thumbnail.jpg"
+                  alt=""
+                  fill
+                  sizes="(min-width: 896px) 896px, 100vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                />
+                <span className="absolute inset-0 grid place-items-center bg-black/10 group-hover:bg-black/20 transition-colors">
+                  <span className="grid place-items-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary text-white shadow-soft transition-transform group-hover:scale-105">
+                    <Play className="w-7 h-7 sm:w-8 sm:h-8 translate-x-0.5" fill="currentColor" />
+                  </span>
+                </span>
+              </button>
+            )}
+          </div>
+        </Reveal>
+        <p className="mt-4 text-center text-sm text-textSecondary">
+          <Link
+            href={DEMO_VIDEO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 hover:text-text transition-colors"
+          >
+            Watch on YouTube
+            <ArrowUpRight className="w-3.5 h-3.5 opacity-60" />
+          </Link>
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function MobileApps() {
   const shots = ['/images/screenshots/app-1.jpg', '/images/screenshots/app-2.jpg', '/images/screenshots/app-3.jpg'];
   return (
@@ -890,6 +953,7 @@ export function Footer() {
       links: [
         [APP_STORE_URL, 'iPhone'],
         [PLAY_STORE_URL, 'Android'],
+        [DEMO_VIDEO_URL, 'Demo video'],
         [GITHUB_URL, 'GitHub'],
       ],
     },

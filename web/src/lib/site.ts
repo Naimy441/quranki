@@ -7,6 +7,8 @@ export const SITE_DESCRIPTION =
 export const APP_STORE_URL = 'https://apps.apple.com/us/app/quranki/id6805386348';
 export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.quranki.app&hl=en_US';
 export const GITHUB_URL = 'https://github.com/Naimy441/quranki';
+export const DEMO_VIDEO_ID = 'ShYk--jn0kU';
+export const DEMO_VIDEO_URL = `https://youtu.be/${DEMO_VIDEO_ID}`;
 
 /** Facts quoted in marketing copy. Keep these in sync with the curriculum data. */
 export const FACTS = {
