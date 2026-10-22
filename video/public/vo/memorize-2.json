@@ -1,0 +1,10 @@
+{
+  "scene": "memorize",
+  "index": 2,
+  "text": "You see the opening words, recite the rest from memory, then check yourself.",
+  "src": "vo/memorize-2.mp3",
+  "speechStart": 0,
+  "speechEnd": 5.2,
+  "duration": 5.2,
+  "hash": "a62472199799"
+}

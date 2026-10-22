@@ -1,0 +1,10 @@
+{
+  "scene": "session",
+  "index": 4,
+  "text": "Each button tells you exactly when you'll see the word next.",
+  "src": "vo/session-4.mp3",
+  "speechStart": 0,
+  "speechEnd": 3.76,
+  "duration": 3.76,
+  "hash": "6d8652e1a7c6"
+}

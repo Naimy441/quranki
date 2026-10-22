@@ -1,0 +1,10 @@
+{
+  "scene": "reader",
+  "index": 5,
+  "text": "Click it for a quick hint.",
+  "src": "vo/reader-5.mp3",
+  "speechStart": 0,
+  "speechEnd": 1.92,
+  "duration": 1.92,
+  "hash": "596465f6298e"
+}

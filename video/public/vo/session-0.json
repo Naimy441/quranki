@@ -1,0 +1,10 @@
+{
+  "scene": "session",
+  "index": 0,
+  "text": "Start a session and you see the Arabic first.",
+  "src": "vo/session-0.mp3",
+  "speechStart": 0,
+  "speechEnd": 3.36,
+  "duration": 3.36,
+  "hash": "121b2c0c5599"
+}

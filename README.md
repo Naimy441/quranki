@@ -8,6 +8,14 @@
   Learn Quranic vocabulary with spaced repetition, and read the Quran word-by-word with Tajweed coloring.
 </p>
 
+<p align="center">
+  <a href="https://quranki.org">Web</a> - <a href="https://apps.apple.com/us/app/quranki/id6805386348">App Store</a> - <a href="https://play.google.com/store/apps/details?id=com.quranki.app">Google Play</a>
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/ShYk--jn0kU"><img src="video/out/thumbnail.png" alt="Watch the Quranki demo video" width="640" /></a>
+</p>
+
 ## What is Quranki?
 
 Quranki is a React Native (Expo) app with two parts:

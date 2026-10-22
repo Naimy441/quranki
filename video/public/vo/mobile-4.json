@@ -1,0 +1,10 @@
+{
+  "scene": "mobile",
+  "index": 4,
+  "text": "Your ruku revision for the day, and every statistic in your pocket.",
+  "src": "vo/mobile-4.mp3",
+  "speechStart": 0,
+  "speechEnd": 4.8,
+  "duration": 4.8,
+  "hash": "d0c09aff7e32"
+}

@@ -1,0 +1,426 @@
+[
+  {
+    "scene": "open",
+    "text": "Every day, millions of people recite the Quran.",
+    "src": "vo/open-0.mp3",
+    "from": 15,
+    "start": 0.5,
+    "end": 4.18
+  },
+  {
+    "scene": "open",
+    "text": "They know its sound by heart.",
+    "src": "vo/open-1.mp3",
+    "from": 134,
+    "start": 4.48,
+    "end": 6.72
+  },
+  {
+    "scene": "open",
+    "text": "But for most of them, the meaning stays behind a translation.",
+    "src": "vo/open-2.mp3",
+    "from": 211,
+    "start": 7.02,
+    "end": 11.1
+  },
+  {
+    "scene": "open",
+    "text": "What if you could understand it directly, word by word, in the language it was revealed in?",
+    "src": "vo/open-3.mp3",
+    "from": 342,
+    "start": 11.4,
+    "end": 17.64
+  },
+  {
+    "scene": "title",
+    "text": "This is Quranki.",
+    "src": "vo/title-0.mp3",
+    "from": 590,
+    "start": 19.667,
+    "end": 21.507
+  },
+  {
+    "scene": "insight",
+    "text": "Here's the surprising part.",
+    "src": "vo/insight-0.mp3",
+    "from": 795,
+    "start": 26.5,
+    "end": 28.58
+  },
+  {
+    "scene": "insight",
+    "text": "The Quran has seventy-seven thousand words, but they come from fewer than five thousand dictionary forms.",
+    "src": "vo/insight-1.mp3",
+    "from": 866,
+    "start": 28.88,
+    "end": 36.08
+  },
+  {
+    "scene": "insight",
+    "text": "And they're not spread evenly.",
+    "src": "vo/insight-2.mp3",
+    "from": 1091,
+    "start": 36.38,
+    "end": 38.38
+  },
+  {
+    "scene": "insight",
+    "text": "Just ten words make up a quarter of the whole text.",
+    "src": "vo/insight-3.mp3",
+    "from": 1160,
+    "start": 38.68,
+    "end": 42.36
+  },
+  {
+    "scene": "insight",
+    "text": "The top one hundred cover more than half.",
+    "src": "vo/insight-4.mp3",
+    "from": 1405,
+    "start": 46.833,
+    "end": 49.873
+  },
+  {
+    "scene": "insight",
+    "text": "Learn about five hundred, and you'll recognize eighty percent of every page.",
+    "src": "vo/insight-5.mp3",
+    "from": 1505,
+    "start": 50.173,
+    "end": 55.373
+  },
+  {
+    "scene": "method",
+    "text": "So Quranki teaches words in the order the Quran actually uses them.",
+    "src": "vo/method-0.mp3",
+    "from": 1815,
+    "start": 60.5,
+    "end": 65.38
+  },
+  {
+    "scene": "method",
+    "text": "It schedules every review with FSRS, the algorithm behind modern Anki.",
+    "src": "vo/method-1.mp3",
+    "from": 1970,
+    "start": 65.68,
+    "end": 72.16
+  },
+  {
+    "scene": "method",
+    "text": "And it brings each word straight back to the ayahs where it appears.",
+    "src": "vo/method-2.mp3",
+    "from": 2174,
+    "start": 72.46,
+    "end": 76.78
+  },
+  {
+    "scene": "landing",
+    "text": "It runs on the web, on iPhone, and on Android, and your progress syncs between them.",
+    "src": "vo/landing-0.mp3",
+    "from": 2385,
+    "start": 79.5,
+    "end": 85.5
+  },
+  {
+    "scene": "landing",
+    "text": "Let's look at a real account, about eleven weeks in.",
+    "src": "vo/landing-1.mp3",
+    "from": 2574,
+    "start": 85.8,
+    "end": 89.32
+  },
+  {
+    "scene": "learn",
+    "text": "This is the Learn page.",
+    "src": "vo/learn-0.mp3",
+    "from": 2805,
+    "start": 93.5,
+    "end": 95.66
+  },
+  {
+    "scene": "learn",
+    "text": "Today there are forty-four words waiting: thirty reviews and fourteen new words.",
+    "src": "vo/learn-1.mp3",
+    "from": 2879,
+    "start": 95.96,
+    "end": 102.2
+  },
+  {
+    "scene": "learn",
+    "text": "Eight hundred forty-eight words mastered, a fifty-two day streak, and about fifteen minutes of study a day.",
+    "src": "vo/learn-2.mp3",
+    "from": 3075,
+    "start": 102.5,
+    "end": 109.62
+  },
+  {
+    "scene": "learn",
+    "text": "The curriculum moves in stages, from the most frequent words to the ninety-nine names of Allah.",
+    "src": "vo/learn-3.mp3",
+    "from": 3390,
+    "start": 113,
+    "end": 119.48
+  },
+  {
+    "scene": "session",
+    "text": "Start a session and you see the Arabic first.",
+    "src": "vo/session-0.mp3",
+    "from": 3615,
+    "start": 120.5,
+    "end": 123.86
+  },
+  {
+    "scene": "session",
+    "text": "Try to recall the meaning, then reveal it.",
+    "src": "vo/session-1.mp3",
+    "from": 3725,
+    "start": 124.16,
+    "end": 127.52
+  },
+  {
+    "scene": "session",
+    "text": "Every word comes with an ayah where it really appears, glossed word by word, so you learn it in context.",
+    "src": "vo/session-2.mp3",
+    "from": 3835,
+    "start": 127.82,
+    "end": 135.26
+  },
+  {
+    "scene": "session",
+    "text": "Then rate yourself: again, hard, good, or easy.",
+    "src": "vo/session-3.mp3",
+    "from": 4067,
+    "start": 135.56,
+    "end": 140.36
+  },
+  {
+    "scene": "session",
+    "text": "Each button tells you exactly when you'll see the word next.",
+    "src": "vo/session-4.mp3",
+    "from": 4220,
+    "start": 140.66,
+    "end": 144.42
+  },
+  {
+    "scene": "session",
+    "text": "On desktop, it's all keyboard driven.",
+    "src": "vo/session-5.mp3",
+    "from": 4342,
+    "start": 144.72,
+    "end": 147.92
+  },
+  {
+    "scene": "reader",
+    "text": "Now the best part.",
+    "src": "vo/reader-0.mp3",
+    "from": 4695,
+    "start": 156.5,
+    "end": 158.26
+  },
+  {
+    "scene": "reader",
+    "text": "Open any surah in the reader.",
+    "src": "vo/reader-1.mp3",
+    "from": 4850,
+    "start": 161.667,
+    "end": 163.827
+  },
+  {
+    "scene": "reader",
+    "text": "Words you've learned appear without a translation, because you already know them.",
+    "src": "vo/reader-2.mp3",
+    "from": 5075,
+    "start": 169.167,
+    "end": 174.127
+  },
+  {
+    "scene": "reader",
+    "text": "Only new words keep their gloss, and every ayah shows how much of it you understand.",
+    "src": "vo/reader-3.mp3",
+    "from": 5233,
+    "start": 174.427,
+    "end": 180.187
+  },
+  {
+    "scene": "reader",
+    "text": "Forget a word?",
+    "src": "vo/reader-4.mp3",
+    "from": 5415,
+    "start": 180.5,
+    "end": 181.7
+  },
+  {
+    "scene": "reader",
+    "text": "Click it for a quick hint.",
+    "src": "vo/reader-5.mp3",
+    "from": 5460,
+    "start": 182,
+    "end": 183.92
+  },
+  {
+    "scene": "reader",
+    "text": "Want the full meaning?",
+    "src": "vo/reader-6.mp3",
+    "from": 5550,
+    "start": 185,
+    "end": 186.44
+  },
+  {
+    "scene": "reader",
+    "text": "Open the translation.",
+    "src": "vo/reader-7.mp3",
+    "from": 5602,
+    "start": 186.74,
+    "end": 188.58
+  },
+  {
+    "scene": "reader",
+    "text": "Right-click any word for its grammar, lemma, and root, and how often it appears in the Quran.",
+    "src": "vo/reader-8.mp3",
+    "from": 5720,
+    "start": 190.667,
+    "end": 197.227
+  },
+  {
+    "scene": "memorize",
+    "text": "Understanding leads naturally to memorizing.",
+    "src": "vo/memorize-0.mp3",
+    "from": 5955,
+    "start": 198.5,
+    "end": 201.94
+  },
+  {
+    "scene": "memorize",
+    "text": "Once you know seventy percent of a ruku's words, it unlocks in Memorize.",
+    "src": "vo/memorize-1.mp3",
+    "from": 6067,
+    "start": 202.24,
+    "end": 207.6
+  },
+  {
+    "scene": "memorize",
+    "text": "You see the opening words, recite the rest from memory, then check yourself.",
+    "src": "vo/memorize-2.mp3",
+    "from": 6290,
+    "start": 209.667,
+    "end": 214.867
+  },
+  {
+    "scene": "memorize",
+    "text": "The same scheduler decides when it's time to revise.",
+    "src": "vo/memorize-3.mp3",
+    "from": 6455,
+    "start": 215.167,
+    "end": 218.847
+  },
+  {
+    "scene": "progress",
+    "text": "Progress shows the big picture.",
+    "src": "vo/progress-0.mp3",
+    "from": 6675,
+    "start": 222.5,
+    "end": 224.58
+  },
+  {
+    "scene": "progress",
+    "text": "This learner now recognizes eighty-one percent of the words in the Quran.",
+    "src": "vo/progress-1.mp3",
+    "from": 6746,
+    "start": 224.88,
+    "end": 229.52
+  },
+  {
+    "scene": "progress",
+    "text": "You can see how well they follow a typical ayah, and every surah gets its own bar.",
+    "src": "vo/progress-2.mp3",
+    "from": 6905,
+    "start": 230.167,
+    "end": 235.927
+  },
+  {
+    "scene": "power",
+    "text": "On desktop there is a command palette, so you can jump to any ayah, like two two fifty-five, in a keystroke.",
+    "src": "vo/power-0.mp3",
+    "from": 7340,
+    "start": 244.667,
+    "end": 252.427
+  },
+  {
+    "scene": "power",
+    "text": "Pin your place, collect ayahs into bookmarks, and read in dark or light.",
+    "src": "vo/power-1.mp3",
+    "from": 7582,
+    "start": 252.727,
+    "end": 258.087
+  },
+  {
+    "scene": "mobile",
+    "text": "And it all comes with you.",
+    "src": "vo/mobile-0.mp3",
+    "from": 7875,
+    "start": 262.5,
+    "end": 264.42
+  },
+  {
+    "scene": "mobile",
+    "text": "On iPhone, the same account picks up right where you left off.",
+    "src": "vo/mobile-1.mp3",
+    "from": 7942,
+    "start": 264.72,
+    "end": 268.64
+  },
+  {
+    "scene": "mobile",
+    "text": "The same reviews, each word inside its ayah.",
+    "src": "vo/mobile-2.mp3",
+    "from": 8068,
+    "start": 268.94,
+    "end": 272.86
+  },
+  {
+    "scene": "mobile",
+    "text": "The same reader, with a hint on tap and full details on a long press.",
+    "src": "vo/mobile-3.mp3",
+    "from": 8305,
+    "start": 276.833,
+    "end": 281.873
+  },
+  {
+    "scene": "mobile",
+    "text": "Your ruku revision for the day, and every statistic in your pocket.",
+    "src": "vo/mobile-4.mp3",
+    "from": 8555,
+    "start": 285.167,
+    "end": 289.967
+  },
+  {
+    "scene": "blog",
+    "text": "Quranki also publishes free guides built on real corpus data: the most common words, how many you need, how long it takes, and why spaced repetition makes them stick.",
+    "src": "vo/blog-0.mp3",
+    "from": 8895,
+    "start": 296.5,
+    "end": 307.86
+  },
+  {
+    "scene": "outro",
+    "text": "Quranki.",
+    "src": "vo/outro-0.mp3",
+    "from": 9405,
+    "start": 313.5,
+    "end": 314.54
+  },
+  {
+    "scene": "outro",
+    "text": "Learn the words, read the Quran, and understand it.",
+    "src": "vo/outro-1.mp3",
+    "from": 9445,
+    "start": 314.84,
+    "end": 318.92
+  },
+  {
+    "scene": "outro",
+    "text": "Start free at quranki dot org, or download it on iPhone and Android.",
+    "src": "vo/outro-2.mp3",
+    "from": 9580,
+    "start": 319.333,
+    "end": 324.453
+  }
+]

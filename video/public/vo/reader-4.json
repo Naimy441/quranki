@@ -1,0 +1,10 @@
+{
+  "scene": "reader",
+  "index": 4,
+  "text": "Forget a word?",
+  "src": "vo/reader-4.mp3",
+  "speechStart": 0,
+  "speechEnd": 1.2,
+  "duration": 1.2,
+  "hash": "603c734e67e2"
+}

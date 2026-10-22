@@ -1,0 +1,10 @@
+{
+  "scene": "reader",
+  "index": 1,
+  "text": "Open any surah in the reader.",
+  "src": "vo/reader-1.mp3",
+  "speechStart": 0,
+  "speechEnd": 2.16,
+  "duration": 2.16,
+  "hash": "5d059d3d0f89"
+}

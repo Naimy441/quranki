@@ -1,0 +1,10 @@
+{
+  "scene": "learn",
+  "index": 0,
+  "text": "This is the Learn page.",
+  "src": "vo/learn-0.mp3",
+  "speechStart": 0,
+  "speechEnd": 2.16,
+  "duration": 2.16,
+  "hash": "5def68bc55e0"
+}

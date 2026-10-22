@@ -34,6 +34,7 @@ yarn-error.*
 
 # local env files
 .env*.local
+/video/.env
 
 # typescript
 *.tsbuildinfo
@@ -55,3 +56,4 @@ example
 # generated Qaida TTS already uploaded to Firebase Storage (qaida-audio/);
 # see scripts/upload-qaida-audio.js
 /assets/audio/qaida
+video/.env

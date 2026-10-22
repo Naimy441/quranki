@@ -1,0 +1,212 @@
+1
+00:00:00,500 --> 00:00:04,180
+Every day, millions of people recite the Quran.
+
+2
+00:00:04,480 --> 00:00:06,720
+They know its sound by heart.
+
+3
+00:00:07,020 --> 00:00:11,100
+But for most of them, the meaning stays behind a translation.
+
+4
+00:00:11,400 --> 00:00:17,640
+What if you could understand it directly, word by word, in the language it was revealed in?
+
+5
+00:00:19,667 --> 00:00:21,507
+This is Quranki.
+
+6
+00:00:26,500 --> 00:00:28,580
+Here's the surprising part.
+
+7
+00:00:28,880 --> 00:00:36,080
+The Quran has seventy-seven thousand words, but they come from fewer than five thousand dictionary forms.
+
+8
+00:00:36,380 --> 00:00:38,380
+And they're not spread evenly.
+
+9
+00:00:38,680 --> 00:00:42,360
+Just ten words make up a quarter of the whole text.
+
+10
+00:00:46,833 --> 00:00:49,873
+The top one hundred cover more than half.
+
+11
+00:00:50,173 --> 00:00:55,373
+Learn about five hundred, and you'll recognize eighty percent of every page.
+
+12
+00:01:00,500 --> 00:01:05,380
+So Quranki teaches words in the order the Quran actually uses them.
+
+13
+00:01:05,680 --> 00:01:12,160
+It schedules every review with FSRS, the algorithm behind modern Anki.
+
+14
+00:01:12,460 --> 00:01:16,780
+And it brings each word straight back to the ayahs where it appears.
+
+15
+00:01:19,500 --> 00:01:25,500
+It runs on the web, on iPhone, and on Android, and your progress syncs between them.
+
+16
+00:01:25,800 --> 00:01:29,320
+Let's look at a real account, about eleven weeks in.
+
+17
+00:01:33,500 --> 00:01:35,660
+This is the Learn page.
+
+18
+00:01:35,960 --> 00:01:42,200
+Today there are forty-four words waiting: thirty reviews and fourteen new words.
+
+19
+00:01:42,500 --> 00:01:49,620
+Eight hundred forty-eight words mastered, a fifty-two day streak, and about fifteen minutes of study a day.
+
+20
+00:01:53,000 --> 00:01:59,480
+The curriculum moves in stages, from the most frequent words to the ninety-nine names of Allah.
+
+21
+00:02:00,500 --> 00:02:03,860
+Start a session and you see the Arabic first.
+
+22
+00:02:04,160 --> 00:02:07,520
+Try to recall the meaning, then reveal it.
+
+23
+00:02:07,820 --> 00:02:15,260
+Every word comes with an ayah where it really appears, glossed word by word, so you learn it in context.
+
+24
+00:02:15,560 --> 00:02:20,360
+Then rate yourself: again, hard, good, or easy.
+
+25
+00:02:20,660 --> 00:02:24,420
+Each button tells you exactly when you'll see the word next.
+
+26
+00:02:24,720 --> 00:02:27,920
+On desktop, it's all keyboard driven.
+
+27
+00:02:36,500 --> 00:02:38,260
+Now the best part.
+
+28
+00:02:41,667 --> 00:02:43,827
+Open any surah in the reader.
+
+29
+00:02:49,167 --> 00:02:54,127
+Words you've learned appear without a translation, because you already know them.
+
+30
+00:02:54,427 --> 00:03:00,187
+Only new words keep their gloss, and every ayah shows how much of it you understand.
+
+31
+00:03:00,500 --> 00:03:01,700
+Forget a word?
+
+32
+00:03:02,000 --> 00:03:03,920
+Click it for a quick hint.
+
+33
+00:03:05,000 --> 00:03:06,440
+Want the full meaning?
+
+34
+00:03:06,740 --> 00:03:08,580
+Open the translation.
+
+35
+00:03:10,667 --> 00:03:17,227
+Right-click any word for its grammar, lemma, and root, and how often it appears in the Quran.
+
+36
+00:03:18,500 --> 00:03:21,940
+Understanding leads naturally to memorizing.
+
+37
+00:03:22,240 --> 00:03:27,600
+Once you know seventy percent of a ruku's words, it unlocks in Memorize.
+
+38
+00:03:29,667 --> 00:03:34,867
+You see the opening words, recite the rest from memory, then check yourself.
+
+39
+00:03:35,167 --> 00:03:38,847
+The same scheduler decides when it's time to revise.
+
+40
+00:03:42,500 --> 00:03:44,580
+Progress shows the big picture.
+
+41
+00:03:44,880 --> 00:03:49,520
+This learner now recognizes eighty-one percent of the words in the Quran.
+
+42
+00:03:50,167 --> 00:03:55,927
+You can see how well they follow a typical ayah, and every surah gets its own bar.
+
+43
+00:04:04,667 --> 00:04:12,427
+On desktop there is a command palette, so you can jump to any ayah, like two two fifty-five, in a keystroke.
+
+44
+00:04:12,727 --> 00:04:18,087
+Pin your place, collect ayahs into bookmarks, and read in dark or light.
+
+45
+00:04:22,500 --> 00:04:24,420
+And it all comes with you.
+
+46
+00:04:24,720 --> 00:04:28,640
+On iPhone, the same account picks up right where you left off.
+
+47
+00:04:28,940 --> 00:04:32,860
+The same reviews, each word inside its ayah.
+
+48
+00:04:36,833 --> 00:04:41,873
+The same reader, with a hint on tap and full details on a long press.
+
+49
+00:04:45,167 --> 00:04:49,967
+Your ruku revision for the day, and every statistic in your pocket.
+
+50
+00:04:56,500 --> 00:05:07,860
+Quranki also publishes free guides built on real corpus data: the most common words, how many you need, how long it takes, and why spaced repetition makes them stick.
+
+51
+00:05:13,500 --> 00:05:14,540
+Quranki.
+
+52
+00:05:14,840 --> 00:05:18,920
+Learn the words, read the Quran, and understand it.
+
+53
+00:05:19,333 --> 00:05:24,453
+Start free at quranki dot org, or download it on iPhone and Android.
+
