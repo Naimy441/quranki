@@ -1,12 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { getKnownLemmaIds } from '@/lib/known-words';
 import { getHiddenLemmaIds, getMasteredLemmaIds, type ProgressMap } from '@/lib/levels';
 import type { LemmaId } from '@/lib/quran-lemmas';
 import { getRecognizedLemmaIds, hasUnlockedRuku } from '@/lib/ruku';
 import { getQuranAyahUnderstandingSummary, countMemorizedQuranWords, TOTAL_QURAN_WORDS } from '@/lib/quran-coverage';
-import { useCanonicalReady } from '@/lib/quran-lemma-index';
+import { loadCanonicalAyahs, useCanonicalReady } from '@/lib/quran-lemma-index';
 import { useHifzStore } from '@/store/hifz-store';
 import { useKnownWordsStore } from '@/store/known-words-store';
 import { useProgressStore } from '@/store/progress-store';
@@ -39,6 +39,9 @@ export function masteredPlusKnown(progress: ProgressMap, known: Set<LemmaId>): S
 export function useQuranCoverage() {
   const ready = useCanonicalReady((s) => s.ready);
   const recognized = useRecognizedLemmaIds();
+  useEffect(() => {
+    if (!ready) void loadCanonicalAyahs().catch(() => {});
+  }, [ready]);
   return useMemo(() => {
     if (!ready) return null;
     const memorized = countMemorizedQuranWords(recognized);
@@ -56,6 +59,9 @@ export function useHifzAvailable(): boolean {
   const ready = useCanonicalReady((s) => s.ready);
   const recognized = useRecognizedLemmaIds();
   const enrolledCount = useHifzStore((s) => s.enrolledRukuIds.length);
+  useEffect(() => {
+    if (!ready) void loadCanonicalAyahs().catch(() => {});
+  }, [ready]);
   const unlocked = useMemo(() => ready && hasUnlockedRuku(recognized), [ready, recognized]);
   return enrolledCount > 0 || unlocked;
 }
