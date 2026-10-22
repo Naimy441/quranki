@@ -1,0 +1,23 @@
+{
+  "total": 77429,
+  "counts": {
+    "letters": 0,
+    "muqattaat": 30,
+    "haraka": 6459,
+    "tanween": 861,
+    "madd": 19020,
+    "leen": 3537,
+    "sukoon": 25822,
+    "shaddah": 21700
+  },
+  "cumulative": {
+    "letters": 0,
+    "muqattaat": 30,
+    "haraka": 6489,
+    "tanween": 7350,
+    "madd": 26370,
+    "leen": 29907,
+    "sukoon": 55729,
+    "shaddah": 77429
+  }
+}

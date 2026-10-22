@@ -3,36 +3,38 @@ import { QAIDA_FIRST_LEVEL, QAIDA_LAST_LEVEL, QAIDA_LEVELS, QAIDA_STAGE_ID } fro
 import lemmaLevelCoverageData from '@/data/quran/lemma-level-coverage.json';
 import stageLevelsData from '@/data/quran/stage-levels.json';
 import quranicWordsData from '@/data/quranic-words.json';
-import {
-  deserializeCard,
-  isCardDue,
-  isWordMastered,
-  shouldHideInReader,
-  State,
-  type GradeName,
-  type SerializedCard,
-} from '@/lib/fsrs';
+import { deserializeCard, isCardDue, isWordMastered, serializeCard, shouldHideInReader, State, type GradeName, type SerializedCard } from '@/lib/fsrs';
+import { QURAN_LEMMA_COUNT, TOTAL_QURAN_WORDS, type LemmaId } from '@/lib/quran-lemmas';
 
 export { QAIDA_FIRST_LEVEL, QAIDA_LAST_LEVEL, QAIDA_LEVELS, QAIDA_STAGE_ID };
-
-export type LemmaId = number;
 
 export interface Word {
   id: string;
   arabic: string;
   english: string;
+  /** Latin reading, used on the 99 Names cards. */
   transliteration?: string;
+  /** Possessive/object ending taught as a clitic, not a standalone mushaf word. */
   isSuffix?: boolean;
+  /** One-letter particle that the mushaf fuses onto the next word (وَ, لِ, بِ, ...). */
   isPrefix?: boolean;
+  /** A one-time explanation card, not a vocabulary item. Qaida cards teach reading, not meaning. */
   kind?: 'grammar' | 'digit' | 'qaida';
   note?: string;
   variant?: string;
   forms?: string[];
+  /** How a fused card is built, shown on the flashcard (e.g. مِنْ + مَنْ). */
   contractionOf?: string;
+  /** English of that makeup (e.g. from + who). */
   contractionEnglish?: string;
   exampleOf?: string;
+  /** Do not split this citation into per-word reader tags (avoids claiming الله, etc.). */
   phrase?: boolean;
+  /** Prefer this ayah when picking a flashcard verse example. */
   exampleVerse?: { s: number; a: number };
+  /** Canonical QAC v0.4 lemma ids represented by this card. Generated once from the former
+   * occurrence matcher; reader words now use these ids directly. Affix and grammar cards have
+   * no lemma ids because they are not standalone lexical stems. */
   lemmaIds?: LemmaId[];
 }
 
@@ -43,6 +45,7 @@ export interface Level {
   words: Word[];
 }
 
+/** Consecutive Easy ratings before the prompt hides Arabic and keeps only the voice button. */
 export const LISTENING_RECALL_EASY_STREAK = 2;
 
 export interface WordProgress {
@@ -50,7 +53,14 @@ export interface WordProgress {
   card: SerializedCard;
   lastGrade: GradeName | null;
   reviewedAt: string;
+  /** Consecutive Easy presses. Reset by any other grade. After
+   *  `LISTENING_RECALL_EASY_STREAK`, the flashcard prompt covers Arabic. */
   easyStreak?: number;
+  /** True only when this progress entry was fabricated by marking the word "known" in the
+   *  Quran reader (see useKnownWordsStore), rather than earned through a real flashcard review.
+   *  Lets "forget this word" safely undo *only* that fabricated mastery - a real review always
+   *  writes a fresh entry without this flag, so genuine progress is never at risk of being wiped
+   *  by an unrelated "forget" action. */
   autoMastered?: boolean;
 }
 
@@ -58,6 +68,7 @@ export function hidesPromptArabic(progress: WordProgress | null | undefined): bo
   return (progress?.easyStreak ?? 0) >= LISTENING_RECALL_EASY_STREAK;
 }
 
+/** Listening overlay covers Arabic and plays the clip. Digits and Qaida have no clips yet. */
 export function usesListeningOverlay(word: Word): boolean {
   return word.kind !== 'grammar' && word.kind !== 'digit' && word.kind !== 'qaida';
 }
@@ -78,29 +89,28 @@ const generated = stageLevelsData as {
   };
   levels: Level[];
 };
-const asmaUlHusna = asmaUlHusnaData as {
-  metadata: { firstLevel: number; lastLevel: number; wordCount: number };
-  levels: Level[];
-};
+const asmaUlHusna = asmaUlHusnaData as { metadata: { firstLevel: number; lastLevel: number; wordCount: number }; levels: Level[] };
 
 export function isStudyWord(word: Word): boolean {
   return word.kind !== 'grammar';
 }
 
 export const DECK_NAME = data.deck;
+/** Stage 1, then the 99 names and Arabic digits, then the rest of the curriculum, sorted by level number. */
 export const LEVELS: Level[] = [...data.levels, ...generated.levels, ...asmaUlHusna.levels].sort(
   (a, b) => a.number - b.number,
 );
 export const LEVEL_COUNT = LEVELS.length;
 export const LAST_LEVEL_NUMBER = LEVELS[LEVELS.length - 1]?.number ?? 0;
+/** Last leftover-frequency level (stage 5). Names in stage 2 do not add Quran coverage. */
 export const LAST_FREQUENCY_LEVEL = generated.metadata.stage4LastLevel;
+/** Study words only - one-shot grammar intros are not vocabulary. */
 export const WORD_COUNT = LEVELS.reduce(
   (sum, level) => sum + level.words.filter(isStudyWord).length,
   0,
 );
-
-const levelCoverage = lemmaLevelCoverageData as { totalWords: number; levels: Record<string, number> };
-export const TOTAL_QURAN_WORDS = levelCoverage.totalWords || 77399;
+/** Complete canonical lemma catalogue. Stage breakpoints 547 / 1467 / 2879 / 4875 refer to these ids. */
+export const CURRICULUM_LEMMA_COUNT = QURAN_LEMMA_COUNT;
 
 export interface Stage {
   id: number;
@@ -108,6 +118,7 @@ export interface Stage {
   subtitle: string;
   firstLevel: number;
   lastLevel: number;
+  /** Memorization track that is not part of the frequency leftover curriculum. */
   kind?: 'asma' | 'qaida';
 }
 
@@ -187,6 +198,7 @@ export function isQaidaStage(stage: Stage): boolean {
 
 export const QAIDA_LEVEL_COUNT = QAIDA_LAST_LEVEL - QAIDA_FIRST_LEVEL + 1;
 
+/** Visible level index. With Qaida on, 1-19 are Qaida and Stage 2 starts at 20. */
 export function levelDisplayNumber(levelNumber: number, learnToRead: boolean): number {
   if (isQaidaLevel(levelNumber)) return levelNumber - QAIDA_FIRST_LEVEL + 1;
   if (learnToRead) return levelNumber + QAIDA_LEVEL_COUNT;
@@ -197,6 +209,7 @@ export function formatLevelLabel(levelNumber: number, learnToRead = false): stri
   return `Level ${levelDisplayNumber(levelNumber, learnToRead)}`;
 }
 
+/** When the Qaida is on, it is Stage 1 and the five vocab stages become 2-6. */
 export function stageDisplayNumber(stage: Stage, learnToRead: boolean): number {
   if (!learnToRead) return stage.id;
   return isQaidaStage(stage) ? 1 : stage.id + 1;
@@ -230,53 +243,13 @@ export function isQaidaComplete(progressMap: ProgressMap): boolean {
   return QAIDA_LEVELS.every((level) => isLevelFullyMastered(level, progressMap));
 }
 
-export const ALL_STAGES: Stage[] = [QAIDA_STAGE, ...STAGES];
-
-const levelMap = new Map<number, Level>();
-const levelByIdMap = new Map<string, Level>();
-const wordIndex = new Map<string, { word: Word; level: Level }>();
-const studyWordIdsByLemma = new Map<LemmaId, string[]>();
-
-for (const level of [...LEVELS, ...QAIDA_LEVELS]) {
-  levelMap.set(level.number, level);
-  levelByIdMap.set(level.id, level);
-  for (const word of level.words) {
-    wordIndex.set(word.id, { word, level });
-    for (const lemmaId of word.lemmaIds ?? []) {
-      const ids = studyWordIdsByLemma.get(lemmaId) ?? [];
-      ids.push(word.id);
-      studyWordIdsByLemma.set(lemmaId, ids);
-    }
-  }
-}
-
-export function getLevel(number: number): Level | undefined {
-  if (isQaidaLevel(number)) return QAIDA_LEVELS.find((level) => level.number === number);
-  return levelMap.get(number);
-}
-
-export function getLevelById(id: string): Level | undefined {
-  if (levelByIdMap.has(id)) return levelByIdMap.get(id);
-  const num = parseInt(id, 10);
-  if (!isNaN(num)) {
-    if (levelMap.has(num)) return levelMap.get(num);
-    const pad = String(num).padStart(2, '0');
-    if (levelByIdMap.has(pad)) return levelByIdMap.get(pad);
-  }
-  return undefined;
-}
-
-export function getWord(wordId: string): Word | undefined {
-  return wordIndex.get(wordId)?.word;
-}
-
-export function getLevelForWord(wordId: string): Level | undefined {
-  return wordIndex.get(wordId)?.level;
-}
-
-export function getWordContext(wordId: string): { word: Word; level: Level } | undefined {
-  return wordIndex.get(wordId);
-}
+/** Levels 1–47 are Stage 1, the original thematic curriculum. */
+export const THEMATIC_LEVEL_COUNT = STAGES[0].lastLevel;
+/** Study-word count in Stage 1 (levels 1–47). */
+export const THEMATIC_WORD_COUNT = LEVELS.filter((level) => level.number <= THEMATIC_LEVEL_COUNT).reduce(
+  (sum, level) => sum + level.words.filter(isStudyWord).length,
+  0,
+);
 
 export function getStage(stageId: number): Stage | undefined {
   if (stageId === QAIDA_STAGE.id) return QAIDA_STAGE;
@@ -293,6 +266,10 @@ export function getLevelsForStage(stage: Stage): Level[] {
   return LEVELS.filter((level) => level.number >= stage.firstLevel && level.number <= stage.lastLevel);
 }
 
+/** Later stages stay locked until the reached level enters them. Isolated words marked known
+ *  in the Quran reader do not unlock a later stage's level list. Learners on the Qaida stay
+ *  there until every Qaida card is mastered. Names of Allah (stage 2) sit between stage 1 and
+ *  the frequency stages, so reaching them is what unlocks stage 2. */
 export function isStageUnlocked(stage: Stage, reachedLevel: number, track?: TrackContext): boolean {
   if (isQaidaStage(stage)) return track?.learnToRead === true;
   if (track?.learnToRead && !track.qaidaComplete) return false;
@@ -334,11 +311,26 @@ export function getStageProgress(stage: Stage, progressMap: ProgressMap, now: Da
   return { stage, mastered, total, introduced };
 }
 
+const wordIndex = new Map<string, { word: Word; level: Level }>();
+const studyWordIdsByLemma = new Map<LemmaId, string[]>();
+for (const level of [...LEVELS, ...QAIDA_LEVELS]) {
+  for (const word of level.words) {
+    wordIndex.set(word.id, { word, level });
+    for (const lemmaId of word.lemmaIds ?? []) {
+      const ids = studyWordIdsByLemma.get(lemmaId) ?? [];
+      ids.push(word.id);
+      studyWordIdsByLemma.set(lemmaId, ids);
+    }
+  }
+}
+
 export interface LevelCoverage {
+  /** Quran tokens covered if every study word through this level is known. */
   quranWords: number;
   percent: number;
 }
 
+const levelCoverage = lemmaLevelCoverageData as { totalWords: number; levels: Record<string, number> };
 const coverageThroughLevel: LevelCoverage[] = [];
 let lastFrequencyCoverage = 0;
 for (const level of LEVELS) {
@@ -350,6 +342,7 @@ for (const level of LEVELS) {
   coverageThroughLevel[level.number] = { quranWords, percent };
 }
 
+/** Quran-text coverage the learner would have after mastering every word through `levelNumber`. */
 export function getCoverageThroughLevel(levelNumber: number): LevelCoverage {
   return coverageThroughLevel[levelNumber] ?? { quranWords: 0, percent: 0 };
 }
@@ -358,12 +351,121 @@ export function getGrammarIntro(level: Level): Word | undefined {
   return level.words.find((word) => word.kind === 'grammar');
 }
 
+export function getLevel(levelNumber: number): Level | undefined {
+  if (isQaidaLevel(levelNumber)) return QAIDA_LEVELS.find((level) => level.number === levelNumber);
+  return LEVELS.find((level) => level.number === levelNumber);
+}
+
+export function getWord(wordId: string): Word | undefined {
+  return wordIndex.get(wordId)?.word;
+}
+
+export function getLevelForWord(wordId: string): Level | undefined {
+  return wordIndex.get(wordId)?.level;
+}
+
+export function getStudyWordIdsForLemma(id: LemmaId): readonly string[] {
+  return studyWordIdsByLemma.get(id) ?? [];
+}
+
+export function getStudyWordIdsForLemmas(ids: readonly LemmaId[]): string[] {
+  const result = new Set<string>();
+  for (const id of ids) {
+    for (const wordId of getStudyWordIdsForLemma(id)) result.add(wordId);
+  }
+  return [...result];
+}
+
+export function getHiddenStudyWordIdForLemmas(
+  lemmaIds: readonly LemmaId[],
+  progressMap: ProgressMap,
+): string | undefined {
+  for (const wordId of getStudyWordIdsForLemmas(lemmaIds)) {
+    const progress = progressMap[wordId];
+    if (progress && shouldHideInReader(deserializeCard(progress.card))) return wordId;
+  }
+  return undefined;
+}
+
+export interface TaughtStudyWord {
+  word: Word;
+  level: Level;
+}
+
+function taughtAffixRank(word: Word): number {
+  if (word.isPrefix) return 0;
+  if (word.isSuffix) return 2;
+  return 1;
+}
+
+/** Flashcards the learner has already met that cover these Quran lemmas, prefixes first. */
+export function getTaughtStudyWordsForLemmas(
+  lemmaIds: readonly LemmaId[],
+  progressMap: ProgressMap,
+): TaughtStudyWord[] {
+  const result: TaughtStudyWord[] = [];
+  for (const wordId of getStudyWordIdsForLemmas(lemmaIds)) {
+    if (!progressMap[wordId]) continue;
+    const word = getWord(wordId);
+    const level = getLevelForWord(wordId);
+    if (!word || !level || !isStudyWord(word)) continue;
+    result.push({ word, level });
+  }
+  result.sort((a, b) => taughtAffixRank(a.word) - taughtAffixRank(b.word));
+  return result;
+}
+
 export interface WordState {
   word: Word;
   progress: WordProgress | null;
   isNew: boolean;
   isDue: boolean;
   isMastered: boolean;
+}
+
+/** Canonical lemma ids whose translations should start hidden in the Quran reader: anything the
+ *  learner is supposed to know (Review or Learning), but not New or Relearning. Distinct from
+ *  `getMasteredLemmaIds`, which is the stricter Good/Easy graduation used for stats and unlocks. */
+export function getHiddenLemmaIds(progressMap: ProgressMap): Set<LemmaId> {
+  const hidden = new Set<LemmaId>();
+  for (const [wordId, progress] of Object.entries(progressMap)) {
+    const word = getWord(wordId);
+    if (!word || word.kind === 'grammar' || !shouldHideInReader(deserializeCard(progress.card))) continue;
+    for (const lemmaId of word.lemmaIds ?? []) hidden.add(lemmaId);
+  }
+  return hidden;
+}
+
+/** All mastered canonical lemma ids in one pass - used for stats and the word-detail sheet, not
+ *  for hiding glosses in the reader (that's `getHiddenLemmaIds`: Review/Learning rather than only
+ *  Good/Easy graduation). Computing this once per progress change is much cheaper than
+ *  deserializing every card again for each of the thousands of words a surah can render. */
+export function getMasteredLemmaIds(progressMap: ProgressMap): Set<LemmaId> {
+  const mastered = new Set<LemmaId>();
+  for (const [wordId, progress] of Object.entries(progressMap)) {
+    const word = getWord(wordId);
+    if (!word || word.kind === 'grammar') continue;
+    if (isWordMastered(deserializeCard(progress.card), progress.lastGrade)) {
+      for (const lemmaId of word.lemmaIds ?? []) mastered.add(lemmaId);
+    }
+  }
+  return mastered;
+}
+
+export function getMasteredStudyWordForLemmas(
+  lemmaIds: readonly LemmaId[],
+  progressMap: ProgressMap,
+): { wordId: string; level: Level } | undefined {
+  for (const lemmaId of lemmaIds) {
+    for (const wordId of getStudyWordIdsForLemma(lemmaId)) {
+      const progress = progressMap[wordId];
+      const level = getLevelForWord(wordId);
+      if (progress && level && isWordMastered(deserializeCard(progress.card), progress.lastGrade)) {
+        return { wordId, level };
+      }
+    }
+  }
+  return undefined;
 }
 
 export function getWordState(word: Word, progressMap: ProgressMap, now: Date): WordState {
@@ -388,6 +490,7 @@ export interface LevelStatus {
   dueCount: number;
   masteredCount: number;
   totalCount: number;
+  /** True once every word in the level has been rated Good/Easy at least once. */
   isMastered: boolean;
 }
 
@@ -404,7 +507,7 @@ export function getLevelStatus(level: Level, progressMap: ProgressMap, now: Date
     dueCount,
     masteredCount,
     totalCount,
-    isMastered: masteredCount === totalCount && totalCount > 0,
+    isMastered: masteredCount === totalCount,
   };
 }
 
@@ -418,50 +521,21 @@ export function getLevelStatusesForStage(stage: Stage, progressMap: ProgressMap,
 
 function isLevelFullyMastered(level: Level, progressMap: ProgressMap): boolean {
   const studyWords = level.words.filter(isStudyWord);
-  return (
-    studyWords.length > 0 &&
-    studyWords.every((word) => {
-      const progress = progressMap[word.id];
-      return Boolean(progress && isWordMastered(deserializeCard(progress.card), progress.lastGrade));
-    })
-  );
+  return studyWords.every((word) => {
+    const progress = progressMap[word.id];
+    return Boolean(progress && isWordMastered(deserializeCard(progress.card), progress.lastGrade));
+  });
 }
 
 function isFrequencyLevel(levelNumber: number): boolean {
   return levelNumber > STAGE1_LAST_LEVEL && !isAsmaLevel(levelNumber) && !isQaidaLevel(levelNumber);
 }
 
-function hasProgressInLevels(progressMap: ProgressMap, levels: readonly Level[]): boolean {
-  return levels.some((level) =>
-    level.words.some((word) => isStudyWord(word) && Boolean(progressMap[word.id])),
-  );
-}
-
-function stage1Levels(): Level[] {
-  return LEVELS.filter((level) => level.number <= STAGE1_LAST_LEVEL);
-}
-
-function asmaLevels(): Level[] {
-  return LEVELS.filter((level) => isAsmaLevel(level.number));
-}
-
-function frequencyLevels(): Level[] {
-  return LEVELS.filter((level) => isFrequencyLevel(level.number));
-}
-
-function hasFrequencyProgress(progressMap: ProgressMap): boolean {
-  return hasProgressInLevels(progressMap, frequencyLevels());
-}
-
-export function computeReachedLevel(progressMap: ProgressMap): number {
-  const enteredFrequency = hasFrequencyProgress(progressMap);
-  for (const level of LEVELS) {
-    if (isAsmaLevel(level.number) && enteredFrequency) continue;
-    if (!isLevelFullyMastered(level, progressMap)) return Math.max(level.number, 1);
+export function computeReachedQaidaLevel(progressMap: ProgressMap): number {
+  for (const level of QAIDA_LEVELS) {
+    if (!isLevelFullyMastered(level, progressMap)) return level.number;
   }
-  const nextName = asmaLevels().find((level) => !isLevelFullyMastered(level, progressMap));
-  if (nextName) return frequencyLevels().at(-1)?.number ?? nextName.number;
-  return Math.max(LAST_LEVEL_NUMBER, 1);
+  return QAIDA_LAST_LEVEL;
 }
 
 export function getQaidaIntroductionFrontier(progressMap: ProgressMap): number {
@@ -471,16 +545,34 @@ export function getQaidaIntroductionFrontier(progressMap: ProgressMap): number {
   return QAIDA_LAST_LEVEL;
 }
 
-export function getIntroductionFrontier(progressMap: ProgressMap): number {
-  const skipNames = hasFrequencyProgress(progressMap);
+function stage1Levels(): Level[] {
+  return LEVELS.filter((level) => level.number <= STAGE1_LAST_LEVEL);
+}
+
+/** The learner's current level: the first unmastered level in curriculum order
+ *  (stage 1, then Names of Allah, then leftover frequency). Names are not skipped
+ *  when a later frequency word already has progress - that jump sent people to
+ *  stage 3 and left stage 2 out of the normal path. */
+export function computeReachedLevel(progressMap: ProgressMap): number {
   for (const level of LEVELS) {
-    if (skipNames && isAsmaLevel(level.number)) continue;
-    if (level.words.some((word) => isStudyWord(word) && !progressMap[word.id])) return level.number;
+    if (!isLevelFullyMastered(level, progressMap)) return Math.max(level.number, 1);
   }
-  if (skipNames) {
-    for (const level of asmaLevels()) {
-      if (level.words.some((word) => isStudyWord(word) && !progressMap[word.id])) return level.number;
-    }
+  return Math.max(LAST_LEVEL_NUMBER, 1);
+}
+
+/** Displayed level only moves forward from reviews. A lapse (Again) must not pull it back;
+ *  forgetting an auto-mastered word still uses `computeReachedLevel` directly. */
+export function nextReachedLevel(progressMap: ProgressMap, currentMax: number): number {
+  return Math.max(currentMax, computeReachedLevel(progressMap));
+}
+
+/** The first level that still has an unseen study word - where sequential new-card
+ *  introduction is currently drawing from. Grammar intros do not hold this back.
+ *  Names of Allah stay in this sequence, between stage 1 and the frequency levels.
+ *  LAST_LEVEL_NUMBER if the whole deck has been introduced. */
+export function getIntroductionFrontier(progressMap: ProgressMap): number {
+  for (const level of LEVELS) {
+    if (level.words.some((word) => isStudyWord(word) && !progressMap[word.id])) return level.number;
   }
   return LAST_LEVEL_NUMBER;
 }
@@ -505,7 +597,84 @@ function isLearningDue(state: WordState): boolean {
   return cardState === State.Learning || cardState === State.Relearning;
 }
 
+/** Hard cap on Review-state cards pulled into sessions each calendar day. Learning/relearning
+ *  steps and new-word introductions are independent of this, matching Anki's "Maximum reviews/day"
+ *  vs "New cards/day" split. */
 export const DAILY_REVIEW_LIMIT = 200;
+
+/** A gap longer than this (local midnights since the last study day) is a return, not daily use. */
+export const RETURN_REVIEW_GAP_DAYS = 3;
+
+/** Overdue Review cards kept due today after a long absence. The rest are pushed onto later
+ *  days in batches of this size. Daily study inside the gap still uses DAILY_REVIEW_LIMIT. */
+export const RETURN_REVIEW_DAILY_CAP = 30;
+
+function localDayKey(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function daysBetweenDayKeys(earlier: string, later: string): number {
+  const [y1, m1, d1] = earlier.split('-').map(Number);
+  const [y2, m2, d2] = later.split('-').map(Number);
+  if (![y1, m1, d1, y2, m2, d2].every((part) => Number.isFinite(part))) return 0;
+  const start = Date.UTC(y1!, (m1 ?? 1) - 1, d1);
+  const end = Date.UTC(y2!, (m2 ?? 1) - 1, d2);
+  return Math.round((end - start) / 86_400_000);
+}
+
+function addLocalDays(date: Date, days: number): Date {
+  const next = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+/**
+ * After more than 3 days away, don't dump every overdue Review card into the next session.
+ * The first RETURN_REVIEW_DAILY_CAP stay due now. Each further batch of that size is given
+ * a later due date, one batch per day, so the backlog drains across return days.
+ * Stability, difficulty, scheduled days, reps, lapses, and learning steps are left alone -
+ * only `due` moves, and only forward. Active users (gap of 3 days or less) are unchanged.
+ * Running this again the same day is a no-op: cards already pushed into the future are no
+ * longer overdue, so they are not moved a second time.
+ */
+export function deferReturnReviewBacklog(
+  progressMap: ProgressMap,
+  now: Date,
+  lastActivityDay: string | null,
+): ProgressMap | null {
+  if (!lastActivityDay) return null;
+  const gapDays = daysBetweenDayKeys(lastActivityDay, localDayKey(now));
+  if (gapDays <= RETURN_REVIEW_GAP_DAYS) return null;
+
+  const overdue: { wordId: string; dueMs: number }[] = [];
+  for (const [wordId, progress] of Object.entries(progressMap)) {
+    const card = deserializeCard(progress.card);
+    if (card.state !== State.Review) continue;
+    if (card.due.getTime() > now.getTime()) continue;
+    overdue.push({ wordId, dueMs: card.due.getTime() });
+  }
+  overdue.sort((a, b) => a.dueMs - b.dueMs || a.wordId.localeCompare(b.wordId));
+  if (overdue.length <= RETURN_REVIEW_DAILY_CAP) return null;
+
+  let next: ProgressMap | null = null;
+  for (let index = RETURN_REVIEW_DAILY_CAP; index < overdue.length; index += 1) {
+    const wordId = overdue[index]!.wordId;
+    const progress = progressMap[wordId];
+    if (!progress) continue;
+    const dayShift = Math.floor(index / RETURN_REVIEW_DAILY_CAP);
+    const deferredDue = addLocalDays(now, dayShift);
+    const card = deserializeCard(progress.card);
+    if (deferredDue.getTime() <= card.due.getTime()) continue;
+    next ??= { ...progressMap };
+    next[wordId] = {
+      ...progress,
+      card: serializeCard({ ...card, due: deferredDue }),
+    };
+  }
+  return next;
+}
 
 function shuffleInPlace<T>(items: T[]): T[] {
   for (let i = items.length - 1; i > 0; i -= 1) {
@@ -523,6 +692,8 @@ export interface UpcomingReview {
   ms: number;
 }
 
+/** Learning/Relearning cards that are not due yet - used to tell the learner
+ *  "5 cards come back in 10 minutes" instead of looking like the day is over. */
 export function getUpcomingLearning(progressMap: ProgressMap, now: Date): UpcomingReview | null {
   let soonest = Number.POSITIVE_INFINITY;
   let count = 0;
@@ -543,13 +714,95 @@ export function getUpcomingLearning(progressMap: ProgressMap, now: Date): Upcomi
   return { count, dueAt: new Date(soonest), ms: soonest - now.getTime() };
 }
 
+export interface TimelineWord {
+  word: Word;
+  levelNumber: number;
+  dueAt: Date;
+  dueMs: number;
+}
+
+export interface TimelineBucket {
+  key: string;
+  title: string;
+  words: TimelineWord[];
+}
+
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function startOfLocalDay(date: Date): number {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+function timelineBucketMeta(dueAt: Date, now: Date): { key: string; title: string } {
+  if (dueAt.getTime() <= now.getTime()) return { key: 'due', title: 'Due now' };
+  const dueDay = startOfLocalDay(dueAt);
+  const today = startOfLocalDay(now);
+  const days = Math.round((dueDay - today) / 86_400_000);
+  if (days === 0) return { key: 'today', title: 'Later today' };
+  if (days === 1) return { key: 'tomorrow', title: 'Tomorrow' };
+  const key = `day:${dueAt.getFullYear()}-${dueAt.getMonth()}-${dueAt.getDate()}`;
+  if (days < 7) return { key, title: WEEKDAYS[dueAt.getDay()] ?? 'Upcoming' };
+  const month = MONTHS[dueAt.getMonth()] ?? '';
+  const title = dueAt.getFullYear() === now.getFullYear() ? `${month} ${dueAt.getDate()}` : `${month} ${dueAt.getDate()}, ${dueAt.getFullYear()}`;
+  return { key, title };
+}
+
+/** Every introduced study word, grouped by the calendar day it is next due. */
+export function getWordReviewTimeline(progressMap: ProgressMap, now: Date): TimelineBucket[] {
+  const items: TimelineWord[] = [];
+  for (const [wordId, progress] of Object.entries(progressMap)) {
+    const word = getWord(wordId);
+    if (!word || !isStudyWord(word)) continue;
+    const level = getLevelForWord(wordId);
+    if (!level) continue;
+    const dueAt = deserializeCard(progress.card).due;
+    items.push({
+      word,
+      levelNumber: level.number,
+      dueAt,
+      dueMs: dueAt.getTime() - now.getTime(),
+    });
+  }
+  items.sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime() || a.word.id.localeCompare(b.word.id));
+
+  const buckets: TimelineBucket[] = [];
+  const index = new Map<string, TimelineBucket>();
+  for (const item of items) {
+    const { key, title } = timelineBucketMeta(item.dueAt, now);
+    let bucket = index.get(key);
+    if (!bucket) {
+      bucket = { key, title, words: [] };
+      index.set(key, bucket);
+      buckets.push(bucket);
+    }
+    bucket.words.push(item);
+  }
+  return buckets;
+}
+
+/**
+ * Builds today's queue across the whole sequential deck, the way Anki does for one sequential
+ * deck: due learning/relearning first, then up to DAILY_REVIEW_LIMIT Review-state cards
+ * (oldest-due first to fill the cap, then shuffled so the session isn't in due-date
+ * order, minus any already reviewed today), then up to `wordsPerSession` unseen
+ * study words in curriculum order (level 1, then 2, …), minus any new cards already introduced
+ * today. Grammar intros in that same stretch are included for free so they don't consume the
+ * new-word quota. Unseen cards follow curriculum order: stage 1, then Names of Allah,
+ * then frequency leftovers. A finished stage 1 used to spill new cards straight into
+ * frequency, and that frequency progress then hid the names stage. Reviews never
+ * consume the new-word quota.
+ *
+ * The new-card cap is the default day's batch, not a hard stop: pass `ignoreNewCardCap` when
+ * the learner explicitly starts another session after finishing today's.
+ */
 export function buildGlobalSessionQueue(
   progressMap: ProgressMap,
   now: Date,
   wordsPerSession: number,
-  reviewsAlreadyToday = 0,
-  newCardsAlreadyToday = 0,
-  ignoreNewCardCap = false,
+  reviewsAlreadyToday: number = 0,
+  newCardsAlreadyToday: number = 0,
+  ignoreNewCardCap: boolean = false,
   track?: TrackContext,
 ): SessionWord[] {
   const remainingReviewSlots = Math.max(0, DAILY_REVIEW_LIMIT - reviewsAlreadyToday);
@@ -593,8 +846,6 @@ export function buildGlobalSessionQueue(
   const asmaFresh = fresh.filter((item) => isAsmaLevel(item.levelNumber));
   const laterFresh = fresh.filter((item) => isFrequencyLevel(item.levelNumber));
   const stage1Complete = stage1Levels().every((level) => isLevelFullyMastered(level, progressMap));
-  const enteredFrequency = hasFrequencyProgress(progressMap);
-  const reserveName = enteredFrequency && asmaFresh.some((item) => isStudyWord(item.word)) ? 1 : 0;
 
   const newCards: SessionWord[] = [];
   const takeFresh = (items: SessionWord[], slots: number): number => {
@@ -612,17 +863,17 @@ export function buildGlobalSessionQueue(
     }
     return remaining;
   };
+  // Names of Allah are the normal step after stage 1. Leftover new-card slots must not
+  // jump to frequency levels while names are still unseen, or the learner lands in stage 3.
   if (qaidaOnly) {
     takeFresh(qaidaFresh, remainingNewSlots);
   } else if (!stage1Complete) {
-    const leftover = takeFresh(stage1Fresh, remainingNewSlots);
-    takeFresh(laterFresh, leftover);
-  } else if (!enteredFrequency) {
-    const leftover = takeFresh(asmaFresh, remainingNewSlots);
-    takeFresh(laterFresh, leftover);
+    const afterStage1 = takeFresh(stage1Fresh, remainingNewSlots);
+    const afterNames = takeFresh(asmaFresh, afterStage1);
+    takeFresh(laterFresh, afterNames);
   } else {
-    const leftover = takeFresh([...stage1Fresh, ...laterFresh], Math.max(0, remainingNewSlots - reserveName));
-    takeFresh(asmaFresh, leftover + reserveName);
+    const afterNames = takeFresh(asmaFresh, remainingNewSlots);
+    takeFresh(laterFresh, afterNames);
   }
 
   return [
@@ -654,77 +905,4 @@ export function totalDueWords(progressMap: ProgressMap, now: Date): number {
     }
   }
   return count;
-}
-
-export function getDueReviewWords(progress: ProgressMap, now: Date = new Date()): Word[] {
-  const due: { word: Word; dueTime: number }[] = [];
-
-  for (const [wordId, wp] of Object.entries(progress)) {
-    const word = getWord(wordId);
-    if (!word || !isStudyWord(word)) continue;
-    const card = deserializeCard(wp.card);
-    if (isCardDue(card, now)) {
-      due.push({ word, dueTime: card.due.getTime() });
-    }
-  }
-
-  due.sort((a, b) => a.dueTime - b.dueTime);
-  return due.map((d) => d.word);
-}
-
-export function getMasteredLemmaIds(progressMap: ProgressMap): Set<LemmaId> {
-  const mastered = new Set<LemmaId>();
-  for (const [wordId, progress] of Object.entries(progressMap)) {
-    const word = getWord(wordId);
-    if (!word || word.kind === 'grammar') continue;
-    if (isWordMastered(deserializeCard(progress.card), progress.lastGrade)) {
-      for (const lemmaId of word.lemmaIds ?? []) mastered.add(lemmaId);
-    }
-  }
-  return mastered;
-}
-
-export function getHiddenLemmaIds(progressMap: ProgressMap): Set<LemmaId> {
-  const hidden = new Set<LemmaId>();
-  for (const [wordId, progress] of Object.entries(progressMap)) {
-    const word = getWord(wordId);
-    if (!word || word.kind === 'grammar' || !shouldHideInReader(deserializeCard(progress.card))) continue;
-    for (const lemmaId of word.lemmaIds ?? []) hidden.add(lemmaId);
-  }
-  return hidden;
-}
-
-export interface LevelProgressSummary {
-  total: number;
-  mastered: number;
-  learning: number;
-  newCount: number;
-  percent: number;
-  isUnlocked: boolean;
-  isComplete: boolean;
-}
-
-export function getLevelProgress(level: Level, progress: ProgressMap, maxUnlocked: number): LevelProgressSummary {
-  const studyWords = level.words.filter(isStudyWord);
-  const total = studyWords.length;
-  let mastered = 0;
-  let learning = 0;
-
-  for (const w of studyWords) {
-    const wp = progress[w.id];
-    if (!wp) continue;
-    const card = deserializeCard(wp.card);
-    if (isWordMastered(card)) {
-      mastered++;
-    } else {
-      learning++;
-    }
-  }
-
-  const newCount = Math.max(0, total - mastered - learning);
-  const percent = total > 0 ? Math.round((mastered / total) * 100) : 0;
-  const isUnlocked = isQaidaLevel(level.number) || level.number <= maxUnlocked;
-  const isComplete = mastered === total && total > 0;
-
-  return { total, mastered, learning, newCount, percent, isUnlocked, isComplete };
 }

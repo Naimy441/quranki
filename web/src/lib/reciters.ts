@@ -1,60 +1,112 @@
+/**
+ * The 15 reciter+style combinations, shared with the mobile app. On the web each reciter's
+ * per-ayah audio URLs and word timings live in `public/data/audio/<key>/<surah>.json`
+ * (see `scripts/split-audio-data.mjs`).
+ */
+
+export type RecitationStyle = 'murattal' | 'mujawwad';
+
 export interface ReciterOption {
   key: string;
+  reciterName: string;
+  style: RecitationStyle;
+}
+
+export interface ReciterGroup {
+  id: string;
   name: string;
-  style: string;
+  options: ReciterOption[];
 }
 
 export const DEFAULT_RECITER_KEY = 'dosari-murattal';
 
-export const RECITERS: ReciterOption[] = [
-  { key: 'dosari-murattal', name: 'Yasser Al-Dosari', style: 'Murattal' },
-  { key: 'afasy-murattal', name: 'Mishari Rashid Al-Afasy', style: 'Murattal' },
-  { key: 'husary-murattal', name: 'Mahmoud Khalil Al-Husary', style: 'Murattal' },
-  { key: 'minshawi-murattal', name: 'Muhammad Siddiq Al-Minshawi', style: 'Murattal' },
-  { key: 'abdul-basit-murattal', name: 'Abdul Basit Abdul Samad', style: 'Murattal' },
-  { key: 'muaiqly-murattal', name: "Maher Al-Mu'aiqly", style: 'Murattal' },
-  { key: 'shatri-murattal', name: 'Abu Bakr Al-Shatri', style: 'Murattal' },
-  { key: 'ghamdi-murattal', name: 'Saad Al-Ghamdi', style: 'Murattal' },
-  { key: 'sudais-murattal', name: 'Abdul Rahman Al-Sudais', style: 'Murattal' },
-  { key: 'shuraim-murattal', name: 'Saud Al-Shuraim', style: 'Murattal' },
+function group(id: string, name: string, options: Omit<ReciterOption, 'reciterName'>[]): ReciterGroup {
+  return { id, name, options: options.map((option) => ({ ...option, reciterName: name })) };
+}
+
+export const RECITER_GROUPS: ReciterGroup[] = [
+  group('husary', 'Mahmoud Khalil Al-Husary', [
+    { key: 'husary-mujawwad', style: 'mujawwad' },
+    { key: 'husary-murattal', style: 'murattal' },
+  ]),
+  group('abdul-basit', 'Abdul Basit Abdul Samad', [
+    { key: 'abdul-basit-mujawwad', style: 'mujawwad' },
+    { key: 'abdul-basit-murattal', style: 'murattal' },
+  ]),
+  group('afasy', 'Mishari Rashid Al-Afasy', [{ key: 'afasy-murattal', style: 'murattal' }]),
+  group('dosari', 'Yasser Al-Dosari', [{ key: 'dosari-murattal', style: 'murattal' }]),
+  group('ghamdi', 'Saad Al-Ghamdi', [{ key: 'ghamdi-murattal', style: 'murattal' }]),
+  group('minshawi', 'Muhammad Siddiq Al-Minshawi', [{ key: 'minshawi-murattal', style: 'murattal' }]),
+  group('muaiqly', "Maher Al-Mu'aiqly", [{ key: 'muaiqly-murattal', style: 'murattal' }]),
+  group('rifai', 'Hani Ar-Rifai', [{ key: 'rifai-murattal', style: 'murattal' }]),
+  group('shatri', 'Abu Bakr Al-Shatri', [{ key: 'shatri-murattal', style: 'murattal' }]),
+  group('shuraim', 'Saud Al-Shuraim', [{ key: 'shuraim-murattal', style: 'murattal' }]),
+  group('sudais', 'Abdul Rahman Al-Sudais', [{ key: 'sudais-murattal', style: 'murattal' }]),
+  group('tablawi', 'Mohamed Al-Tablawi', [{ key: 'tablawi-murattal', style: 'murattal' }]),
+  group('tunaiji', 'Khalifa Al-Tunaiji', [{ key: 'tunaiji-murattal', style: 'murattal' }]),
 ];
 
+const OPTIONS_BY_KEY: Map<string, ReciterOption> = new Map(
+  RECITER_GROUPS.flatMap((g) => g.options).map((option) => [option.key, option]),
+);
+
+export function findReciterOption(key: string): ReciterOption | undefined {
+  return OPTIONS_BY_KEY.get(key);
+}
+
+export function isReciterKey(value: unknown): value is string {
+  return typeof value === 'string' && OPTIONS_BY_KEY.has(value);
+}
+
+export function styleLabel(style: RecitationStyle): string {
+  return style === 'mujawwad' ? 'Mujawwad' : 'Murattal';
+}
+
+export function reciterLabel(key: string): string {
+  const option = findReciterOption(key);
+  if (!option) return 'Unknown reciter';
+  return `${option.reciterName} - ${styleLabel(option.style)}`;
+}
+
+/** Flat list for pickers: one row per reciter and style. */
+export const RECITERS = RECITER_GROUPS.flatMap((g) =>
+  g.options.map((o) => ({ key: o.key, name: o.reciterName, style: styleLabel(o.style) })),
+);
+
 export interface AyahAudioData {
-  surah_number: number;
-  ayah_number: number;
   audio_url: string;
-  segments: [number, number, number][]; // [wordIndex, fromMs, toMs]
+  segments: [number, number, number][]; // [wordIndex (1-based), fromMs, toMs]
 }
 
-const reciterAudioCache = new Map<string, Record<string, AyahAudioData>>();
+const surahAudioCache = new Map<string, Promise<Record<string, AyahAudioData>>>();
 
-export async function fetchReciterAudioDataset(
-  reciterKey: string
-): Promise<Record<string, AyahAudioData>> {
-  const cached = reciterAudioCache.get(reciterKey);
-  if (cached) return cached;
-
-  try {
-    const res = await fetch(`/data/audio/${reciterKey}.json`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = (await res.json()) as Record<string, AyahAudioData>;
-    reciterAudioCache.set(reciterKey, data);
-    return data;
-  } catch (err) {
-    console.warn(`Failed to fetch audio dataset for ${reciterKey}:`, err);
-    return {};
+/** Loads one surah's ayah audio URLs and word timings for a reciter. */
+export function fetchSurahAudio(reciterKey: string, surah: number): Promise<Record<string, AyahAudioData>> {
+  const cacheKey = `${reciterKey}/${surah}`;
+  let pending = surahAudioCache.get(cacheKey);
+  if (!pending) {
+    pending = fetch(`/data/audio/${reciterKey}/${surah}.json`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<Record<string, { u: string; s: [number, number, number][] }>>;
+      })
+      .then((raw) => {
+        const out: Record<string, AyahAudioData> = {};
+        for (const [ayah, entry] of Object.entries(raw)) out[ayah] = { audio_url: entry.u, segments: entry.s };
+        return out;
+      })
+      .catch((err) => {
+        surahAudioCache.delete(cacheKey);
+        throw err;
+      });
+    surahAudioCache.set(cacheKey, pending);
   }
+  return pending;
 }
 
-export function getCachedAyahAudio(
-  reciterKey: string,
-  surahNumber: number,
-  ayahNumber: number
-): AyahAudioData | undefined {
-  const dataset = reciterAudioCache.get(reciterKey);
-  if (!dataset) return undefined;
-  const key = `${surahNumber}:${ayahNumber}`;
-  return dataset[key];
+export async function getAyahAudio(reciterKey: string, surah: number, ayah: number): Promise<AyahAudioData | undefined> {
+  const data = await fetchSurahAudio(reciterKey, surah);
+  return data[String(ayah)];
 }
 
 /** 1-based word index matching the current playback time */

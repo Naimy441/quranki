@@ -1,52 +1,52 @@
 'use client';
 
 import React from 'react';
-import { previewGrades, type Card, type GradeName } from '@/lib/fsrs';
+import { motion } from 'framer-motion';
+import { previewGrades, type Card, type GradeName, type GradePreview } from '@/lib/fsrs';
+import { cn } from '@/lib/cn';
 
-interface GradeButtonsProps {
-  card: Card;
+const META: Record<GradeName, { label: string; key: string; className: string }> = {
+  again: { label: 'Again', key: '1', className: 'bg-gradeAgain' },
+  hard: { label: 'Hard', key: '2', className: 'bg-gradeHard' },
+  good: { label: 'Good', key: '3', className: 'bg-gradeGood' },
+  easy: { label: 'Easy', key: '4', className: 'bg-gradeEasy' },
+};
+
+export function GradeButtons({
+  card,
+  previews: given,
+  onGrade,
+}: {
+  card?: Card;
+  previews?: GradePreview[];
   onGrade: (grade: GradeName) => void;
-  disabled?: boolean;
-}
-
-const LABELS: Record<GradeName, string> = {
-  again: 'Again',
-  hard: 'Hard',
-  good: 'Good',
-  easy: 'Easy',
-};
-
-const GRADE_BG: Record<GradeName, string> = {
-  again: 'bg-gradeAgain',
-  hard: 'bg-gradeHard',
-  good: 'bg-gradeGood',
-  easy: 'bg-gradeEasy',
-};
-
-export function GradeButtons({ card, onGrade, disabled = false }: GradeButtonsProps) {
-  const previews = previewGrades(card);
-
+}) {
+  const previews = given ?? (card ? previewGrades(card) : []);
   return (
-    <div className="w-full max-w-xl flex items-center gap-2 animate-fadeIn select-none">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+      className="grid grid-cols-4 gap-2"
+    >
       {previews.map((p) => {
-        const bg = GRADE_BG[p.grade];
+        const m = META[p.grade];
         return (
           <button
             key={p.grade}
             type="button"
             onClick={() => onGrade(p.grade)}
-            disabled={disabled}
-            className={`flex-1 py-4 px-2 rounded-medium ${bg} text-white flex flex-col items-center justify-center gap-0.5 shadow-xs transition-all duration-100 hover:opacity-90 active:scale-95 active:opacity-80`}
+            className={cn(
+              'relative h-16 rounded-large text-white flex flex-col items-center justify-center transition-all hover:brightness-110 active:scale-[0.97]',
+              m.className,
+            )}
           >
-            <span className="text-[15px] font-bold text-white leading-tight">
-              {LABELS[p.grade]}
-            </span>
-            <span className="text-xs font-semibold text-white/90 leading-tight">
-              {p.label}
-            </span>
+            <span className="text-[15px] font-semibold leading-tight">{m.label}</span>
+            <span className="text-xs text-white/80">{p.label}</span>
+            <span className="hidden md:block absolute top-1.5 right-2 text-[10px] font-mono text-white/60">{m.key}</span>
           </button>
         );
       })}
-    </div>
+    </motion.div>
   );
 }

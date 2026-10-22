@@ -1,188 +1,105 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Volume2, BookOpen } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Volume2 } from 'lucide-react';
+import { displayArabic, shapeQpcArabic } from '@/lib/arabic-display';
 import type { Word } from '@/lib/levels';
-import { getVocabExampleRefs } from '@/lib/vocab-examples';
-import { fetchSurahAyahs, type ReaderAyah } from '@/lib/quran-data';
-import { useRecitation } from '@/context/recitation-context';
+import { exampleSurface, getVocabExamples } from '@/lib/vocab-examples';
+import { useQuranDataVersion } from '@/lib/quran-reader';
+import { GrammarCard } from '@/components/session/grammar-card';
+import { VerseExamplePager } from '@/components/session/verse-example';
+import { cn } from '@/lib/cn';
 
 interface FlashCardProps {
   word: Word;
   revealed: boolean;
-  onReveal: () => void;
+  /** Listening recall: a cover hides the Arabic until clicked (or the answer is shown). */
   hideArabic?: boolean;
+  /** Resets the cover when the same word appears again in the sitting. */
+  appearanceKey?: string;
+  onSpeak: () => void;
+  isSpeaking: boolean;
 }
 
-export function FlashCard({ word, revealed, onReveal, hideArabic = false }: FlashCardProps) {
-  const { playWordAudio } = useRecitation();
-  const refs = getVocabExampleRefs(word);
-  const primaryRef = refs[0];
-
-  const [exampleAyah, setExampleAyah] = useState<ReaderAyah | null>(null);
+/** The study card, matching the mobile flashcard. */
+export function FlashCard({ word, revealed, hideArabic = false, appearanceKey, onSpeak, isSpeaking }: FlashCardProps) {
+  const dataVersion = useQuranDataVersion((s) => s.version);
+  const examples = useMemo(
+    () => (word.kind === 'digit' || word.kind === 'qaida' ? [] : getVocabExamples(word)),
+    [word, dataVersion], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const [covered, setCovered] = useState(hideArabic);
 
   useEffect(() => {
-    if (!primaryRef) {
-      setExampleAyah(null);
-      return;
-    }
-    let active = true;
-    fetchSurahAyahs(primaryRef.s).then((ayahs) => {
-      if (active) {
-        const found = ayahs.find((a) => a.a === primaryRef.a) || null;
-        setExampleAyah(found);
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, [primaryRef?.s, primaryRef?.a]);
+    setCovered(hideArabic && !revealed);
+  }, [appearanceKey, hideArabic, revealed, word.id]);
 
-  const handlePlayWord = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (primaryRef) {
-      playWordAudio(primaryRef.s, primaryRef.a, primaryRef.p);
-    }
-  };
+  if (word.kind === 'grammar') return <GrammarCard word={word} />;
 
-  const plainTranslation = exampleAyah?.tr
-    ? exampleAyah.tr
-        .map((p) => (p.t !== undefined ? p.t : ''))
-        .join('')
-        .replace(/\s+/g, ' ')
-        .trim()
-    : '';
+  const spokenSurface = examples[0] ? shapeQpcArabic(exampleSurface(examples[0])) : '';
+  const showSpoken = isSpeaking && spokenSurface.length > 0 && !covered;
+  const canSpeak = examples.length > 0 || word.kind === 'qaida';
 
   return (
-    <div
-      onClick={!revealed ? onReveal : undefined}
-      className={`relative w-full max-w-xl min-h-[380px] rounded-large border p-8 flex flex-col justify-between select-none shadow-sm transition-all duration-200 bg-card ${
-        revealed
-          ? 'border-border'
-          : 'border-border hover:border-primary/50 cursor-pointer'
-      }`}
-    >
-      {/* Front / Prompt Section */}
-      <div className="flex flex-col items-center justify-center flex-1 py-6 space-y-4 text-center">
-        {hideArabic && !revealed ? (
-          <div className="space-y-4">
-            <div className="w-16 h-16 rounded-full bg-backgroundSelected text-primary flex items-center justify-center mx-auto shadow-xs">
-              <Volume2 className="w-8 h-8" />
-            </div>
-            <div className="text-sm font-semibold text-textSecondary">
-              Listening Recall - Listen and recall the meaning
-            </div>
-            {primaryRef && (
-              <button
-                type="button"
-                onClick={handlePlayWord}
-                className="px-5 py-2.5 rounded-medium bg-primary text-onPrimary font-bold text-xs flex items-center gap-2 mx-auto shadow-xs transition-opacity hover:opacity-90"
-              >
-                <Volume2 className="w-4 h-4" />
-                <span>Play Audio (R)</span>
-              </button>
+    <div className="flex w-full flex-col items-center text-center">
+      <div className={cn('flex items-center justify-center gap-3', revealed ? 'pt-2' : 'pt-10')}>
+        <div className="relative">
+          <span
+            className={cn(
+              'uthmanic-text block leading-[1.7] transition-colors',
+              revealed ? 'text-6xl' : word.kind === 'qaida' ? 'text-8xl' : 'text-7xl',
+              showSpoken && 'text-primary',
             )}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="flex items-center justify-center gap-4">
-              <h2 className="uthmanic-text text-5xl md:text-6xl font-bold text-text tracking-wide py-2">
-                {word.arabic}
-              </h2>
-              {primaryRef && (
-                <button
-                  type="button"
-                  onClick={handlePlayWord}
-                  title="Play pronunciation (R)"
-                  className="p-3 rounded-medium bg-backgroundElement hover:bg-backgroundSelected text-textSecondary hover:text-primary transition-colors shadow-xs"
-                >
-                  <Volume2 className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-
-            {word.transliteration && revealed && (
-              <p className="text-sm font-mono text-primary font-bold">
-                {word.transliteration}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Revealed Details */}
-        {revealed && (
-          <div className="w-full pt-6 mt-4 border-t border-border space-y-4 animate-fadeIn">
-            {/* English Meaning */}
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-text">
-                {word.english}
-              </div>
-              {word.note && (
-                <div className="text-xs text-textSecondary max-w-lg mx-auto">
-                  {word.note}
-                </div>
-              )}
-            </div>
-
-            {/* Contraction if applicable */}
-            {word.contractionOf && (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-medium bg-backgroundElement text-xs text-textSecondary border border-border">
-                <span>Contraction of:</span>
-                <span className="uthmanic-text font-bold text-base text-text">{word.contractionOf}</span>
-                <span className="text-textMuted">({word.contractionEnglish})</span>
-              </div>
-            )}
-
-            {/* Quranic Verse Example */}
-            {primaryRef && exampleAyah && (
-              <div className="mt-4 p-4 rounded-medium bg-backgroundElement border border-border text-left space-y-2">
-                <div className="flex items-center justify-between text-xs font-semibold text-textMuted">
-                  <span className="flex items-center gap-1.5 text-primary">
-                    <BookOpen className="w-3.5 h-3.5" /> Quranic Verse Example
-                  </span>
-                  <span>
-                    Surah {primaryRef.s}:{primaryRef.a}
-                  </span>
-                </div>
-
-                {/* Ayah with highlighted target word */}
-                <p className="uthmanic-text text-xl leading-loose text-text text-right" dir="rtl">
-                  {exampleAyah.w.map((w, i) => {
-                    const isTarget = w.p === primaryRef.p;
-                    return (
-                      <span
-                        key={i}
-                        className={`inline-block mx-1 ${
-                          isTarget
-                            ? 'text-primary font-bold underline decoration-primary decoration-2 underline-offset-8'
-                            : ''
-                        }`}
-                      >
-                        {w.ar.map((seg) => seg.t).join('')}
-                      </span>
-                    );
-                  })}
-                </p>
-
-                {/* Ayah Translation */}
-                {plainTranslation && (
-                  <p className="text-xs text-textSecondary italic pt-1 border-t border-border/60">
-                    &ldquo;{plainTranslation}&rdquo;
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          >
+            {showSpoken ? spokenSurface : displayArabic(word)}
+          </span>
+          {hideArabic && covered && (
+            <motion.button
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCovered(false);
+              }}
+              className="absolute inset-0 rounded-large bg-primary"
+              aria-label="Show Arabic"
+              title="Listen first, then click to see the Arabic"
+            />
+          )}
+        </div>
+        {canSpeak && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSpeak();
+            }}
+            className={cn('icon-btn rounded-full bg-backgroundElement text-primary', revealed ? 'h-9 w-9' : 'h-11 w-11')}
+            title="Play pronunciation (R)"
+          >
+            <Volume2 className={cn(revealed ? 'w-4 h-4' : 'w-5 h-5', isSpeaking && 'animate-pulse')} />
+          </button>
         )}
       </div>
-
-      {/* Bottom Hint / Flip instruction */}
-      {!revealed && (
-        <div className="text-center pt-4 border-t border-border">
-          <span className="text-xs font-semibold text-textMuted flex items-center justify-center gap-1.5">
-            Click card or press <kbd className="px-2 py-0.5 rounded-small bg-backgroundElement border border-border text-text font-mono font-bold">Space</kbd> to reveal answer
-          </span>
-        </div>
+      {revealed && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28 }}
+          className="flex w-full flex-col items-center"
+        >
+          <div className="my-5 h-px w-full bg-border" />
+          <h2 className="text-3xl font-semibold tracking-tight">{word.english}</h2>
+          {word.transliteration && <p className="mt-1 text-sm text-textSecondary">{word.transliteration}</p>}
+          {word.contractionOf && (
+            <div className="mt-3 flex flex-col items-center">
+              <span className="uthmanic-text text-2xl">{word.contractionOf}</span>
+              {word.contractionEnglish && <span className="text-sm text-textSecondary">{word.contractionEnglish}</span>}
+            </div>
+          )}
+          {word.note && <p className="mt-3 max-w-md text-sm text-textSecondary">{word.note}</p>}
+          {examples.length > 0 && <VerseExamplePager word={word} examples={examples} />}
+        </motion.div>
       )}
     </div>
   );

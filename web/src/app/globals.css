@@ -11,52 +11,71 @@
 @font-face {
   font-family: 'SurahNames';
   src: url('/fonts/surah_names.ttf') format('truetype');
-  font-display: swap;
+  font-display: block;
 }
 
 :root {
-  --background: #FFFFFF;
-  --background-element: #F3F7F4;
-  --background-selected: #E4F1E8;
-  --card: #FFFFFF;
-  --border: #E6ECE8;
-  --text: #101913;
-  --text-secondary: #5C6B62;
-  --text-muted: #94A39B;
-  --primary: #1E8E5A;
-  --primary-dark: #0F5C3C;
-  --on-primary: #FFFFFF;
-  --danger: #E5484D;
-  --grade-again: #C1121F;
-  --grade-hard: #F77F00;
-  --grade-good: #146B38;
-  --grade-easy: #3568A0;
+  color-scheme: light;
+  --background: #fbfcfb;
+  --background-element: #f1f5f2;
+  --background-selected: #e3f1e8;
+  --card: #ffffff;
+  --border: #e3e9e5;
+  --text: #0e1a13;
+  --text-secondary: #55665c;
+  --text-muted: #8d9c94;
+  --primary-rgb: 30 142 90;
+  --primary-dark: #0f5c3c;
+  --on-primary-rgb: 255 255 255;
+  --danger: #e5484d;
+  --gold: #b7862b;
+  --grade-again: #c1121f;
+  --grade-hard: #e07000;
+  --grade-good: #146b38;
+  --grade-easy: #3568a0;
 }
 
 .dark {
-  --background: #0A0D0B;
-  --background-element: #151B17;
-  --background-selected: #1E2B23;
-  --card: #131916;
-  --border: #232B26;
-  --text: #F2F6F3;
-  --text-secondary: #9CB0A5;
-  --text-muted: #6C7A73;
-  --primary: #34C77E;
-  --primary-dark: #1E8E5A;
-  --on-primary: #06140D;
-  --danger: #F1666B;
-  --grade-again: #E23A44;
-  --grade-hard: #FF9520;
-  --grade-good: #2FA66A;
-  --grade-easy: #4A6F9A;
+  color-scheme: dark;
+  --background: #090c0a;
+  --background-element: #141a16;
+  --background-selected: #1b2a21;
+  --card: #10150f;
+  --border: #212a24;
+  --text: #f1f5f2;
+  --text-secondary: #9db0a5;
+  --text-muted: #67776e;
+  --primary-rgb: 52 199 126;
+  --primary-dark: #1e8e5a;
+  --on-primary-rgb: 6 20 13;
+  --danger: #f1666b;
+  --gold: #e3b45a;
+  --grade-again: #e23a44;
+  --grade-hard: #ff9520;
+  --grade-good: #2fa66a;
+  --grade-easy: #5a84b5;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
 }
 
 body {
   background-color: var(--background);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgb(var(--primary-rgb) / 0.25);
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--primary-rgb) / 0.7);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 .uthmanic-text {
@@ -68,20 +87,101 @@ body {
 .surah-name-glyph {
   font-family: 'SurahNames', sans-serif;
   user-select: none;
+  line-height: 1;
 }
 
-/* Custom Scrollbars */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-medium font-semibold text-sm transition-all duration-150 select-none disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98];
+  }
+  .btn-primary {
+    @apply btn bg-primary text-onPrimary hover:brightness-110 shadow-xs;
+  }
+  .btn-secondary {
+    @apply btn bg-backgroundElement text-text border border-border hover:bg-backgroundSelected;
+  }
+  .btn-ghost {
+    @apply btn text-textSecondary hover:text-text hover:bg-backgroundElement;
+  }
+  .icon-btn {
+    @apply inline-flex items-center justify-center w-9 h-9 rounded-medium text-textSecondary hover:text-text hover:bg-backgroundElement transition-colors;
+  }
+  .card {
+    @apply bg-card border border-border rounded-large;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-xs font-semibold border border-border bg-backgroundElement text-textSecondary;
+  }
+  .input {
+    @apply w-full h-11 px-3.5 rounded-medium bg-backgroundElement border border-border text-sm text-text placeholder:text-textMuted outline-none focus:border-primary/60 focus:ring-4 focus:ring-primary/10 transition;
+  }
+  .kbd {
+    @apply inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 rounded-[6px] border border-border bg-backgroundElement text-[11px] font-mono font-bold text-textSecondary;
+  }
+  .skeleton {
+    @apply rounded-medium bg-backgroundElement;
+    background-image: linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 0.05) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .bg-grid {
+    background-image: linear-gradient(to right, var(--border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(140, 160, 150, 0.3);
-  border-radius: 4px;
+  background: rgba(140, 160, 150, 0.28);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(140, 160, 150, 0.6);
+  background: rgba(140, 160, 150, 0.55);
+  background-clip: padding-box;
 }

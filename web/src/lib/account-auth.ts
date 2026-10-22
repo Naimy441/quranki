@@ -1,19 +1,18 @@
 /**
- * Firebase Auth integration for Quranki Web: email + password.
- * Uses Firebase Identity Toolkit REST API (compatible with mobile app).
+ * Optional Firebase Auth session: email + password. Tokens live in AsyncStorage so the
+ * user stays signed in across launches.
  */
+import AsyncStorage from '@/lib/async-storage';
 
-export const FIREBASE_PROJECT_ID = 'quranki-506915';
-export const FIREBASE_API_KEY = 'AIzaSyDF7zLexThLA3SbEUN64YiGDeLWLQURtnE';
+import { firebaseApiKey } from '@/lib/firebase-config';
 
-const SESSION_STORAGE_KEY = 'quranki_account_session_v1';
+const SESSION_KEY = 'quranki:account:v1';
 const REFRESH_SKEW_MS = 60_000;
 const MIN_PASSWORD_LENGTH = 6;
 
 export interface AccountSession {
   uid: string;
   email: string;
-  displayName?: string;
   idToken: string;
   refreshToken: string;
   expiresAt: number;
@@ -29,12 +28,33 @@ export function subscribeAccountSession(listener: (session: AccountSession | nul
   };
 }
 
+export function accountStorageKeys(): string[] {
+  return [SESSION_KEY];
+}
+
 function authUrl(path: string): string {
-  return `https://identitytoolkit.googleapis.com/v1/${path}?key=${FIREBASE_API_KEY}`;
+  const key = firebaseApiKey();
+  if (!key) throw new Error('Firebase is not configured on this platform.');
+  return `https://identitytoolkit.googleapis.com/v1/${path}?key=${key}`;
 }
 
 function tokenUrl(): string {
-  return `https://securetoken.googleapis.com/v1/token?key=${FIREBASE_API_KEY}`;
+  const key = firebaseApiKey();
+  if (!key) throw new Error('Firebase is not configured on this platform.');
+  return `https://securetoken.googleapis.com/v1/token?key=${key}`;
+}
+
+async function readJson(response: Response): Promise<Record<string, unknown>> {
+  const payload = (await response.json()) as Record<string, unknown>;
+  if (!response.ok) {
+    const error = payload.error;
+    const message =
+      error && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
+        ? error.message
+        : `Auth request failed (${response.status})`;
+    throw new Error(friendlyAuthError(message));
+  }
+  return payload;
 }
 
 function friendlyAuthError(code: string): string {
@@ -67,11 +87,10 @@ export function isValidPassword(value: string): boolean {
   return value.length >= MIN_PASSWORD_LENGTH;
 }
 
-export function loadAccountSession(): AccountSession | null {
-  if (typeof window === 'undefined') return null;
+export async function loadAccountSession(): Promise<AccountSession | null> {
   if (sessionMemory !== undefined) return sessionMemory;
   try {
-    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    const raw = await AsyncStorage.getItem(SESSION_KEY);
     sessionMemory = raw ? (JSON.parse(raw) as AccountSession) : null;
   } catch {
     sessionMemory = null;
@@ -79,55 +98,50 @@ export function loadAccountSession(): AccountSession | null {
   return sessionMemory;
 }
 
-export function persistAccountSession(session: AccountSession | null): void {
+async function persistSession(session: AccountSession | null): Promise<void> {
   sessionMemory = session;
-  if (typeof window === 'undefined') return;
-  try {
-    if (session) {
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
-    } else {
-      localStorage.removeItem(SESSION_STORAGE_KEY);
-    }
-  } catch (e) {
-    console.error('Failed to persist account session:', e);
-  }
+  if (session) await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  else await AsyncStorage.removeItem(SESSION_KEY);
   for (const listener of sessionListeners) listener(session);
 }
 
-async function readJson(response: Response): Promise<Record<string, unknown>> {
-  const payload = (await response.json()) as Record<string, unknown>;
-  if (!response.ok) {
-    const error = payload.error;
-    const message =
-      error && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
-        ? error.message
-        : `Auth request failed (${response.status})`;
-    throw new Error(friendlyAuthError(message));
-  }
-  return payload;
-}
-
-function sessionFromPayload(
-  payload: Record<string, unknown>,
-  fallbackEmail: string,
-  fallbackDisplayName?: string,
-): AccountSession {
+function sessionFromAuthPayload(payload: Record<string, unknown>, fallbackEmail: string): AccountSession {
   const idToken = typeof payload.idToken === 'string' ? payload.idToken : '';
   const refreshToken = typeof payload.refreshToken === 'string' ? payload.refreshToken : '';
   const uid = typeof payload.localId === 'string' ? payload.localId : '';
   const email = typeof payload.email === 'string' ? payload.email : fallbackEmail;
-  const displayName = typeof payload.displayName === 'string' ? payload.displayName : fallbackDisplayName;
   const expiresIn = Number(payload.expiresIn ?? 3600);
-
   if (!idToken || !refreshToken || !uid) throw new Error('Sign-in did not return a session.');
   return {
     uid,
     email: normalizeEmail(email),
-    displayName: displayName || email.split('@')[0],
     idToken,
     refreshToken,
     expiresAt: Date.now() + Math.max(60, expiresIn) * 1000,
   };
+}
+
+async function authenticate(path: 'accounts:signInWithPassword' | 'accounts:signUp', email: string, password: string): Promise<AccountSession> {
+  const normalized = normalizeEmail(email);
+  if (!isValidEmail(normalized)) throw new Error('That email does not look valid.');
+  if (!isValidPassword(password)) throw new Error(`Use at least ${MIN_PASSWORD_LENGTH} characters.`);
+  const response = await fetch(authUrl(path), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: normalized, password, returnSecureToken: true }),
+  });
+  const payload = await readJson(response);
+  const session = sessionFromAuthPayload(payload, normalized);
+  await persistSession(session);
+  return session;
+}
+
+export async function signInWithPassword(email: string, password: string): Promise<AccountSession> {
+  return authenticate('accounts:signInWithPassword', email, password);
+}
+
+export async function createAccount(email: string, password: string): Promise<AccountSession> {
+  return authenticate('accounts:signUp', email, password);
 }
 
 export async function refreshAccountSession(session: AccountSession): Promise<AccountSession> {
@@ -140,84 +154,108 @@ export async function refreshAccountSession(session: AccountSession): Promise<Ac
   const idToken = typeof payload.id_token === 'string' ? payload.id_token : '';
   const refreshToken = typeof payload.refresh_token === 'string' ? payload.refresh_token : session.refreshToken;
   const expiresIn = Number(payload.expires_in ?? 3600);
-
-  if (!idToken) throw new Error('Could not refresh session.');
-  const updated: AccountSession = {
-    ...session,
+  const uid = typeof payload.user_id === 'string' ? payload.user_id : session.uid;
+  if (!idToken) throw new Error('Could not refresh your sign-in.');
+  const next: AccountSession = {
+    uid,
+    email: session.email,
     idToken,
     refreshToken,
     expiresAt: Date.now() + Math.max(60, expiresIn) * 1000,
   };
-  persistAccountSession(updated);
-  return updated;
+  await persistSession(next);
+  return next;
 }
 
 export async function getValidIdToken(): Promise<string | null> {
-  const session = loadAccountSession();
+  const session = await loadAccountSession();
   if (!session) return null;
-  if (Date.now() < session.expiresAt - REFRESH_SKEW_MS) return session.idToken;
+  if (session.expiresAt - REFRESH_SKEW_MS > Date.now()) return session.idToken;
   try {
     const refreshed = await refreshAccountSession(session);
     return refreshed.idToken;
   } catch {
-    return session.idToken;
+    await persistSession(null);
+    return null;
   }
 }
 
-export async function signInWithPassword(email: string, password: string): Promise<AccountSession> {
-  const normalized = normalizeEmail(email);
-  if (!isValidEmail(normalized)) throw new Error('That email does not look valid.');
-  if (!isValidPassword(password)) throw new Error(`Use at least ${MIN_PASSWORD_LENGTH} characters.`);
-
-  const response = await fetch(authUrl('accounts:signInWithPassword'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: normalized, password, returnSecureToken: true }),
-  });
-  const payload = await readJson(response);
-  const session = sessionFromPayload(payload, normalized);
-  persistAccountSession(session);
-  return session;
+export async function signOutAccount(): Promise<void> {
+  await persistSession(null);
 }
 
-export async function signUpWithPassword(
-  email: string,
-  password: string,
-  displayName?: string,
-): Promise<AccountSession> {
+// ---- Web additions ---------------------------------------------------------
+
+/** Emails a Firebase password reset link. Resolves the same way for unknown emails. */
+export async function sendPasswordResetEmail(email: string): Promise<void> {
   const normalized = normalizeEmail(email);
   if (!isValidEmail(normalized)) throw new Error('That email does not look valid.');
-  if (!isValidPassword(password)) throw new Error(`Use at least ${MIN_PASSWORD_LENGTH} characters.`);
-
-  const response = await fetch(authUrl('accounts:signUp'), {
+  const response = await fetch(authUrl('accounts:sendOobCode'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: normalized, password, returnSecureToken: true }),
+    body: JSON.stringify({ requestType: 'PASSWORD_RESET', email: normalized }),
   });
-  const payload = await readJson(response);
-  const session = sessionFromPayload(payload, normalized, displayName);
+  if (response.ok) return;
+  try {
+    await readJson(response);
+  } catch (error) {
+    // Do not reveal whether an account exists.
+    if (error instanceof Error && /No account/.test(error.message)) return;
+    throw error;
+  }
+}
 
-  // If displayName is provided, update profile
-  if (displayName && session.idToken) {
-    try {
-      await fetch(authUrl('accounts:update'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idToken: session.idToken,
-          displayName,
-          returnSecureToken: true,
-        }),
-      });
-    } catch {
-      // Ignore display name failure
+/** Permanently deletes the Firebase Auth user. Callers delete the cloud document first. */
+export async function deleteAccount(): Promise<void> {
+  const token = await getValidIdToken();
+  if (!token) throw new Error('Not signed in.');
+  const response = await fetch(authUrl('accounts:delete'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken: token }),
+  });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as { error?: { message?: string } };
+    const code = payload.error?.message ?? '';
+    throw new Error(
+      /CREDENTIAL_TOO_OLD|TOKEN_EXPIRED/.test(code)
+        ? 'For your security, sign out, sign back in, and try again.'
+        : 'Could not delete the account. Try again.',
+    );
+  }
+  await persistSession(null);
+}
+
+if (typeof window !== 'undefined') {
+  // The first web release stored the session under a different key; keep those users signed in.
+  try {
+    const legacy = window.localStorage.getItem('quranki_account_session_v1');
+    if (legacy && !window.localStorage.getItem(SESSION_KEY)) {
+      const parsed = JSON.parse(legacy) as Partial<AccountSession>;
+      if (parsed.uid && parsed.refreshToken && parsed.email) {
+        window.localStorage.setItem(
+          SESSION_KEY,
+          JSON.stringify({
+            uid: parsed.uid,
+            email: parsed.email,
+            idToken: parsed.idToken ?? '',
+            refreshToken: parsed.refreshToken,
+            expiresAt: 0,
+          } satisfies AccountSession),
+        );
+      }
+      window.localStorage.removeItem('quranki_account_session_v1');
     }
+  } catch {
+    // Ignore malformed legacy data.
   }
 
-  persistAccountSession(session);
-  return session;
-}
-
-export function signOutAccount(): void {
-  persistAccountSession(null);
+  // Keep tabs in agreement when the user signs in or out elsewhere.
+  window.addEventListener('storage', (event) => {
+    if (event.key !== SESSION_KEY) return;
+    sessionMemory = undefined;
+    void loadAccountSession().then((next) => {
+      for (const listener of sessionListeners) listener(next);
+    });
+  });
 }

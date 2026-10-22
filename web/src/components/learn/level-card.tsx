@@ -25,9 +25,7 @@ export function LevelCard({ status, isCurrent, learnToRead }: LevelCardProps) {
     <Link
       href={`/level/${level.number}`}
       className={`group flex items-center gap-4 p-4 rounded-large border transition-all duration-150 bg-card select-none ${
-        isCurrent
-          ? 'border-primary ring-1 ring-primary/30 shadow-sm'
-          : 'border-border hover:border-textMuted/40'
+        isCurrent ? 'border-primary' : 'border-border hover:border-textMuted/40'
       }`}
     >
       {/* Progress Ring with Level Number */}
@@ -35,7 +33,7 @@ export function LevelCard({ status, isCurrent, learnToRead }: LevelCardProps) {
         progress={progress}
         size={52}
         strokeWidth={4}
-        color="var(--primary)"
+        color="rgb(var(--primary-rgb))"
         trackColor="var(--background-element)"
       >
         <span className="text-sm font-bold text-text">

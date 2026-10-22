@@ -1,31 +1,24 @@
 /**
- * Cloud sync for Quranki Web with Firestore.
- * Syncs learned words, reader bookmarks, settings, review dates, and streaks
- * with the Firestore database shared with the mobile app.
+ * Cloud backup for optional accounts. Learned vocab ids, reader "known" lemma keys,
+ * Settings, hifz, Quran marks, and streak days are stored. Level unlock is recomputed
+ * locally from the word ids.
+ *
+ * Writes never block grading: we debounce and run after interactions.
  */
 
-import { getValidIdToken, loadAccountSession, FIREBASE_PROJECT_ID } from './account-auth';
-import type { Bookmark, UserSettings } from './storage';
+import { getValidIdToken, loadAccountSession } from '@/lib/account-auth';
+import { FIREBASE_PROJECT_ID } from '@/lib/firebase-config';
+import { EMPTY_HIFZ, mergeHifzData, sanitizeHifzData, type HifzData } from '@/lib/hifz';
+import { EMPTY_QURAN_MARKS, mergeQuranMarks, sanitizeQuranMarks, type QuranMarksData } from '@/lib/quran-marks';
+import { mergeDayKeys, mergeStudyMsByDate, sanitizeDayKeys, sanitizeStudyMsByDate } from '@/lib/stats';
+import { sanitizeSettings, type Settings } from '@/lib/storage';
+import { useHifzStore } from '@/store/hifz-store';
+import { useKnownWordsStore } from '@/store/known-words-store';
+import { useProgressStore } from '@/store/progress-store';
+import { useQuranMarksStore } from '@/store/quran-marks-store';
+import { noteSyncError, noteSyncStart, noteSyncSuccess } from '@/lib/sync-status';
 
-export interface RemoteSnapshot {
-  wordIds: string[];
-  knownLemmas: string[];
-  settings: Partial<UserSettings> | null;
-  onboardingCompleted: boolean;
-  hifz: unknown;
-  quranMarks: {
-    lastRead?: unknown;
-    recentSurahs?: unknown[];
-    pins?: unknown[];
-    pinPlacements?: unknown[];
-    collections?: unknown[];
-    bookmarks?: { id?: string; collectionId?: string; surah: number; ayah: number; createdAt?: string }[];
-  };
-  reviewDates: string[];
-  streakGraceDates: string[];
-  studyMsByDate: Record<string, number>;
-  updatedAt: number;
-}
+const PUSH_DEBOUNCE_MS = 2500;
 
 const CLOUD_FIELD_PATHS = [
   'wordIds',
@@ -40,7 +33,24 @@ const CLOUD_FIELD_PATHS = [
   'updatedAt',
 ] as const;
 
-let cachedRemoteSnapshot: RemoteSnapshot | null = null;
+export interface CloudLearningSnapshot {
+  wordIds: string[];
+  knownLemmas: string[];
+  settings: Settings | null;
+  onboardingCompleted: boolean;
+  hifz: HifzData;
+  quranMarks: QuranMarksData;
+  reviewDates: string[];
+  streakGraceDates: string[];
+  studyMsByDate: Record<string, number>;
+  updatedAt: number;
+}
+
+let pushTimer: ReturnType<typeof setTimeout> | null = null;
+let pushInFlight = false;
+let pushAgain = false;
+let syncing = false;
+let scheduledSyncPaused = 0;
 
 function documentUrl(uid: string): string {
   return `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${uid}`;
@@ -50,30 +60,30 @@ function decodeStringArray(value: unknown): string[] {
   if (!value || typeof value !== 'object' || !('arrayValue' in value)) return [];
   const arrayValue = (value as { arrayValue?: { values?: unknown[] } }).arrayValue;
   const values = arrayValue?.values ?? [];
-  const items: string[] = [];
+  const ids: string[] = [];
   for (const item of values) {
     if (item && typeof item === 'object' && 'stringValue' in item) {
       const text = (item as { stringValue?: string }).stringValue;
-      if (text) items.push(text);
+      if (text) ids.push(text);
     }
   }
-  return items;
+  return ids;
 }
 
-function encodeStringArray(items: string[]): { arrayValue: { values: { stringValue: string }[] } } {
-  return { arrayValue: { values: items.map((s) => ({ stringValue: s })) } };
+function encodeStringArray(ids: string[]): { arrayValue: { values: { stringValue: string }[] } } {
+  return { arrayValue: { values: ids.map((id) => ({ stringValue: id })) } };
 }
 
 function encodeJson(value: unknown): { stringValue: string } {
   return { stringValue: JSON.stringify(value) };
 }
 
-function decodeJson<T>(value: unknown, fallback: T): T {
+function decodeJson<T>(value: unknown, fallback: T, sanitize: (raw: unknown) => T): T {
   if (value && typeof value === 'object' && 'stringValue' in value) {
     const raw = (value as { stringValue?: string }).stringValue;
     if (raw) {
       try {
-        return JSON.parse(raw) as T;
+        return sanitize(JSON.parse(raw));
       } catch {
         return fallback;
       }
@@ -82,63 +92,7 @@ function decodeJson<T>(value: unknown, fallback: T): T {
   return fallback;
 }
 
-function sanitizeDayKeys(keys: string[]): string[] {
-  return Array.from(new Set(keys.filter((k) => /^\d{4}-\d{2}-\d{2}$/.test(k)))).sort();
-}
-
-function mapSettingsFromRemote(remoteSettings: Record<string, unknown> | null): Partial<UserSettings> {
-  if (!remoteSettings) return {};
-  const s: Partial<UserSettings> = {};
-
-  if (typeof remoteSettings.wordsPerSession === 'number') s.wordsPerSession = remoteSettings.wordsPerSession;
-  if (typeof remoteSettings.dailyReviewLimit === 'number') s.dailyReviewLimit = remoteSettings.dailyReviewLimit;
-  if (typeof remoteSettings.selectedReciterKey === 'string') s.selectedReciterKey = remoteSettings.selectedReciterKey;
-
-  const fontAr = remoteSettings.readerArabicFontSize ?? remoteSettings.readerArabicSize;
-  if (typeof fontAr === 'number') s.readerArabicFontSize = fontAr;
-
-  const fontTrans = remoteSettings.readerTranslationFontSize ?? remoteSettings.readerGlossSize;
-  if (typeof fontTrans === 'number') s.readerTranslationFontSize = fontTrans;
-
-  if (typeof remoteSettings.readerShowTranslation === 'boolean') s.readerShowTranslation = remoteSettings.readerShowTranslation;
-  if (typeof remoteSettings.readerShowWbwGloss === 'boolean') s.readerShowWbwGloss = remoteSettings.readerShowWbwGloss;
-
-  const translit = remoteSettings.readerShowWbwTransliteration ?? remoteSettings.readerTransliteration;
-  if (typeof translit === 'boolean') s.readerShowWbwTransliteration = translit;
-
-  if (typeof remoteSettings.readerShowTajweed === 'boolean') s.readerShowTajweed = remoteSettings.readerShowTajweed;
-  if (typeof remoteSettings.readerHideLearnedWords === 'boolean') s.readerHideLearnedWords = remoteSettings.readerHideLearnedWords;
-  if (typeof remoteSettings.canReadQuran === 'boolean') s.canReadQuran = remoteSettings.canReadQuran;
-
-  const theme = remoteSettings.theme ?? remoteSettings.themePreference;
-  if (theme === 'light' || theme === 'dark' || theme === 'system') s.theme = theme;
-
-  return s;
-}
-
-function mapSettingsToRemote(localSettings: UserSettings, existingRemote: Record<string, unknown> | null): Record<string, unknown> {
-  return {
-    ...(existingRemote || {}),
-    wordsPerSession: localSettings.wordsPerSession,
-    dailyReviewLimit: localSettings.dailyReviewLimit,
-    selectedReciterKey: localSettings.selectedReciterKey,
-    readerArabicFontSize: localSettings.readerArabicFontSize,
-    readerArabicSize: localSettings.readerArabicFontSize,
-    readerTranslationFontSize: localSettings.readerTranslationFontSize,
-    readerGlossSize: localSettings.readerTranslationFontSize,
-    readerShowTranslation: localSettings.readerShowTranslation,
-    readerShowWbwGloss: localSettings.readerShowWbwGloss,
-    readerShowWbwTransliteration: localSettings.readerShowWbwTransliteration,
-    readerTransliteration: localSettings.readerShowWbwTransliteration,
-    readerShowTajweed: localSettings.readerShowTajweed,
-    readerHideLearnedWords: localSettings.readerHideLearnedWords,
-    canReadQuran: localSettings.canReadQuran,
-    theme: localSettings.theme,
-    themePreference: localSettings.theme,
-  };
-}
-
-function decodeSnapshot(payload: Record<string, unknown>): RemoteSnapshot {
+function decodeSnapshot(payload: Record<string, unknown>): CloudLearningSnapshot {
   const fields = (payload.fields ?? {}) as Record<string, unknown>;
   const updatedRaw = fields.updatedAt;
   let updatedAt = 0;
@@ -148,25 +102,60 @@ function decodeSnapshot(payload: Record<string, unknown>): RemoteSnapshot {
       updatedAt = Date.parse((updatedRaw as { timestampValue: string }).timestampValue) || 0;
     }
   }
-
-  const rawSettings = fields.settings ? decodeJson<Record<string, unknown>>(fields.settings, {}) : null;
-
   return {
     wordIds: decodeStringArray(fields.wordIds),
     knownLemmas: decodeStringArray(fields.knownLemmas),
-    settings: rawSettings ? mapSettingsFromRemote(rawSettings) : null,
+    settings: fields.settings ? decodeJson(fields.settings, sanitizeSettings(null), sanitizeSettings) : null,
     onboardingCompleted:
       fields.onboardingCompleted &&
       typeof fields.onboardingCompleted === 'object' &&
       'booleanValue' in fields.onboardingCompleted
         ? Boolean((fields.onboardingCompleted as { booleanValue: boolean }).booleanValue)
         : false,
-    hifz: decodeJson(fields.hifz, { enrolledRukuIds: [], cards: {} }),
-    quranMarks: decodeJson(fields.quranMarks, { bookmarks: [] }),
+    hifz: decodeJson(fields.hifz, { ...EMPTY_HIFZ, enrolledRukuIds: [], cards: {} }, sanitizeHifzData),
+    quranMarks: decodeJson(fields.quranMarks, EMPTY_QURAN_MARKS, sanitizeQuranMarks),
     reviewDates: sanitizeDayKeys(decodeStringArray(fields.reviewDates)),
     streakGraceDates: sanitizeDayKeys(decodeStringArray(fields.streakGraceDates)),
-    studyMsByDate: decodeJson<Record<string, number>>(fields.studyMsByDate, {}),
+    studyMsByDate: decodeJson(fields.studyMsByDate, {}, sanitizeStudyMsByDate),
     updatedAt,
+  };
+}
+
+function marksSnapshot(): QuranMarksData {
+  const marks = useQuranMarksStore.getState();
+  return {
+    lastRead: marks.lastRead,
+    recentSurahs: marks.recentSurahs,
+    pins: marks.pins,
+    pinPlacements: marks.pinPlacements,
+    collections: marks.collections,
+    bookmarks: marks.bookmarks,
+  };
+}
+
+function hifzSnapshot(): HifzData {
+  const hifz = useHifzStore.getState();
+  return {
+    enrolledRukuIds: hifz.enrolledRukuIds,
+    cards: hifz.cards,
+    introSeen: hifz.introSeen,
+  };
+}
+
+function localSnapshot(): CloudLearningSnapshot {
+  const progress = useProgressStore.getState();
+  const known = useKnownWordsStore.getState();
+  return {
+    wordIds: Object.keys(progress.progress),
+    knownLemmas: Object.keys(known.knownWords),
+    settings: progress.settings,
+    onboardingCompleted: progress.onboardingCompleted,
+    hifz: hifzSnapshot(),
+    quranMarks: marksSnapshot(),
+    reviewDates: progress.reviewDates,
+    streakGraceDates: progress.streakGraceDates,
+    studyMsByDate: progress.studyMsByDate,
+    updatedAt: Date.now(),
   };
 }
 
@@ -183,108 +172,122 @@ async function authorizedFetch(url: string, init: RequestInit): Promise<Response
   });
 }
 
-export async function pullCloudSnapshot(): Promise<RemoteSnapshot | null> {
-  const session = loadAccountSession();
+export async function pullCloudSnapshot(): Promise<CloudLearningSnapshot | null> {
+  const session = await loadAccountSession();
   if (!session) return null;
-
-  try {
-    const response = await authorizedFetch(documentUrl(session.uid), { method: 'GET' });
-    if (response.status === 404) return null;
-    if (!response.ok) {
-      throw new Error(`Failed to fetch cloud progress (${response.status})`);
-    }
-    const payload = (await response.json()) as Record<string, unknown>;
-    const snapshot = decodeSnapshot(payload);
-    cachedRemoteSnapshot = snapshot;
-    return snapshot;
-  } catch (e) {
-    console.warn('Could not load cloud progress:', e);
-    throw e;
-  }
+  const response = await authorizedFetch(documentUrl(session.uid), { method: 'GET' });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error('Could not load cloud progress.');
+  return decodeSnapshot((await response.json()) as Record<string, unknown>);
 }
 
-export interface LocalSyncPayload {
-  wordIds: string[];
-  settings: UserSettings;
-  bookmarks: Bookmark[];
-  reviewDates: string[];
-  studySeconds: number;
-  hasCompletedOnboarding: boolean;
-}
-
-export async function pushCloudSnapshot(local: LocalSyncPayload): Promise<void> {
-  const session = loadAccountSession();
+export async function pushCloudSnapshot(snapshot: CloudLearningSnapshot = localSnapshot()): Promise<void> {
+  const session = await loadAccountSession();
   if (!session) return;
-
-  const baseRemote = cachedRemoteSnapshot;
-  const uniqueWords = [...new Set([...(baseRemote?.wordIds || []), ...local.wordIds])].sort();
-  const uniqueDates = sanitizeDayKeys([...(baseRemote?.reviewDates || []), ...local.reviewDates]);
-
-  // Merge bookmarks with existing remote quranMarks.bookmarks
-  const existingBookmarks = (baseRemote?.quranMarks?.bookmarks as {
-    id?: string;
-    collectionId?: string;
-    surah: number;
-    ayah: number;
-    createdAt?: string;
-  }[]) || [];
-
-  const localBookmarkSet = new Set(local.bookmarks.map((b) => `${b.surah}:${b.ayah}`));
-  // Keep existing that are still bookmarked
-  const retainedExisting = existingBookmarks.filter((b) => localBookmarkSet.has(`${b.surah}:${b.ayah}`));
-  const retainedSet = new Set(retainedExisting.map((b) => `${b.surah}:${b.ayah}`));
-
-  // Add new bookmarks from web
-  const addedBookmarks = local.bookmarks
-    .filter((b) => !retainedSet.has(`${b.surah}:${b.ayah}`))
-    .map((b) => ({
-      id: `web-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      collectionId: '',
-      surah: b.surah,
-      ayah: b.ayah,
-      createdAt: new Date().toISOString(),
-    }));
-
-  const mergedMarks = {
-    ...(baseRemote?.quranMarks || {}),
-    bookmarks: [...retainedExisting, ...addedBookmarks],
-  };
-
-  // Convert studySeconds to studyMsByDate for today
-  const todayKey = new Date().toISOString().split('T')[0];
-  const studyMsByDate = { ...(baseRemote?.studyMsByDate || {}) };
-  if (local.studySeconds > 0) {
-    studyMsByDate[todayKey] = Math.max(studyMsByDate[todayKey] || 0, local.studySeconds * 1000);
-  }
-
-  const mergedSettings = mapSettingsToRemote(
-    local.settings,
-    (baseRemote?.settings as Record<string, unknown>) || null
-  );
-
+  const uniqueWords = [...new Set(snapshot.wordIds)].sort();
+  const uniqueKnown = [...new Set(snapshot.knownLemmas)].sort();
   const body = JSON.stringify({
     fields: {
       wordIds: encodeStringArray(uniqueWords),
-      knownLemmas: encodeStringArray(baseRemote?.knownLemmas || []),
-      settings: encodeJson(mergedSettings),
-      onboardingCompleted: { booleanValue: local.hasCompletedOnboarding || Boolean(baseRemote?.onboardingCompleted) },
-      hifz: encodeJson(baseRemote?.hifz || { enrolledRukuIds: [], cards: {} }),
-      quranMarks: encodeJson(mergedMarks),
-      reviewDates: encodeStringArray(uniqueDates),
-      streakGraceDates: encodeStringArray(baseRemote?.streakGraceDates || []),
-      studyMsByDate: encodeJson(studyMsByDate),
-      updatedAt: { integerValue: String(Date.now()) },
+      knownLemmas: encodeStringArray(uniqueKnown),
+      settings: encodeJson(snapshot.settings ?? localSnapshot().settings),
+      onboardingCompleted: { booleanValue: snapshot.onboardingCompleted },
+      hifz: encodeJson(sanitizeHifzData(snapshot.hifz)),
+      quranMarks: encodeJson(sanitizeQuranMarks(snapshot.quranMarks)),
+      reviewDates: encodeStringArray(sanitizeDayKeys(snapshot.reviewDates)),
+      streakGraceDates: encodeStringArray(sanitizeDayKeys(snapshot.streakGraceDates)),
+      studyMsByDate: encodeJson(sanitizeStudyMsByDate(snapshot.studyMsByDate)),
+      updatedAt: { integerValue: String(snapshot.updatedAt) },
     },
   });
-
   const base = documentUrl(session.uid);
   const mask = CLOUD_FIELD_PATHS.map((path) => `updateMask.fieldPaths=${path}`).join('&');
-
   let response = await authorizedFetch(`${base}?${mask}`, { method: 'PATCH', body });
   if (response.status === 404) {
     response = await authorizedFetch(base, { method: 'PATCH', body });
   }
-  if (!response.ok) {
-    throw new Error(`Failed to save cloud progress (${response.status})`);
+  if (!response.ok) throw new Error('Could not save cloud progress.');
+}
+
+function applyCloudSnapshot(remote: CloudLearningSnapshot): void {
+  useProgressStore.getState().importLearnedWordIds(remote.wordIds);
+  if (remote.settings) useProgressStore.getState().importSettings(remote.settings);
+  if (remote.onboardingCompleted) useProgressStore.getState().setOnboardingCompleted(true);
+  useKnownWordsStore.getState().mergeCloudKnownLemmas(remote.knownLemmas);
+
+  const progress = useProgressStore.getState();
+  useProgressStore.getState().importCloudStreaks({
+    reviewDates: mergeDayKeys(progress.reviewDates, remote.reviewDates),
+    streakGraceDates: mergeDayKeys(progress.streakGraceDates, remote.streakGraceDates),
+    studyMsByDate: mergeStudyMsByDate(progress.studyMsByDate, remote.studyMsByDate),
+  });
+
+  useHifzStore.getState().importCloudHifz(mergeHifzData(hifzSnapshot(), remote.hifz));
+  useQuranMarksStore.getState().importCloudMarks(mergeQuranMarks(marksSnapshot(), remote.quranMarks));
+}
+
+export async function mergeAccountCloud(): Promise<void> {
+  if (syncing) return;
+  if (typeof window === 'undefined') return;
+  const session = await loadAccountSession();
+  if (!session) return;
+  syncing = true;
+  scheduledSyncPaused += 1;
+  noteSyncStart();
+  try {
+    const remote = await pullCloudSnapshot();
+    if (remote) applyCloudSnapshot(remote);
+    await pushCloudSnapshot(localSnapshot());
+    noteSyncSuccess();
+  } catch (error) {
+    // Offline or rules not deployed yet - local study keeps working.
+    noteSyncError(error);
+  } finally {
+    scheduledSyncPaused = Math.max(0, scheduledSyncPaused - 1);
+    syncing = false;
+    scheduleAccountSync();
   }
+}
+
+async function flushPush(): Promise<void> {
+  if (pushInFlight) {
+    pushAgain = true;
+    return;
+  }
+  pushInFlight = true;
+  try {
+    if (!(await loadAccountSession())) return;
+    noteSyncStart();
+    await pushCloudSnapshot();
+    noteSyncSuccess();
+  } catch (error) {
+    // The next local change or launch retries.
+    noteSyncError(error);
+  } finally {
+    pushInFlight = false;
+    if (pushAgain) {
+      pushAgain = false;
+      scheduleAccountSync();
+    }
+  }
+}
+
+/** Debounced, after-interactions upload. Safe to call from gradeWord. */
+export function scheduleAccountSync(): void {
+  if (scheduledSyncPaused > 0) return;
+  if (pushTimer) clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {
+    pushTimer = null;
+    const run = () => void flushPush();
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) window.requestIdleCallback(run, { timeout: 2000 });
+    else setTimeout(run, 0);
+  }, PUSH_DEBOUNCE_MS);
+}
+
+/** Web addition: deletes the signed-in user's cloud document. Local data is untouched. */
+export async function deleteCloudSnapshot(): Promise<void> {
+  const session = await loadAccountSession();
+  if (!session) return;
+  const response = await authorizedFetch(documentUrl(session.uid), { method: 'DELETE' });
+  if (!response.ok && response.status !== 404) throw new Error('Could not delete cloud data.');
 }

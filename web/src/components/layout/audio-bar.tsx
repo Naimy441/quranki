@@ -1,154 +1,127 @@
 'use client';
 
-import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, Repeat, User, X } from 'lucide-react';
-import { useRecitation } from '@/context/recitation-context';
-import { useProgress } from '@/context/progress-context';
-import { getSurahMeta } from '@/lib/quran-data';
-import { RECITERS } from '@/lib/reciters';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Loader2, Pause, Play, SkipBack, SkipForward, X } from 'lucide-react';
+import { getSurahMeta } from '@/lib/quran-reader';
+import { reciterLabel } from '@/lib/reciters';
+import { isTypingTarget } from '@/components/layout/command-palette';
+import { useProgressStore } from '@/store/progress-store';
+import {
+  seekRecitation,
+  setAutoScrollSuspended,
+  skipNextAyah,
+  skipPreviousAyah,
+  stopRecitation,
+  togglePlayPause,
+  useRecitationStore,
+} from '@/store/recitation-store';
 
 function formatSeconds(sec: number): string {
-  if (isNaN(sec) || sec < 0) return '0:00';
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${m}:${String(s).padStart(2, '0')}`;
+  if (!Number.isFinite(sec) || sec < 0) return '0:00';
+  return `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
 }
 
+/** The recitation player, with the same controls and status text as the mobile player bar. */
 export function AudioBar() {
-  const {
-    currentSurah,
-    currentAyah,
-    isPlaying,
-    isLoading,
-    currentTime,
-    duration,
-    autoAdvance,
-    hasActiveRecitation,
-    closeRecitation,
-    togglePlay,
-    nextAyah,
-    prevAyah,
-    seek,
-    toggleAutoAdvance,
-  } = useRecitation();
+  const router = useRouter();
+  const s = useRecitationStore();
+  const reciterKey = useProgressStore((st) => st.settings.selectedReciterKey);
+  const meta = s.surahNumber ? getSurahMeta(s.surahNumber) : undefined;
 
-  const { settings, updateSettings } = useProgress();
-  const surahMeta = getSurahMeta(currentSurah);
+  useEffect(() => {
+    if (!s.visible) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (k === 'k') togglePlayPause();
+      else if (k === 'j') skipPreviousAyah();
+      else if (k === 'l') skipNextAyah();
+      else return;
+      e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [s.visible]);
 
-  if (!hasActiveRecitation) {
-    return null;
-  }
+  const canPrev = s.playingBismillah || s.ayahNumber > s.rangeStartAyah || Boolean(s.mode === 'surah' && meta?.b && s.rangeStartAyah <= 1);
+  const canNext = s.playingBismillah || s.ayahNumber < s.rangeEndAyah;
+  const busy = s.awaitingAudio && !s.playing;
+  let status = s.playingBismillah ? 'Bismillah' : `Ayah ${s.ayahNumber} of ${s.rangeEndAyah}`;
+  if (s.error) status = s.error;
+  else if (busy) status = 'Loading';
+  const pct = s.durationSeconds > 0 ? Math.min(100, (s.positionSeconds / s.durationSeconds) * 100) : 0;
+
+  const jumpToRecitation = () => {
+    if (!s.surahNumber) return;
+    setAutoScrollSuspended(false);
+    const ayah = s.ayahNumber > 0 ? s.ayahNumber : 1;
+    if (window.location.pathname === `/quran/${s.surahNumber}`) {
+      document.getElementById(`ayah-${ayah}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else router.push(`/quran/${s.surahNumber}?ayah=${ayah}`);
+  };
 
   return (
-    <div className="fixed bottom-0 left-60 right-0 h-16 bg-card/95 backdrop-blur-md border-t border-border px-6 flex items-center justify-between z-40 select-none shadow-md transition-colors">
-      {/* Current Surah / Ayah info */}
-      <div className="flex items-center gap-3 min-w-[220px]">
-        <div className="w-8 h-8 rounded-medium bg-backgroundSelected border border-border flex items-center justify-center font-bold text-primary text-xs shrink-0">
-          {currentSurah}:{currentAyah}
-        </div>
-        <div className="flex flex-col truncate">
-          <div className="text-xs font-bold text-text flex items-center gap-1.5 truncate">
-            <span>{surahMeta?.en || `Surah ${currentSurah}`}</span>
-            <span className="text-[11px] font-normal text-textMuted">
-              ayah {currentAyah} of {surahMeta?.ac || 0}
-            </span>
-          </div>
-          <div className="text-[11px] text-textSecondary truncate">
-            <span>{surahMeta?.nt || ''}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Playback Controls & Progress Bar */}
-      <div className="flex flex-col items-center gap-1 max-w-md w-full px-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={prevAyah}
-            title="Previous Ayah"
-            className="p-1.5 text-textSecondary hover:text-text hover:bg-backgroundElement rounded-full transition-colors"
-          >
-            <SkipBack className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            onClick={togglePlay}
-            disabled={isLoading}
-            title={isPlaying ? 'Pause' : 'Play'}
-            className="w-8 h-8 rounded-full bg-primary hover:opacity-90 text-onPrimary flex items-center justify-center shadow-xs transition-opacity disabled:opacity-50"
-          >
-            {isPlaying ? (
-              <Pause className="w-4 h-4 fill-onPrimary" />
-            ) : (
-              <Play className="w-4 h-4 fill-onPrimary ml-0.5" />
-            )}
-          </button>
-
-          <button
-            onClick={nextAyah}
-            title="Next Ayah"
-            className="p-1.5 text-textSecondary hover:text-text hover:bg-backgroundElement rounded-full transition-colors"
-          >
-            <SkipForward className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="w-full flex items-center gap-2 text-[10px] text-textMuted font-mono">
-          <span>{formatSeconds(currentTime)}</span>
-          <input
-            type="range"
-            min={0}
-            max={duration || 100}
-            step={0.1}
-            value={currentTime}
-            onChange={(e) => seek(parseFloat(e.target.value))}
-            className="flex-1 h-1 bg-backgroundElement border border-border rounded-lg appearance-none cursor-pointer accent-primary"
-          />
-          <span>{formatSeconds(duration)}</span>
-        </div>
-      </div>
-
-      {/* Reciter & Auto-advance controls */}
-      <div className="flex items-center gap-3 min-w-[220px] justify-end">
-        {/* Reciter Selector */}
-        <div className="flex items-center gap-1.5 text-xs text-textSecondary">
-          <User className="w-3 h-3 text-textMuted" />
-          <select
-            value={settings.selectedReciterKey}
-            onChange={(e) => updateSettings({ selectedReciterKey: e.target.value })}
-            className="bg-backgroundElement border border-border rounded-small px-2 py-0.5 text-xs text-text font-medium focus:outline-none"
-          >
-            {RECITERS.map((r) => (
-              <option key={r.key} value={r.key}>
-                {r.name} - {r.style}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Auto-advance toggle */}
-        <button
-          onClick={toggleAutoAdvance}
-          title={autoAdvance ? 'Auto-advance enabled' : 'Auto-advance disabled'}
-          className={`flex items-center gap-1 px-2 py-0.5 rounded-small text-xs font-bold transition-colors ${
-            autoAdvance
-              ? 'bg-backgroundSelected text-primary border border-primary/20'
-              : 'text-textMuted hover:text-text'
-          }`}
+    <AnimatePresence>
+      {s.visible && (
+        <motion.div
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 80, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className="fixed z-40 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] lg:bottom-4 left-3 right-3 lg:left-[calc(16rem+1.5rem)] lg:right-6"
         >
-          <Repeat className="w-3 h-3" />
-          <span>Auto</span>
-        </button>
-
-        {/* Dismiss Audio Bar */}
-        <button
-          onClick={closeRecitation}
-          title="Close audio player"
-          className="p-1 text-textMuted hover:text-text hover:bg-backgroundElement rounded-full transition-colors ml-0.5"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
+          <div className="mx-auto max-w-3xl overflow-hidden rounded-large border border-border bg-card/95 shadow-lift backdrop-blur-xl">
+            <div
+              className="relative h-1.5 cursor-pointer bg-border"
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                if (s.durationSeconds > 0) seekRecitation(((e.clientX - rect.left) / rect.width) * s.durationSeconds);
+              }}
+            >
+              {busy ? (
+                <div className="absolute inset-y-0 w-1/3 animate-shimmer bg-gradient-to-r from-transparent via-primary to-transparent bg-[length:200%_100%]" />
+              ) : (
+                <div className="absolute inset-y-0 left-0 bg-primary" style={{ width: `${s.error ? 0 : pct}%` }} />
+              )}
+            </div>
+            <div className="flex items-center gap-3 px-3 sm:px-4 py-2.5">
+              <button onClick={jumpToRecitation} className="flex min-w-0 flex-1 items-center gap-3 text-left" title="Go to the ayah being recited">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-medium bg-primary/10 font-mono text-[11px] font-bold text-primary">
+                  {s.surahNumber}:{s.playingBismillah ? 'b' : s.ayahNumber}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold">{meta?.tr ?? 'Recitation'}</span>
+                  <span className={s.error ? 'block truncate text-xs text-danger' : 'block truncate text-xs text-textMuted'}>
+                    {status}
+                    {!s.error && !busy && s.durationSeconds > 0 && ` - ${formatSeconds(s.positionSeconds)} / ${formatSeconds(s.durationSeconds)}`}
+                  </span>
+                </span>
+              </button>
+              <span className="hidden md:block max-w-[180px] truncate text-xs text-textMuted">{reciterLabel(reciterKey)}</span>
+              <div className="flex items-center gap-1">
+                <button onClick={skipPreviousAyah} disabled={!canPrev} className="icon-btn disabled:opacity-30" title="Previous ayah (J)">
+                  <SkipBack className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={togglePlayPause}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-onPrimary transition hover:brightness-110"
+                  title={s.playing ? 'Pause (K)' : 'Play (K)'}
+                >
+                  {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : s.playing ? <Pause className="w-4 h-4 fill-current" /> : <Play className="ml-0.5 w-4 h-4 fill-current" />}
+                </button>
+                <button onClick={skipNextAyah} disabled={!canNext} className="icon-btn disabled:opacity-30" title="Next ayah (L)">
+                  <SkipForward className="w-4 h-4" />
+                </button>
+              </div>
+              <button onClick={stopRecitation} className="icon-btn w-8 h-8" title="Stop and close">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

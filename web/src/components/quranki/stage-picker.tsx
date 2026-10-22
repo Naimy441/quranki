@@ -12,6 +12,8 @@ import {
   type Stage,
   type StageProgress,
 } from '@/lib/levels';
+import { getQaidaReadableCoverage } from '@/lib/qaida-readable';
+import { daysAtPace, formatCount, formatDaysAtPace } from '@/lib/stats';
 
 export interface StageEntry {
   stage: Stage;
@@ -33,6 +35,7 @@ export function StagePicker({
   selectedStageId,
   wordsPerDay = 10,
   learnToRead,
+  progressMap,
   onSelect,
 }: StagePickerProps) {
   const selected = entries.find((entry) => entry.stage.id === selectedStageId) ?? entries[0];
@@ -41,27 +44,24 @@ export function StagePicker({
   const { stage, progress, unlocked } = selected;
   const { mastered, total } = progress;
   const coverage = getCoverageThroughLevel(stage.lastLevel);
+  const qaidaReadable = isQaidaStage(stage) ? getQaidaReadableCoverage(progressMap) : null;
+  const qaidaPercent = qaidaReadable && qaidaReadable.total > 0 ? Math.round((qaidaReadable.readable / qaidaReadable.total) * 100) : 0;
+  const daysLabel = unlocked ? formatDaysAtPace(daysAtPace(total - mastered, wordsPerDay)) : undefined;
 
   let detailText: string;
   if (isQaidaStage(stage)) {
-    detailText = unlocked
-      ? `${mastered.toLocaleString()} of ${total.toLocaleString()} mastered`
-      : `${total.toLocaleString()} cards`;
+    detailText = unlocked ? `${formatCount(mastered)} of ${formatCount(total)} mastered - ${qaidaPercent}% of the Quran` : `${formatCount(total)} cards`;
   } else if (isAsmaStage(stage)) {
     detailText = unlocked
-      ? `${mastered.toLocaleString()} of ${total.toLocaleString()} mastered - ${stage.subtitle}`
-      : `${stage.subtitle} - ${total.toLocaleString()} cards - unlocks after Stage ${learnToRead ? 2 : 1}`;
+      ? `${formatCount(mastered)} of ${formatCount(total)} mastered - ${stage.subtitle}`
+      : `${stage.subtitle} - ${formatCount(total)} cards - unlocks after Stage ${learnToRead ? 2 : 1}`;
   } else if (unlocked) {
-    detailText = `${mastered.toLocaleString()} of ${total.toLocaleString()} mastered - ${coverage.percent}% of the Quran`;
+    detailText = `${formatCount(mastered)} of ${formatCount(total)} mastered - ${coverage.percent}% of the Quran`;
   } else if (stage.id === 1) {
-    detailText = `${stage.subtitle} - ${total.toLocaleString()} words - unlocks after Stage 1`;
+    detailText = `${stage.subtitle} - ${formatCount(total)} words - unlocks after Stage 1`;
   } else {
-    detailText = `${stage.subtitle} - ${total.toLocaleString()} words - unlocks as you progress`;
+    detailText = `${stage.subtitle} - ${formatCount(total)} words - unlocks as you progress`;
   }
-
-  const remaining = Math.max(0, total - mastered);
-  const daysAtPace = wordsPerDay > 0 ? Math.ceil(remaining / wordsPerDay) : 0;
-  const daysLabel = unlocked && daysAtPace > 0 ? `${daysAtPace} ${daysAtPace === 1 ? 'day' : 'days'}` : null;
 
   return (
     <div className="flex flex-col gap-3">
@@ -99,9 +99,7 @@ export function StagePicker({
           {stageDisplayTitle(stage, learnToRead)}
         </div>
         <div className="text-xs text-textSecondary">{detailText}</div>
-        {daysLabel && (
-          <div className="text-xs text-textMuted">{daysLabel} left at your pace</div>
-        )}
+        {daysLabel && <div className="text-xs text-textMuted">{daysLabel} left at your pace</div>}
       </div>
     </div>
   );

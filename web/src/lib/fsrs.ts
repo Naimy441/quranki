@@ -1,3 +1,8 @@
+/**
+ * Thin wrapper around ts-fsrs (the open-source FSRS spaced-repetition algorithm used by
+ * modern Anki). No optimizer/binding packages are used - just the scheduler with sane
+ * defaults, matching Anki's default learning steps (1m -> 10m) for new cards.
+ */
 import { Card, createEmptyCard, fsrs, generatorParameters, Rating, State } from 'ts-fsrs';
 
 export { Rating, State };
@@ -28,6 +33,7 @@ const params = generatorParameters({
 
 const scheduler = fsrs(params);
 
+/** A Card with Date fields converted to ISO strings, safe for JSON persistence. */
 export interface SerializedCard {
   due: string;
   stability: number;
@@ -43,21 +49,6 @@ export interface SerializedCard {
 
 export function createNewCard(now: Date = new Date()): Card {
   return createEmptyCard(now);
-}
-
-export function createMasteredCard(now: Date = new Date()): SerializedCard {
-  const due = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const card = createNewCard(now);
-  return serializeCard({
-    ...card,
-    state: State.Review,
-    due,
-    stability: 30,
-    difficulty: 5,
-    reps: 3,
-    scheduled_days: 30,
-    last_review: now,
-  });
 }
 
 export function serializeCard(card: Card): SerializedCard {
@@ -81,6 +72,7 @@ export interface GradeResult {
   reviewedAt: Date;
 }
 
+/** Applies a rating to a card and returns the newly scheduled card. */
 export function gradeCard(card: Card, grade: GradeName, now: Date = new Date()): GradeResult {
   const rating = GRADE_TO_RATING[grade];
   const { card: nextCard } = scheduler.next(card, now, rating);
@@ -93,20 +85,7 @@ export interface GradePreview {
   label: string;
 }
 
-export function formatInterval(ms: number): string {
-  if (ms <= 0) return '< 1m';
-  const minutes = Math.round(ms / (1000 * 60));
-  if (minutes < 60) return `${Math.max(1, minutes)}m`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.round(hours / 24);
-  if (days < 30) return `${days}d`;
-  const months = Math.round(days / 30);
-  if (months < 12) return `${months}mo`;
-  const years = Math.round(days / 365);
-  return `${years}y`;
-}
-
+/** Previews the resulting interval for all four ratings, without committing a review. */
 export function previewGrades(card: Card, now: Date = new Date()): GradePreview[] {
   const preview = scheduler.repeat(card, now);
   return GRADE_NAMES.map((grade) => {
@@ -117,15 +96,33 @@ export function previewGrades(card: Card, now: Date = new Date()): GradePreview[
   });
 }
 
+/** Formats a millisecond interval the way Anki-style apps display it ("<1m", "6m", "3d", ...). */
+export function formatInterval(ms: number): string {
+  const minutes = ms / 60_000;
+  if (minutes < 1) return '<1m';
+  if (minutes < 60) return `${Math.round(minutes)}m`;
+  const hours = minutes / 60;
+  if (hours < 24) return `${Math.round(hours)}h`;
+  const days = hours / 24;
+  if (days < 30) return `${Math.round(days * 10) / 10}d`;
+  const months = days / 30;
+  if (months < 12) return `${Math.round(months * 10) / 10}mo`;
+  const years = months / 12;
+  return `${Math.round(years * 10) / 10}y`;
+}
+
+/** Hide this word's gloss in the reader while the learner is still supposed to know it:
+ *  Review (including Hard - still a review card) or Learning (working through 1m/10m). New
+ *  cards and Relearning (just lapsed with Again) stay visible. */
+export function shouldHideInReader(card: Card): boolean {
+  return card.state === State.Review || card.state === State.Learning;
+}
+
+/** A word is considered "at least good" once it has graduated to Review state on a Good/Easy rating. */
+export function isWordMastered(card: Card, lastGrade: GradeName | null): boolean {
+  return card.state === State.Review && (lastGrade === 'good' || lastGrade === 'easy');
+}
+
 export function isCardDue(card: Card, now: Date = new Date()): boolean {
   return card.due.getTime() <= now.getTime();
-}
-
-export function isWordMastered(card: Card, lastGrade?: GradeName | null): boolean {
-  if (lastGrade === 'good' || lastGrade === 'easy') return true;
-  return card.state === State.Review && card.stability >= 21;
-}
-
-export function shouldHideInReader(card: Card): boolean {
-  return card.state === State.Review && card.stability >= 1;
 }

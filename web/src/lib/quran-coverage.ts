@@ -1,61 +1,76 @@
-import vocabCoverageData from '@/data/quran/vocab-coverage.json';
-import { SURAH_INDEX } from '@/lib/quran-data';
-import { isWordMastered, shouldHideInReader, deserializeCard } from '@/lib/fsrs';
-import type { ProgressMap } from '@/lib/levels';
+import { getCanonicalAyahs } from '@/lib/quran-lemma-index';
+import { ayahLemmaUnderstanding, getQuranLemma, TOTAL_QURAN_WORDS, type LemmaId } from '@/lib/quran-lemmas';
+import { SURAH_COUNT } from '@/lib/quran-reader';
 
-const coverage = vocabCoverageData as {
-  totalWords: number;
-  occurrenceCounts: Record<string, number>;
-};
+export { TOTAL_QURAN_WORDS };
 
-export const TOTAL_QURAN_WORDS = coverage.totalWords || 77429;
+export interface AyahUnderstandingHistogramBin {
+  min: number;
+  max: number;
+  label: string;
+  ayahCount: number;
+}
 
-export function calculateMemorizedWords(progress: ProgressMap): {
-  count: number;
-  percentage: number;
-} {
+export interface QuranAyahUnderstandingSummary {
+  average: number;
+  ayahCount: number;
+  histogram: AyahUnderstandingHistogramBin[];
+  /** Average ayah-understanding score for every surah, in Quran order. */
+  surahAverages: number[];
+}
+
+const HISTOGRAM_BIN_COUNT = 10;
+
+function createHistogram(counts: number[]): AyahUnderstandingHistogramBin[] {
+  return counts.map((ayahCount, index) => {
+    const min = index * 10;
+    const max = index === HISTOGRAM_BIN_COUNT - 1 ? 100 : min + 9;
+    return { min, max, label: `${min}–${max}%`, ayahCount };
+  });
+}
+
+/** Exact Quran-word coverage for a set of canonical lemmas. Multi-stem words count only when
+ * every lexical stem is recognized; opening letters are excluded from both numerator and total. */
+export function countMemorizedQuranWords(recognizedLemmaIds: Set<LemmaId>): number {
   let count = 0;
-  for (const [wordId, wp] of Object.entries(progress)) {
-    const card = deserializeCard(wp.card);
-    if (isWordMastered(card) || shouldHideInReader(card) || wp.autoMastered) {
-      const occurrences = coverage.occurrenceCounts[wordId] || 0;
-      count += occurrences;
-    }
+  for (const ayah of getCanonicalAyahs()) {
+    count += ayahLemmaUnderstanding(ayah.words, recognizedLemmaIds).knownWords;
+  }
+  return count;
+}
+
+/**
+ * The expected vocabulary understanding of a typical ayah. Unlike corpus-wide word coverage,
+ * this gives every ayah equal weight, regardless of how short or long it is.
+ */
+export function getQuranAyahUnderstandingSummary(recognizedLemmaIds: Set<LemmaId>): QuranAyahUnderstandingSummary {
+  let total = 0;
+  let ayahCount = 0;
+  const counts = Array.from({ length: HISTOGRAM_BIN_COUNT }, () => 0);
+  const surahTotals = Array.from({ length: SURAH_COUNT }, () => 0);
+  const surahCounts = Array.from({ length: SURAH_COUNT }, () => 0);
+
+  for (const ayah of getCanonicalAyahs()) {
+    const { totalWords, ratio } = ayahLemmaUnderstanding(ayah.words, recognizedLemmaIds);
+    if (totalWords === 0) continue;
+    total += ratio;
+    surahTotals[ayah.surah - 1] += ratio;
+    surahCounts[ayah.surah - 1] += 1;
+    counts[Math.min(Math.floor(ratio * HISTOGRAM_BIN_COUNT), HISTOGRAM_BIN_COUNT - 1)] += 1;
+    ayahCount += 1;
   }
 
-  // Clamp to TOTAL_QURAN_WORDS
-  count = Math.min(count, TOTAL_QURAN_WORDS);
-  const percentage = Math.round((count / TOTAL_QURAN_WORDS) * 1000) / 10;
-  return { count, percentage };
+  return {
+    average: ayahCount === 0 ? 0 : total / ayahCount,
+    ayahCount,
+    histogram: createHistogram(counts),
+    surahAverages: surahTotals.map((surahTotal, index) => (
+      surahCounts[index] === 0 ? 0 : surahTotal / surahCounts[index]
+    )),
+  };
 }
 
-export interface SurahUnderstanding {
-  surahNumber: number;
-  nameEn: string;
-  nameAr: string;
-  totalWords: number;
-  knownWords: number;
-  percentage: number;
-}
-
-export function getAllSurahsUnderstanding(progress: ProgressMap): SurahUnderstanding[] {
-  const { percentage: globalPercentage } = calculateMemorizedWords(progress);
-
-  // Approximate per-surah comprehension weighted by surah length and vocabulary frequency
-  return SURAH_INDEX.map((surah) => {
-    // Shorter Meccan surahs have concentrated vocabulary; longer Medinan surahs have broader vocabulary
-    const factor = surah.rp === 'meccan' ? 1.08 : 0.96;
-    const surahPercent = Math.min(100, Math.round(globalPercentage * factor));
-    const estimatedWords = surah.ac * 12; // approximate words per ayah
-    const knownWords = Math.round((surahPercent / 100) * estimatedWords);
-
-    return {
-      surahNumber: surah.n,
-      nameEn: surah.en,
-      nameAr: surah.ar,
-      totalWords: estimatedWords,
-      knownWords,
-      percentage: surahPercent,
-    };
-  });
+/** Exact stem frequency supplied by the generated canonical lemma catalogue. */
+export function getLemmaOccurrenceCount(id: LemmaId | undefined): number {
+  return getQuranLemma(id)?.frequency ?? 0;
 }

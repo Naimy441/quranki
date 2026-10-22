@@ -1,0 +1,147 @@
+[
+  {
+    "sura_number": 2,
+    "sura_name": "The Cow",
+    "beginning_letters": "Alif-Lam-Meem"
+  },
+  {
+    "sura_number": 3,
+    "sura_name": "The Family of Imran",
+    "beginning_letters": "Alif-Lam-Meem"
+  },
+  {
+    "sura_number": 7,
+    "sura_name": "The Purgatory",
+    "beginning_letters": "Alif-Lam-Meem-Sad"
+  },
+  {
+    "sura_number": 10,
+    "sura_name": "Jonah",
+    "beginning_letters": "Alif-Lam-Ra"
+  },
+  {
+    "sura_number": 11,
+    "sura_name": "Hud",
+    "beginning_letters": "Alif-Lam-Ra"
+  },
+  {
+    "sura_number": 12,
+    "sura_name": "Joseph",
+    "beginning_letters": "Alif-Lam-Ra"
+  },
+  {
+    "sura_number": 13,
+    "sura_name": "The Thunder",
+    "beginning_letters": "Alif-Lam-Meem-Ra"
+  },
+  {
+    "sura_number": 14,
+    "sura_name": "Abraham",
+    "beginning_letters": "Alif-Lam-Ra"
+  },
+  {
+    "sura_number": 15,
+    "sura_name": "Hijr",
+    "beginning_letters": "Alif-Lam-Ra"
+  },
+  {
+    "sura_number": 19,
+    "sura_name": "Mary",
+    "beginning_letters": "Kaf-He-Ya-Ayn-Sad"
+  },
+  {
+    "sura_number": 20,
+    "sura_name": "Ta-He",
+    "beginning_letters": "Ta-He"
+  },
+  {
+    "sura_number": 26,
+    "sura_name": "The Poets",
+    "beginning_letters": "Ta-Seen-Meem"
+  },
+  {
+    "sura_number": 27,
+    "sura_name": "The Ant",
+    "beginning_letters": "Ta-Seen"
+  },
+  {
+    "sura_number": 28,
+    "sura_name": "The History",
+    "beginning_letters": "Ta-Seen-Meem"
+  },
+  {
+    "sura_number": 29,
+    "sura_name": "The Spider",
+    "beginning_letters": "Alif-Lam-Meem"
+  },
+  {
+    "sura_number": 30,
+    "sura_name": "The Romans",
+    "beginning_letters": "Alif-Lam-Meem"
+  },
+  {
+    "sura_number": 31,
+    "sura_name": "Luqman",
+    "beginning_letters": "Alif-Lam-Meem"
+  },
+  {
+    "sura_number": 32,
+    "sura_name": "The Prostration",
+    "beginning_letters": "Alif-Lam-Meem"
+  },
+  {
+    "sura_number": 36,
+    "sura_name": "Ya-Seen",
+    "beginning_letters": "Ya-Seen"
+  },
+  {
+    "sura_number": 38,
+    "sura_name": "Sad",
+    "beginning_letters": "Sad"
+  },
+  {
+    "sura_number": 40,
+    "sura_name": "The Believer",
+    "beginning_letters": "Ha-Meem"
+  },
+  {
+    "sura_number": 41,
+    "sura_name": "Elucidated",
+    "beginning_letters": "Ha-Meem"
+  },
+  {
+    "sura_number": 42,
+    "sura_name": "Consultation",
+    "beginning_letters": "Ha-Meem / Ayn-Seen-Qaf"
+  },
+  {
+    "sura_number": 43,
+    "sura_name": "Vanity",
+    "beginning_letters": "Ha-Meem"
+  },
+  {
+    "sura_number": 44,
+    "sura_name": "Smoke",
+    "beginning_letters": "Ha-Meem"
+  },
+  {
+    "sura_number": 45,
+    "sura_name": "Kneeling",
+    "beginning_letters": "Ha-Meem"
+  },
+  {
+    "sura_number": 46,
+    "sura_name": "The Dunes",
+    "beginning_letters": "Ha-Meem"
+  },
+  {
+    "sura_number": 50,
+    "sura_name": "Qaf",
+    "beginning_letters": "Qaf"
+  },
+  {
+    "sura_number": 68,
+    "sura_name": "The Pen",
+    "beginning_letters": "Noon"
+  }
+]
