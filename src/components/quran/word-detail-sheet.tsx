@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
   },
   rootLetter: {
     fontSize: 22,
-    lineHeight: 34,
+    lineHeight: 36,
   },
   occurrences: {
     textAlign: 'center',

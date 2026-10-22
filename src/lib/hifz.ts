@@ -66,7 +66,7 @@ export function getHifzCard(data: HifzData, rukuId: number): Card {
 }
 
 /** Learning/relearning first, then due reviews, then never-reviewed enrolled rukus. */
-export function buildHifzSessionQueue(data: HifzData, now: Date = new Date()): HifzSessionCard[] {
+export function buildHifzSessionQueue(data: Pick<HifzData, 'enrolledRukuIds' | 'cards'>, now: Date = new Date()): HifzSessionCard[] {
   const learning: HifzSessionCard[] = [];
   const reviews: HifzSessionCard[] = [];
   const fresh: HifzSessionCard[] = [];
@@ -95,7 +95,7 @@ export function buildHifzSessionQueue(data: HifzData, now: Date = new Date()): H
   return [...learning, ...reviews, ...fresh];
 }
 
-export function countDueHifzCards(data: HifzData, now: Date = new Date()): { due: number; next: number } {
+export function countDueHifzCards(data: Pick<HifzData, 'enrolledRukuIds' | 'cards'>, now: Date = new Date()): { due: number; next: number } {
   const queue = buildHifzSessionQueue(data, now);
   return {
     due: queue.filter((entry) => entry.reason === 'due').length,
