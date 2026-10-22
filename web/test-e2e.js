@@ -146,8 +146,8 @@ async function runTests() {
 
     const sitemapRes = await get('http://localhost:3005/sitemap.xml');
     assert.strictEqual(sitemapRes.status, 200);
-    assert.ok(sitemapRes.body.includes('quranki.com/quran/1'));
-    assert.ok(sitemapRes.body.includes('quranki.com/learn'));
+    assert.ok(sitemapRes.body.includes('quranki.org/quran/1'));
+    assert.ok(sitemapRes.body.includes('quranki.org/learn'));
   });
 
   // Test 14: Static Surah Data serving
